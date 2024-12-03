@@ -22,6 +22,9 @@ https://tree.taiga.io/project/ikerdelgado-tr2_carreramates/backlog
 🎨 Prototip gràfic del projecte:
 (Penpot)
 
+- Pantalla web:
+https://design.penpot.app/#/workspace/a0a8e792-b2d2-818e-8005-5d043f5ef60f/a0a8e792-b2d2-818e-8005-5d0441e08724?page-id=a0a8e792-b2d2-818e-8005-5d0441e08725 
+
 🌐 URL de producció:
 Encara no disponible.
 
