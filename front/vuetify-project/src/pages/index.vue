@@ -1,7 +1,7 @@
 <template>
-  <!--<CarrilesCarrera /> -->
+  <CarrilesCarrera />
   <CarrilJugador />
-  <dado />
+  <!--<dado />-->
 </template>
 
 <script setup>
