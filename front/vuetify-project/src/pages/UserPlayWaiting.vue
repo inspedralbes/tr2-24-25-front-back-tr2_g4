@@ -1,5 +1,11 @@
 <template>
     <v-app>
+      <!-- Barra superior -->
+      <v-app-bar color="black" dark flat>
+        <v-toolbar-title class="text-center">GMaths</v-toolbar-title>
+      </v-app-bar>
+  
+      <!-- Contenedor principal -->
       <v-container 
         class="d-flex justify-center align-center"
         style="height: 100vh; background-color: #99a6e9;"
@@ -70,7 +76,7 @@
   .mb-2 {
     margin-bottom: 10px;
   }
-
+  
   .color-chips {
     background-color: #020c11;
     color: black;
