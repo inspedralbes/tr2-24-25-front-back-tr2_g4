@@ -45,6 +45,23 @@ connectDB();
 app.use(cors()); 
 
 
+
+// TRABAJO USERS MOI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Ruta básica
 app.get('/', (req, res) => {
   res.send('¡Hola, mundo!');
