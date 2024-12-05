@@ -1,28 +1,63 @@
 <template>
-    <v-container class="d-flex align-center justify-center" style="height: 100vh; background-color: #99a6e9;">
+    <v-container class="d-flex align-center justify-center" style="height: 100vh; background-color: #99a6e9; position: relative;">
+      <!-- Tarjeta principal -->
       <v-card
         elevation="6"
         class="py-12 px-6"
-        style="background-color: #4a6fb3; color: white; max-width: 500px; text-align: center; border-radius: 16px;"
+        style="
+          background-color: slateblue;     
+          color: white;
+          width: 45%;
+          text-align: center;
+          border-radius: 16px;
+        "
       >
         <v-card-title class="text-h5 font-weight-bold">POSICIÓN</v-card-title>
   
-        <v-card-text class="text-subtitle-1 mt-4">
-          2n posición
+        <v-card-text class="mt-6" style="margin-top: 20px;">
+          <v-card
+            elevation="2"
+            style="background-color: #2d50a5; color: white; padding: 12px; border-radius: 8px; display: inline-block;"
+          >
+            2n posición
+          </v-card>
         </v-card-text>
   
-        <v-divider class="my-4" style="border-color: rgba(255, 255, 255, 0.5);"></v-divider>
+        <v-divider class="my-6" style="border-color: rgba(255, 255, 255, 0.5);"></v-divider>
   
         <v-card-text class="text-subtitle-2">
           <strong>Sigue así!</strong>
         </v-card-text>
       </v-card>
+  
+      <!-- Botón de retroceso -->
+      <v-btn
+        icon
+        class="back-button"
+        style="
+          position: absolute;
+          bottom: 16px;
+          right: 16px;
+          background-color: black;
+          color: white;
+          border-radius: 50%;
+        "
+        @click="onBack"
+      >
+        <v-icon>mdi-arrow-left</v-icon>
+      </v-btn>
     </v-container>
   </template>
   
   <script>
   export default {
-    name: "PosicionTab",
+    name: "SuperDesign",
+    methods: {
+      onBack() {
+        // Acción para el botón de retroceso
+        alert("Regresando...");
+      },
+    },
   };
   </script>
   
@@ -33,7 +68,12 @@
   }
   
   .v-card:hover {
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
+  
+  .back-button:hover {
+    background-color: #333333;
+  }
+
   </style>
   
