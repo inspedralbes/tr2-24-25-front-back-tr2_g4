@@ -14,10 +14,10 @@ export default {
         dadoStyle: {
           width: "300px",
           height: "300px",
-          backgroundColor: "red",
+          backgroundColor: "white",
           borderRadius: "10px",
           fontSize: "32px",
-          color: "white",
+          color: "black",
           fontWeight: "bold",
           display: "flex",
           alignItems: "center",
@@ -36,21 +36,28 @@ export default {
     methods: {
       lanzarDado() {
         if (this.girando) return;
-  
+      
         this.girando = true; // Bloquear clics
         this.numeroDado = null; // Reiniciar el dado
-        this.dadoStyle.backgroundColor = "red"; // Fondo rojo al iniciar
+        this.dadoStyle.backgroundColor = "white"; // Fondo rojo al iniciar
         this.rotacion = 0;
-  
+      
         let iteraciones = 0;
         const interval = setInterval(() => {
           this.numeroDado = Math.floor(Math.random() * 6) + 1; // Número aleatorio
           this.rotacion += Math.floor(Math.random() * 180) + 90; // Rotación aleatoria
           this.dadoStyle.transform = `rotate(${this.rotacion}deg)`;
           iteraciones++;
-  
+      
           if (iteraciones === 10) {
             clearInterval(interval); // Detener el dado tras 10 giros
+      
+            // Asegurar que la rotación final sea múltiplo de 90
+            this.rotacion = Math.ceil(this.rotacion / 90) * 90;
+      
+            // Fijar la posición del dado de manera recta
+            this.dadoStyle.transform = `rotate(${this.rotacion}deg)`;
+      
             this.dado = this.numeroDado; // Fijar el número final
             this.dadoStyle.backgroundColor = "green"; // Fondo verde
             this.actualizarPosicion(); // Mover al jugador
@@ -58,7 +65,6 @@ export default {
           }
         }, 400); // Giro cada 500ms para un total de 5 segundos
       },
-  
       actualizarPosicion() {
         const nuevaPosicion = Math.min(this.carril.position + this.dado, 39);
         this.carril.position = nuevaPosicion;
@@ -99,8 +105,8 @@ export default {
       },
   
       getColor(index) {
-        if (index === this.carril.position) return "red lighten-3";
-        return index % 2 === 0 ? "blue lighten-4" : "grey lighten-4";
+        if (index === this.carril.position) return "white";
+        return index % 2 === 0 ? "red" : "black";
       },
     }
   };

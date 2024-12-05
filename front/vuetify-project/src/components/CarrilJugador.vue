@@ -102,10 +102,10 @@ export default {
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
   width: 200px;
   height: 200px;
-  background-color: red;
+  background-color: white;
   border-radius: 10px;
   font-size: 72px;
-  color: white;
+  color: black;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -114,19 +114,19 @@ export default {
 }
 
 .numero {
-  font-size: 72px;
+  font-size: 100px;
   font-weight: bold;
   color: white;
 }
 
 /* Estilo para los emoticonos */
 .bomb-text {
-  font-size: 24px;
+  font-size: 45px;
   color: red;
 }
 
 .golden-text {
-  font-size: 24px;
+  font-size: 45px;
   color: gold;
 }
 </style>
