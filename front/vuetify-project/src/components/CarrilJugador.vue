@@ -56,7 +56,13 @@
           :disabled="girando"
           style="cursor: pointer;"   
         >
-          <span v-if="numeroDado !== null" class="numero">{{ numeroDado }}</span>
+          <span 
+            v-if="numeroDado !== null" 
+            class="numero" 
+            :style="numeroDadoStyle"
+          >
+            {{ numeroDado }}
+          </span>
         </div>
       </v-col>
     </v-row>
@@ -97,8 +103,7 @@ export default {
 }
 
 .dado {
-  margin-top:100px;
- 
+  margin-top: 100px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
   width: 200px;
   height: 200px;
