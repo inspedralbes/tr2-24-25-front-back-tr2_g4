@@ -165,6 +165,7 @@ export default {
   width: 100%;
   border: 1px solid #ddd;
   padding: 8px;
+  margin: 10px;
 }
 .carril-row {
   display: flex;

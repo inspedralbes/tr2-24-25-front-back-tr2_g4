@@ -12,8 +12,8 @@ export default {
         girando: false, // Controla el estado de giro del dado
         rotacion: 0, // Ángulo de rotación del dado
         dadoStyle: {
-          width: "100px",
-          height: "100px",
+          width: "300px",
+          height: "300px",
           backgroundColor: "red",
           borderRadius: "10px",
           fontSize: "32px",
@@ -56,7 +56,7 @@ export default {
             this.actualizarPosicion(); // Mover al jugador
             this.girando = false; // Permitir clics
           }
-        }, 500); // Giro cada 500ms para un total de 5 segundos
+        }, 400); // Giro cada 500ms para un total de 5 segundos
       },
   
       actualizarPosicion() {
