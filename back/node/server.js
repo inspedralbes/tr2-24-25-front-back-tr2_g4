@@ -15,9 +15,9 @@ const port = process.env.PORT;
 
 /* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
 // CREAR UNA BASE DE DATOS
-(async () => {
-  await createDB();
-})();
+// (async () => {
+//   await createDB();
+// })();
 
 // CONEXIÓN A LA BASE DE DATOS
 const dataConnection = {
