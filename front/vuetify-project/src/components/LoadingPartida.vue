@@ -23,10 +23,10 @@
                   <span>{{ index + 1 }}</span>
                 </v-list-item-avatar>
                 <v-list-item-content>
-                  <v-list-item-title class="text-h6">{{ user }}</v-list-item-title>
+                  <v-list-item-title class="text-h6">{{ user.name }}</v-list-item-title>
                 </v-list-item-content>
                 <v-list-item-action>
-                  <v-chip color="red lighten-1" class="white--text font-weight-bold" small @click="removeUser(index)">
+                  <v-chip color="red lighten-1" class="white--text font-weight-bold" small @click="removeUser(user.id)">
                     <v-icon left small>mdi-delete</v-icon> Eliminar
                   </v-chip>
                 </v-list-item-action>
@@ -53,25 +53,47 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { io } from 'socket.io-client';
+import axios from 'axios';
 
-const users = ref([]);
-const gameCode = ref('123456'); // Código del juego
+const gameCode = ref(''); // Código del juego, obtenido dinámicamente
+const users = ref([]); // Usuarios conectados a la partida
+const socket = io('http://localhost:3000'); // URL del servidor de Node.js
 
-const removeUser = (index) => {
-  users.value.splice(index, 1);
+// Función para unirse al juego cuando el componente se monta
+onMounted(async () => {
+  // Obtener el código de la partida desde el backend
+  const response = await axios.get('http://localhost:3000/game-code');
+  gameCode.value = response.data.gameCode;
+
+  // Simulación de usuario con un nombre aleatorio y un ID único
+  const usuario = { id: socket.id, name: `Jugador ${Math.floor(Math.random() * 1000)}` };
+
+  // Enviar al servidor para unirse al juego
+  socket.emit('join_partida', { codigo: gameCode.value, alumno: usuario });
+
+  // Escuchar eventos del servidor para actualizar la lista de usuarios
+  socket.on('update_alumnos', (alumnos) => {
+    users.value = alumnos;
+  });
+
+  // Escuchar por errores
+  socket.on('error', (error) => {
+    alert(error);
+  });
+});
+
+// Función para eliminar un usuario
+const removeUser = (userId) => {
+  socket.emit('remove_alumno', { codigo: gameCode.value, alumnoId: userId });
 };
 
+// Función para comenzar el juego
 const startGame = () => {
   alert('¡La partida ha comenzado!');
+  // Aquí podrías emitir un evento para el inicio del juego, si es necesario
 };
-
-// Simulación de usuarios uniéndose
-setInterval(() => {
-  if (users.value.length < 10) {
-    users.value.push(`Jugador ${users.value.length + 1}`);
-  }
-}, 2000);
 </script>
 
 <style scoped>

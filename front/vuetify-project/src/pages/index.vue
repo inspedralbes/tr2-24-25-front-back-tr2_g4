@@ -1,5 +1,5 @@
 <template>
-  <HelloWorld />
+  <LoadingPartida />
 </template>
 
 <script setup>
