@@ -1,6 +1,6 @@
 <template>
-  <v-container class="text-center">
-    <!-- Título -->
+    <v-container class="text-center"
+    style="height: 100vh; background-color: #99a6e9;">
     <v-row>
       <v-col>
         <h1>Carril de Carreras</h1>
