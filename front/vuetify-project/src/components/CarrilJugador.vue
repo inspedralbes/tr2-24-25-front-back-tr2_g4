@@ -66,6 +66,33 @@
         </div>
       </v-col>
     </v-row>
+
+    <!-- Mostrar la pregunta actual -->
+    <!-- Mostrar la pregunta y las respuestas -->
+    <v-row class="mt-3" align="center" justify="center" v-if="preguntaActiva">
+      <v-col cols="12">
+        <h2>{{ preguntaActual }}</h2>
+        <div class="opciones-respuesta">
+          <v-row class="d-flex justify-center">
+            <!-- Mostramos 2 opciones por fila -->
+            <v-col
+              v-for="(opcion, index) in opcionesRespuesta"
+              :key="index"
+              cols="3"  
+              class="respuesta-col"
+            >
+              <v-btn
+                class="mx-2 respuesta-btn"
+                @click="verificarRespuesta(opcion)"
+              >
+                {{ opcion }}
+              </v-btn>
+            </v-col>
+          </v-row>
+        </div>
+      </v-col>
+    </v-row>
+
   </v-container>
 </template>
 
@@ -133,5 +160,34 @@ export default {
 .golden-text {
   font-size: 45px;
   color: gold;
+}
+
+/* Nuevos estilos para las opciones de respuesta */
+.opciones-respuesta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* Ajustar el tamaño de los botones de respuesta */
+.respuesta-btn {
+  width: 200px;
+  height: 200px;
+  font-size: 20px;
+  background-color: #5e81f4;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.respuesta-btn:hover {
+  background-color: #4b72c2;
+}
+
+/* Ajustar las columnas para que las respuestas se muestren en 2 por fila */
+.respuesta-col {
+  flex: 0 0 48%; /* Aproximadamente dos elementos por fila */
 }
 </style>

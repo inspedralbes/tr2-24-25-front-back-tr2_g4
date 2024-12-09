@@ -15,9 +15,9 @@ const port = process.env.PORT;
 
 /* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
 // CREAR UNA BASE DE DATOS
-(async () => {
-  await createDB();
-})();
+//(async () => {
+//  await createDB();
+//})();
 
 // CONEXIÓN A LA BASE DE DATOS
 const dataConnection = {
@@ -49,6 +49,27 @@ app.use(cors());
 app.get('/', (req, res) => {
   res.send('¡Hola, mundo!');
 });
+
+app.get('/preguntas', async (req, res) => {
+  try {
+    // Crear conexión a la base de datos
+    const connection = await mysql.createConnection(dataConnection);
+
+    // Realizar consulta a la base de datos
+    const [results] = await connection.execute('SELECT * FROM pregunta ORDER BY RAND() LIMIT 50');
+
+    // Cerrar la conexión después de la consulta
+    await connection.end();
+
+    // Enviar las preguntas como respuesta
+    res.json(results);
+  } catch (error) {
+    console.error('Error al obtener las preguntas:', error);
+    res.status(500).send('Error al obtener las preguntas');
+  }
+});
+
+
 
 /* ---------------------------- SERVIDOR CON SOCKET.IO ---------------------------- */
 const server = createServer(app);
