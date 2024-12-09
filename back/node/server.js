@@ -10,6 +10,7 @@ const path = require('path');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const createDB = require(path.join(__dirname, 'configDB.js'));
+const enviarCodigoAlCorreo = require('./emailService');
 const app = express();
 const port = process.env.PORT;
 
@@ -39,16 +40,14 @@ const connectDB = async () => {
   }
 };
 
-connectDB();
+//connectDB();
 
 // Middleware para CORS
 app.use(cors()); 
 
 
 // Ruta básica
-app.get('/', (req, res) => {
-  res.send('¡Hola, mundo!');
-});
+
 
 /* ---------------------------- SERVIDOR CON SOCKET.IO ---------------------------- */
 const server = createServer(app);
@@ -63,6 +62,23 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Cliente desconectado');
   });
+});
+
+/* ---------------------------- RUTAS ---------------------------- */
+app.post('/enviar-codigo', async (req, res) => {
+  const { correo, codigo } = req.body;
+
+  if (!correo || !codigo) {
+      return res.status(400).json({ success: false, message: 'Correo y código son requeridos.' });
+  }
+
+  const resultado = await enviarCodigoAlCorreo(correo, codigo);
+
+  if (resultado.success) {
+      res.status(200).json({ success: true, message: resultado.message });
+  } else {
+      res.status(500).json({ success: false, message: resultado.message });
+  }
 });
 
 // Iniciar el servidor
