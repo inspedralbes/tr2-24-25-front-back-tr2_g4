@@ -9,7 +9,6 @@
       </v-col>
     </v-row>
 
-    <!-- Sección de usuarios conectados -->
     <v-row justify="center" class="mt-10">
       <v-col cols="12" md="6">
         <v-card color="black" outlined>
@@ -38,7 +37,6 @@
       </v-col>
     </v-row>
 
-    <!-- Botón de comenzar partida (como chip) -->
     <v-row justify="center" class="mt-8">
       <v-chip
         color="green darken-2"
@@ -57,42 +55,34 @@ import { ref, onMounted } from 'vue';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 
-const gameCode = ref(''); // Código del juego, obtenido dinámicamente
-const users = ref([]); // Usuarios conectados a la partida
-const socket = io('http://localhost:3000'); // URL del servidor de Node.js
+const gameCode = ref('');
+const users = ref([]);
+const socket = io('http://localhost:3000');
 
-// Función para unirse al juego cuando el componente se monta
 onMounted(async () => {
-  // Obtener el código de la partida desde el backend
   const response = await axios.get('http://localhost:3000/game-code');
   gameCode.value = response.data.gameCode;
 
-  // Simulación de usuario con un nombre aleatorio y un ID único
-  const usuario = { id: socket.id, name: `Jugador ${Math.floor(Math.random() * 1000)}` };
+  const alumnosResponse = await axios.get('http://localhost:3000/alumnos', { params: { codigo: gameCode.value } });
+  users.value = alumnosResponse.data;
 
-  // Enviar al servidor para unirse al juego
-  socket.emit('join_partida', { codigo: gameCode.value, alumno: usuario });
+  socket.emit('join_room', { codigo: gameCode.value });
 
-  // Escuchar eventos del servidor para actualizar la lista de usuarios
   socket.on('update_alumnos', (alumnos) => {
     users.value = alumnos;
   });
 
-  // Escuchar por errores
   socket.on('error', (error) => {
     alert(error);
   });
 });
 
-// Función para eliminar un usuario
 const removeUser = (userId) => {
   socket.emit('remove_alumno', { codigo: gameCode.value, alumnoId: userId });
 };
 
-// Función para comenzar el juego
 const startGame = () => {
   alert('¡La partida ha comenzado!');
-  // Aquí podrías emitir un evento para el inicio del juego, si es necesario
 };
 </script>
 
