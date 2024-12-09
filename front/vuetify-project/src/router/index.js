@@ -23,6 +23,8 @@ const routes = [
     name: 'UserPlayWaiting',
     component: UserPlayWaiting, // La pantalla de espera
     props: true, // Habilita el paso de props desde la URL
+
+    
   },
 ];
 
