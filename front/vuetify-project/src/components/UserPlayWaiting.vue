@@ -22,7 +22,7 @@
             text-color="white"
             pill
           >
-            USUARIO {{ index + 1 }}
+            {{ user.name }}
           </v-chip>
         </div>
         
@@ -42,32 +42,50 @@
 </template>
 
 <script>
+import { io } from 'socket.io-client';
+
 export default {
-  name: "ParticipantsScreen",
+  name: "GameWaitingRoom",
   data() {
     return {
-      participants: Array(8).fill("Usuario"), // Simula 8 participantes; reemplazar con lógica dinámica
-      dots: ".", // Inicia con un solo punto
-      intervalId: null, // Para almacenar el ID del intervalo
+      codigo: '', // Código de la partida
+      participants: [], // Lista de participantes
+      dots: '', // Animación de puntos
     };
   },
-  methods: {
-    updateDots() {
-      // Actualiza los puntos de forma cíclica
-      if (this.dots.length < 3) {
-        this.dots += ".";
-      } else {
-        this.dots = "."; // Reinicia cuando llega a 3 puntos
+  created() {
+    this.codigo = this.$route.params.codigo; // Obtener el código de la URL
+
+    // Conectar con el servidor de Socket.io
+    this.socket = io('http://localhost:3001');
+
+    // Unirse a la sala de la partida
+    this.socket.emit('join-room', { codigo: this.codigo });
+
+    // Escuchar actualizaciones de los participantes
+    this.socket.on('update-alumnos', (alumnos) => {
+      this.participants = alumnos; // Actualizar la lista de participantes
+    });
+
+    // Manejar nuevos participantes
+    this.socket.on('new-participant', (data) => {
+      if (data.codigo === this.codigo) {
+        this.participants.push({ name: data.usuario });
       }
-    },
+    });
+
+    // Animación de puntos (esto es solo una opción para el UI)
+    let count = 0;
+    setInterval(() => {
+      count = (count + 1) % 4;
+      this.dots = '.'.repeat(count);
+    }, 500);
   },
-  mounted() {
-    // Inicia el ciclo de puntos cuando el componente se monta
-    this.intervalId = setInterval(this.updateDots, 500); // Actualiza cada 500ms
-  },
-  beforeDestroy() {
-    // Limpia el intervalo cuando el componente se destruye
-    clearInterval(this.intervalId);
+  destroyed() {
+    // Desconectar cuando el componente se destruya
+    if (this.socket) {
+      this.socket.disconnect();
+    }
   },
 };
 </script>

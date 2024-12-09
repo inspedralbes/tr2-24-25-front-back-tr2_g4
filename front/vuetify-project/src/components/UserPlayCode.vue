@@ -49,31 +49,48 @@ export default {
     };
   },
   methods: {
-  async jugar() {
-    if (!this.codigo.trim()) {
-      this.error = "Por favor, ingresa un código válido.";
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:3001/game-code?codigo=${this.codigo}`);
-      const data = await response.json();
-
-      if (data.message === "Partida encontrada.") {
-        // Redirigir a la sala de espera con el código como parte de la URL
-        this.error = '';
-        window.location.href = `/UserPlayWaiting/${this.codigo}`;
-      } else {
-        // Si el código no existe, mostrar error
-        this.error = "El código ingresado no corresponde a ninguna partida existente.";
+    async jugar() {
+      if (!this.codigo.trim()) {
+        this.error = "Por favor, ingresa un código válido.";
+        return;
       }
-    } catch (err) {
-      console.error("Error al verificar el código:", err);
-      this.error = "Hubo un problema al conectarse al servidor. Intenta de nuevo más tarde.";
-    }
-  },
-},
 
+      try {
+        // Asegurarse de que el código es válido
+        const response = await fetch(`http://localhost:3001/game-code?codigo=${this.codigo}`);
+        const data = await response.json();
+
+        if (data.message === "Partida encontrada.") {
+          // Si la partida es válida, se pasa el código y el usuario
+          const usuario = 'UserDEF3'; // Esto debe ser asignado dinámicamente según el usuario actual
+          
+          // Enviar el código y el nombre del usuario al backend para agregarlo a la partida
+          const updateResponse = await fetch(`http://localhost:3001/update-partida`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ codigo: this.codigo, usuario }),
+          });
+
+          const updateData = await updateResponse.json();
+          if (updateData.success) {
+            // Redirigir a la sala de espera con el código como parte de la URL
+            this.error = '';
+            window.location.href = `/UserPlayWaiting/${this.codigo}`;
+          } else {
+            this.error = updateData.message; // Mostrar el error si ocurre
+          }
+        } else {
+          // Si el código no existe, mostrar error
+          this.error = "El código ingresado no corresponde a ninguna partida existente.";
+        }
+      } catch (err) {
+        console.error("Error al verificar el código:", err);
+        this.error = "Hubo un problema al conectarse al servidor. Intenta de nuevo más tarde.";
+      }
+    },
+  },
 };
 </script>
 
@@ -90,8 +107,8 @@ export default {
   align-items: center;
   flex-direction: column;
   text-align: center;
-  height: 10%; /* Asegura que el contenedor ocupe toda la altura disponible */
-  width: 100%; /* Asegura que el contenedor ocupe todo el ancho disponible */
+  height: 10%;
+  width: 100%;
 }
 
 .code-center {
