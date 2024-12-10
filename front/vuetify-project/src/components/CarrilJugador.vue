@@ -74,17 +74,15 @@
       </v-col>
     </v-row>
 
-    <!-- Opciones de respuesta al fondo -->
+    <p v-if="mensajeRespuesta" class="mensaje-respuesta">{{ mensajeRespuesta }}</p>
+
     <div v-if="preguntaActiva" class="opciones-container">
-  <div
-    v-for="(opcion, index) in opcionesRespuesta"
-    :key="index"
-    class="opcion"
-    @click="verificarRespuesta(opcion)"
-  >
-    {{ opcion }}
-  </div>
-</div>
+      <div v-for="(opcion, index) in opcionesRespuesta" :key="index" class="opcion" 
+        @click="verificarRespuesta(opcion)" :style="getOpcionColor(index)">
+        {{ opcion }}
+      </div>
+    </div>
+
 
   </v-container>
 </template>
@@ -98,7 +96,7 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos para el carril con scroll horizontal */
+/* Estilo del carril con scroll horizontal */
 .carril-container {
   overflow-x: scroll;
   white-space: nowrap;
@@ -113,6 +111,7 @@ export default {
   display: none;
 }
 
+/* Estilo para los elementos dentro del carril */
 .v-col {
   height: 60px;
 }
@@ -121,6 +120,7 @@ export default {
   width: 100%;
 }
 
+/* Estilo para el dado (botón interactivo) */
 .dado {
   margin-top: 100px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
@@ -143,7 +143,7 @@ export default {
   color: white;
 }
 
-/* Estilo para los emoticonos */
+/* Estilos para los emoticonos de bomba y multiplicador */
 .bomb-text {
   font-size: 45px;
   color: red;
@@ -154,54 +154,39 @@ export default {
   color: gold;
 }
 
-.respuesta-btn {
-  width: 100%;
-  max-width: 180px;
-  height: 100px;
-  margin-bottom: 10px;
+/* Estilo para el contenedor de las opciones de respuesta */
+.opciones-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+  width: 80%;
+  max-width: 500px;
+}
+
+/* Estilo para cada opción de respuesta */
+.opcion {
+  color: white;
   font-size: 18px;
   font-weight: bold;
-  color: white;
-  background-color: #5e81f4;
   border-radius: 12px;
   box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  padding: 20px;
+  cursor: pointer;
   transition: background-color 0.3s ease;
-}
-.opciones-container {
-  position: absolute; /* Fijo en la pantalla */
-  bottom: 20px; /* Cerca del borde inferior */
-  left: 50%; /* Centrado horizontalmente */
-  transform: translateX(-50%); /* Ajuste para centrar perfectamente */
-  display: grid; /* Activamos grid */
-  grid-template-columns: repeat(2, 1fr); /* 2 columnas */
-  grid-template-rows: repeat(2, 1fr); /* 2 filas */
-  gap: 10px; /* Espaciado uniforme entre las opciones */
-  width: 80%; /* Ancho máximo relativo a la pantalla */
-  max-width: 500px; /* No crecerá más de 500px */
-}
-.opcion {
-  background-color: #5e81f4; /* Azul llamativo */
-  color: white; /* Texto blanco */
-  font-size: 18px; /* Texto legible */
-  font-weight: bold; /* Letras en negrita */
-  border-radius: 12px; /* Bordes redondeados */
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2); /* Sombra sutil */
-  text-align: center; /* Centrar texto */
-  padding: 20px; /* Espaciado interno */
-  cursor: pointer; /* Aparece como botón */
-  transition: background-color 0.3s ease; /* Animación suave */
+  padding: 20%;
 }
 
-.opcion:hover {
-  background-color: #4b72c2; /* Cambia a un tono más oscuro */
-}
-
-.respuesta-btn:hover {
-  background-color: #4b72c2;
-}
-
-/* Ajustar las columnas para que las respuestas se muestren en 2 por fila */
-.respuesta-col {
-  flex: 0 0 48%;
+.mensaje-respuesta {
+  font-size: 24px;  
+  font-weight: bold;
+  color: white; 
+  margin-top: 20px; 
+  text-align: center; 
 }
 </style>

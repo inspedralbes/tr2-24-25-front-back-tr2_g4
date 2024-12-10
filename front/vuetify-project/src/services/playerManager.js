@@ -7,11 +7,12 @@ export default {
         avatar: "https://cdn-icons-png.freepik.com/512/32/32689.png",
         position: 0, // Empezamos en la casilla 0
       },
-      dado: 0,
+      mensajeRespuesta: "", // Mensaje que muestra la respuesta al usuario
+      dado: 0, // Número del dado que se obtiene tras el giro
       numeroDado: null, // Número mostrado en el dado durante el giro
-      girando: false, // Controla el estado de giro del dado
-      rotacion: 0, // Ángulo de rotación del dado
-      dadoStyle: {
+      girando: false, // Controla el estado de giro del dado (para evitar clics múltiples)
+      rotacion: 0, // Ángulo de rotación del dado para simular el giro
+      dadoStyle: { // Estilos para el dado
         width: "300px",
         height: "300px",
         backgroundColor: "white",
@@ -24,85 +25,105 @@ export default {
         justifyContent: "center",
         transition: "transform 0.5s ease, background-color 0.3s ease",
       },
-      numeroDadoStyle: {
+      numeroDadoStyle: { // Estilos para el número del dado
         transition: "transform 0.5s ease",
       },
-      preguntaActual: null, // Pregunta actual
-      opcionesRespuesta: [], // Opciones de respuesta
-      respuestaCorrecta: null, // Respuesta correcta
+      preguntaActual: null, // Pregunta que se obtiene tras el giro del dado
+      opcionesRespuesta: [], // Opciones de respuesta generadas aleatoriamente
+      respuestaCorrecta: null, // Respuesta correcta a la pregunta
       preguntaActiva: false, // Controla si la pregunta está activa
-      bombas: [], // Posiciones de las bombas
-      multipliers: [], // Posiciones de los multiplicadores
+      bombas: [], // Posiciones de las bombas en el tablero
+      multipliers: [], // Posiciones de los multiplicadores en el tablero
     };
   },
   created() {
-    // Generar posiciones para las bombas y multiplicadores
+    // Al crear el componente, generamos las posiciones de las bombas y multiplicadores
     this.generateUniquePositions();
   },
   methods: {
+    // Método para devolver un color aleatorio para las opciones de respuesta
+    getOpcionColor(index) {
+      const colors = ['#5e81f4', '#f4a56e', '#68f497', '#f4796e']; // Colores predefinidos
+      return {
+        backgroundColor: colors[index % colors.length], // Cicla entre los colores
+      };
+    },
+    // Método que simula el giro del dado
     async lanzarDado() {
-      if (this.girando || this.preguntaActiva) return; // Evitar lanzar el dado si está girando o hay una pregunta activa
+      // Si el dado está girando o hay una pregunta activa, no se puede girar de nuevo
+      if (this.girando || this.preguntaActiva) return; 
     
-      this.girando = true; // Bloquear clics
-      this.numeroDado = null; // Reiniciar el dado
-      this.dadoStyle.backgroundColor = "white"; // Fondo blanco al iniciar
-      this.rotacion = 0;
+      this.girando = true; // Bloquear clics mientras se gira el dado
+      this.numeroDado = null; // Reiniciar el número del dado
+      this.dadoStyle.backgroundColor = "white"; // Fondo blanco al iniciar el giro
+      this.rotacion = 0; // Reiniciar la rotación
+      this.mensajeRespuesta = ""; // Borrar el mensaje de respuesta
     
-      let iteraciones = 0;
+      let iteraciones = 0; 
+      // Intervalo para generar el giro aleatorio del dado
       const interval = setInterval(() => {
-        this.numeroDado = Math.floor(Math.random() * 6) + 1; // Número aleatorio
-        this.rotacion += Math.floor(Math.random() * 180) + 90; // Rotación aleatoria
-        this.dadoStyle.transform = `rotate(${this.rotacion}deg)`; // Rotación del dado
+        this.numeroDado = Math.floor(Math.random() * 6) + 1; // Número aleatorio entre 1 y 6
+        this.rotacion += Math.floor(Math.random() * 180) + 90; // Rotación aleatoria del dado
+        this.dadoStyle.transform = `rotate(${this.rotacion}deg)`; // Aplicamos la rotación al dado
         iteraciones++;
     
         if (iteraciones === 10) {
-          clearInterval(interval); // Detener el dado tras 10 giros
+          clearInterval(interval); // Detener el giro tras 10 iteraciones
     
-          // Asegurar que la rotación final sea múltiplo de 90
+          // Aseguramos que la rotación final sea un múltiplo de 90 grados
           this.rotacion = Math.ceil(this.rotacion / 90) * 90;
     
-          // Fijar la posición del dado de manera recta
+          // Ajustar la rotación del dado y el número para que siempre se vea recto
           this.dadoStyle.transform = `rotate(${this.rotacion}deg)`;
+          this.numeroDadoStyle.transform = `rotate(${-this.rotacion}deg)`; // Rotación contraria para que el número quede recto
     
-          // Ajustar la rotación del número para que siempre se vea recto
-          this.numeroDadoStyle.transform = `rotate(${-this.rotacion}deg)`; // Rotación contraria
-    
-          this.dado = this.numeroDado; // Fijar el número final
-          this.dadoStyle.backgroundColor = "green"; // Fondo verde
+          this.dado = this.numeroDado; // Fijar el número final del dado
+          this.dadoStyle.backgroundColor = "green"; // Fondo verde al terminar el giro
           console.log('Obteniendo pregunta...');
-          this.obtenerPregunta() // Llama al método
+          this.obtenerPregunta() // Llamada al método que obtiene la pregunta
             .then(() => console.log('Pregunta obtenida:', this.preguntaActual))
             .catch((error) => console.error('Error al obtener la pregunta:', error));
-          this.girando = false; // Permitir clics (solo para el dado, pregunta seguirá bloqueando)
+          this.girando = false; // Permitir clics de nuevo
         }
-      }, 400); // Giro cada 400ms para un total de 5 segundos
+      }, 400); // 400ms por giro, por lo que el dado gira durante 4 segundos
     },
+    
+    // Método para obtener una pregunta desde la API
     async obtenerPregunta() {
       try {
-        const response = await fetch('http://localhost:3000/preguntas'); // Cambia esta URL si es necesario
+        const response = await fetch('http://localhost:3000/preguntas'); // URL de la API para obtener las preguntas
         const preguntas = await response.json();
     
         if (preguntas.length > 0) {
-          const pregunta = preguntas[0]; // Tomar la primera pregunta
+          const pregunta = preguntas[0]; // Tomamos la primera pregunta
           this.preguntaActual = pregunta.text_pregunta;
           this.respuestaCorrecta = pregunta.respuesta_correcta;
     
-          // Generar respuestas aleatorias (si la respuesta correcta es numérica)
+          // Generación de respuestas aleatorias (si la respuesta correcta es un número)
           const respuestasSimilares = new Set();
     
-          // Asegurarnos de que no se repitan las respuestas
           while (respuestasSimilares.size < 3) {
-            const respuestaAleatoria = Math.floor(Math.random() * 50) + 1; // Generar entre 1 y 20
-            if (respuestaAleatoria != this.respuestaCorrecta) {
-              respuestasSimilares.add(respuestaAleatoria);
+            let respuestaAleatoria;
+        
+            // Generamos respuestas aleatorias cercanas a la respuesta correcta
+            if (this.respuestaCorrecta <= 50) {
+                respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 41) + (this.respuestaCorrecta - 20));
+            } else if (this.respuestaCorrecta > 50 && this.respuestaCorrecta <= 150) {
+                respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 61) + (this.respuestaCorrecta - 30));
+            } else {
+                respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 201) + (this.respuestaCorrecta - 100));
+            }
+        
+            // Nos aseguramos de que las respuestas no se repitan ni sean la correcta
+            if (respuestaAleatoria !== this.respuestaCorrecta && !respuestasSimilares.has(respuestaAleatoria)) {
+                respuestasSimilares.add(respuestaAleatoria);
             }
           }
-    
-          // Combinar respuestas y desordenarlas
+          // Mezclamos las respuestas y las mostramos
           const opciones = [this.respuestaCorrecta, ...Array.from(respuestasSimilares)].sort(() => Math.random() - 0.5);
           this.opcionesRespuesta = opciones;
     
-          this.preguntaActiva = true; // Activar la pregunta
+          this.preguntaActiva = true; // Activamos la pregunta
         } else {
           throw new Error('No hay preguntas disponibles');
         }
@@ -112,71 +133,86 @@ export default {
         this.preguntaActiva = false;
       }
     },
+
+    // Método para verificar si la respuesta del jugador es correcta
     verificarRespuesta(respuesta) {
       if (respuesta === this.respuestaCorrecta) {
-        // Respuesta correcta: actualizar posición
+        // Si la respuesta es correcta, avanzamos el carril
         let nuevaPosicion = this.carril.position + this.dado;
     
-        // Verifica si la casilla es un multiplicador (x2)
+        // Verificamos si el carril está sobre un multiplicador (x2)
         if (this.isMultiplier(this.carril.position)) {
-          nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39); // Duplicar el avance
-          console.log("¡Multiplicador! Avanzando el doble.");
+          nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39); // Avanzamos el doble
+          this.mensajeRespuesta = 'Multiplicador, avanzando el doble';
+        } else {
+          this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.'; // Respuesta correcta
         }
     
-        // Si es bomba, no se aplica la retrocesión en respuesta correcta
+        // Si el carril está sobre una bomba, no retrocedemos
         if (this.isBomb(this.carril.position)) {
           console.log("¡Bomba! No retrocede por respuesta correcta.");
         }
     
-        this.carril.position = nuevaPosicion;
-        this.scrollCarril();
+        this.carril.position = nuevaPosicion; // Actualizamos la posición del carril
+        this.scrollCarril(); // Hacemos scroll para mostrar la nueva posición
       } else {
-        // Respuesta incorrecta: retroceder 2 posiciones si es bomba
+        // Si la respuesta es incorrecta, retrocedemos 2 posiciones si estamos sobre una bomba
         if (this.isBomb(this.carril.position)) {
-          this.carril.position = Math.max(this.carril.position - 2, 0); // Retroceder 2 posiciones
-          console.log("¡Bomba! Retrocediendo 2 posiciones por respuesta incorrecta.");
+          this.carril.position = Math.max(this.carril.position - 2, 0); // Retrocedemos 2 posiciones
+          this.mensajeRespuesta = "¡Bomba! Retrocediendo 2 posiciones por respuesta incorrecta.";
+        } else {
+          this.mensajeRespuesta = 'Respuesta incorrecta'; // Respuesta incorrecta
         }
-    
-        alert('Respuesta incorrecta. Intenta nuevamente.');
       }
     
-      // Desactivar la pregunta después de responder
+      // Desactivamos la pregunta después de responder
       this.preguntaActiva = false;
       this.preguntaActual = null;
       this.opcionesRespuesta = [];
     },
-    
+
+    // Método para hacer scroll en el carril según la posición
     scrollCarril() {
       const carrilContainer = this.$refs.carrilContainer;
       const desplazamiento = this.carril.position * 60; // 60px por casilla
       if (carrilContainer) {
-        carrilContainer.scrollLeft = desplazamiento;
+        carrilContainer.scrollLeft = desplazamiento; // Desplazamos el carril
       }
     },
+
+    // Método para generar posiciones únicas para las bombas y multiplicadores
     generateUniquePositions() {
-      let availablePositions = Array.from({ length: 39 }, (_, i) => i + 1);
-      this.bombas = this.getRandomPositions(availablePositions, 2);
-      availablePositions = availablePositions.filter((pos) => !this.bombas.includes(pos));
-      this.multipliers = this.getRandomPositions(availablePositions, 2);
+      let availablePositions = Array.from({ length: 39 }, (_, i) => i + 1); // Casillas disponibles
+      this.bombas = this.getRandomPositions(availablePositions, 2); // Seleccionamos 2 bombas
+      availablePositions = availablePositions.filter((pos) => !this.bombas.includes(pos)); // Excluimos las bombas de las opciones
+      this.multipliers = this.getRandomPositions(availablePositions, 2); // Seleccionamos 2 multiplicadores
     },
+
+    // Método para obtener posiciones aleatorias de un conjunto de posiciones disponibles
     getRandomPositions(availablePositions, number) {
       const positions = [];
       for (let i = 0; i < number; i++) {
         const randomIndex = Math.floor(Math.random() * availablePositions.length);
-        positions.push(availablePositions[randomIndex]);
-        availablePositions.splice(randomIndex, 1);
+        positions.push(availablePositions[randomIndex]); // Añadimos una posición aleatoria
+        availablePositions.splice(randomIndex, 1); // Eliminamos la posición seleccionada
       }
       return positions;
     },
+
+    // Método para verificar si una posición corresponde a una bomba
     isBomb(index) {
-      return this.bombas.includes(index);
+      return this.bombas.includes(index); // Retorna true si es una bomba
     },
+
+    // Método para verificar si una posición corresponde a un multiplicador
     isMultiplier(index) {
-      return this.multipliers.includes(index);
+      return this.multipliers.includes(index); // Retorna true si es un multiplicador
     },
+
+    // Método para obtener el color de la casilla en el carril
     getColor(index) {
-      if (index === this.carril.position) return "white";
-      return index % 2 === 0 ? "red" : "black";
+      if (index === this.carril.position) return "white"; // Color de la casilla actual
+      return index % 2 === 0 ? "red" : "black"; // Color alternado para las demás casillas
     },
   },
 };

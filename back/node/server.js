@@ -56,7 +56,7 @@ app.get('/preguntas', async (req, res) => {
     const connection = await mysql.createConnection(dataConnection);
 
     // Realizar consulta a la base de datos
-    const [results] = await connection.execute('SELECT * FROM pregunta ORDER BY RAND() LIMIT 50');
+    const [results] = await connection.execute('SELECT * FROM pregunta ORDER BY RAND() LIMIT 1');
 
     // Cerrar la conexión después de la consulta
     await connection.end();
