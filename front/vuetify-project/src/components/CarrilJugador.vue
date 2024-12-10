@@ -24,7 +24,7 @@
           >
             <!-- Muestra el número de la casilla o la imagen si es la casilla activa -->
             <template v-if="index === carril.position">
-              <v-avatar size="60" class="d-flex justify-center align-center"> <!-- Cambiamos el tamaño del avatar para que sea consistente -->
+              <v-avatar size="60" class="d-flex justify-center align-center">
                 <img :src="carril.avatar" alt="Caballo" />
               </v-avatar>
             </template>
@@ -68,40 +68,32 @@
     </v-row>
 
     <!-- Mostrar la pregunta actual -->
-    <!-- Mostrar la pregunta y las respuestas -->
     <v-row class="mt-3" align="center" justify="center" v-if="preguntaActiva">
       <v-col cols="12">
         <h2>{{ preguntaActual }}</h2>
-        <div class="opciones-respuesta">
-          <v-row class="d-flex justify-center">
-            <!-- Mostramos 2 opciones por fila -->
-            <v-col
-              v-for="(opcion, index) in opcionesRespuesta"
-              :key="index"
-              cols="3"  
-              class="respuesta-col"
-            >
-              <v-btn
-                class="mx-2 respuesta-btn"
-                @click="verificarRespuesta(opcion)"
-              >
-                {{ opcion }}
-              </v-btn>
-            </v-col>
-          </v-row>
-        </div>
       </v-col>
     </v-row>
+
+    <!-- Opciones de respuesta al fondo -->
+    <div v-if="preguntaActiva" class="opciones-container">
+  <div
+    v-for="(opcion, index) in opcionesRespuesta"
+    :key="index"
+    class="opcion"
+    @click="verificarRespuesta(opcion)"
+  >
+    {{ opcion }}
+  </div>
+</div>
 
   </v-container>
 </template>
 
 <script>
-// Importa el archivo CommunityManager.js
 import playerManager from '../services/playerManager.js';
 
 export default {
-  mixins: [playerManager],  // Usa CommunityManager como un mixin
+  mixins: [playerManager],
 };
 </script>
 
@@ -122,7 +114,7 @@ export default {
 }
 
 .v-col {
-  height: 60px; /* Aseguramos que la casilla tenga una altura constante */
+  height: 60px;
 }
 
 .v-avatar img {
@@ -162,24 +154,46 @@ export default {
   color: gold;
 }
 
-/* Nuevos estilos para las opciones de respuesta */
-.opciones-respuesta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+.respuesta-btn {
+  width: 100%;
+  max-width: 180px;
+  height: 100px;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  background-color: #5e81f4;
+  border-radius: 12px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+.opciones-container {
+  position: absolute; /* Fijo en la pantalla */
+  bottom: 20px; /* Cerca del borde inferior */
+  left: 50%; /* Centrado horizontalmente */
+  transform: translateX(-50%); /* Ajuste para centrar perfectamente */
+  display: grid; /* Activamos grid */
+  grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+  grid-template-rows: repeat(2, 1fr); /* 2 filas */
+  gap: 10px; /* Espaciado uniforme entre las opciones */
+  width: 80%; /* Ancho máximo relativo a la pantalla */
+  max-width: 500px; /* No crecerá más de 500px */
+}
+.opcion {
+  background-color: #5e81f4; /* Azul llamativo */
+  color: white; /* Texto blanco */
+  font-size: 18px; /* Texto legible */
+  font-weight: bold; /* Letras en negrita */
+  border-radius: 12px; /* Bordes redondeados */
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+  text-align: center; /* Centrar texto */
+  padding: 20px; /* Espaciado interno */
+  cursor: pointer; /* Aparece como botón */
+  transition: background-color 0.3s ease; /* Animación suave */
 }
 
-/* Ajustar el tamaño de los botones de respuesta */
-.respuesta-btn {
-  width: 200px;
-  height: 200px;
-  font-size: 20px;
-  background-color: #5e81f4;
-  color: white;
-  border-radius: 8px;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease;
+.opcion:hover {
+  background-color: #4b72c2; /* Cambia a un tono más oscuro */
 }
 
 .respuesta-btn:hover {
@@ -188,6 +202,6 @@ export default {
 
 /* Ajustar las columnas para que las respuestas se muestren en 2 por fila */
 .respuesta-col {
-  flex: 0 0 48%; /* Aproximadamente dos elementos por fila */
+  flex: 0 0 48%;
 }
 </style>
