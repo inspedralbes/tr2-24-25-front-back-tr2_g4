@@ -9,39 +9,41 @@
     <v-container 
       class="d-flex justify-center align-center" 
       style="height: 100vh; background-color: #99a6e9;">
-      <div class="text-center">
-        <!-- Campo de entrada para el código -->
-        <v-text-field 
-          class="code-center"
-          v-model="codigo"
-          outlined
-          solo
-          color="white"
-          label="INGRESA EL CÓDIGO"
-          style="max-width: 600px; width: 100%;"
-        ></v-text-field>
-        
-        <!-- Botón de jugar -->
-        <v-btn
-          @click="jugar"
-          color="primary"
-          class="gradient-btn"
-          elevation="5"
-          style="background: linear-gradient(to bottom, #4fc3f7, #0288d1); color: white;"
-        >
-          ¡JUGAR! 
-        </v-btn>
+    <div class="text-center">
+  <!-- Campo de entrada para el código -->
+  <v-text-field 
+    class="code-center"
+    v-model="codigo"
+    outlined
+    solo
+    color="white"
+    label="INGRESA EL CÓDIGO"
+    style="max-width: 600px; width: 100%;"
+  ></v-text-field>
 
-        <!-- Mensajes de error -->
-        <v-alert 
-          v-if="error" 
-          type="error" 
-          dismissible 
-          style="margin-top: 20px; max-width: 600px; width: 100%;"
-        >
-          {{ error }}
-        </v-alert>
-      </div>
+  <!-- Botón de jugar -->
+  <v-btn
+    @click="jugar"
+    color="primary"
+    class="gradient-btn"
+    elevation="5"
+    style="background: linear-gradient(to bottom, #4fc3f7, #0288d1); color: white;"
+  >
+    ¡JUGAR! 
+  </v-btn>
+
+  <!-- Mensajes de error -->
+ <v-alert 
+  v-if="error" 
+  type="error" 
+  style="margin-top: 20px; max-width: 600px; width: 100%; word-wrap: break-word; padding: 35px; display: flex; justify-content: center; align-items: center; position: relative;"
+>
+  <!-- Texto de error centrado -->
+  <span style="flex-grow: 1; text-align: center; display: inline-block;">{{ error }}</span>
+</v-alert>
+
+
+</div>
     </v-container>
 
     <!-- Botón flotante para abrir las reglas -->
@@ -101,7 +103,7 @@
           <iframe 
             width="100%" 
             height="400" 
-            src="https://www.youtube.com/embed/uLqKwB6QO4k" 
+            src="https://www.youtube.com/embed/ZldSOzmye4Q" 
             frameborder="0" 
             allowfullscreen
           ></iframe>
@@ -137,7 +139,7 @@ export default {
         const data = await response.json();
 
         if (data.message === "Partida encontrada.") {
-          const usuario = 'UserDEF5'; // Esto debe ser asignado dinámicamente según el usuario actual
+          const usuario = 'UserDEF6'; // Esto debe ser asignado dinámicamente según el usuario actual
           const updateResponse = await fetch(`http://localhost:3000/update-partida`, {
             method: 'POST',
             headers: {
@@ -196,18 +198,10 @@ export default {
   margin-bottom: 20px;
 }
 
-.text-rules-color {
-  background-color: #146591;
-}
-
-.text-rules, .text-video {
-  background-color: #0288d1;
-}
-
 /* Botón flotante: Reglas */
 .rules-button {
   position: fixed;
-  bottom: 100px; /* Ajustado para el nuevo botón */
+  bottom: 80px; /* Ajustado para el nuevo botón */
   right: 100px;
   background-color: #0288d1;
   color: white;
