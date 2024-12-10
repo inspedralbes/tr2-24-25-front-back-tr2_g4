@@ -6,13 +6,14 @@ CREATE TABLE Pregunta (
     type ENUM('suma', 'resta', 'division', 'multiplicacion') NOT NULL
 );
 
-CREATE TABLE Alumnos (
+CREATE TABLE Usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     cognom VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR (100) NOT NULL,
     fecha DATE NOT NULL,
-    idioma VARCHAR(50) NOT NULL
+    profesor boolean
 );
 
 CREATE TABLE Aulas (
@@ -25,18 +26,11 @@ CREATE TABLE Partida (
     alumnos JSON NOT NULL
 );
 
-CREATE TABLE Profesor (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    cognom VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    fecha DATE NOT NULL
-);
 
 CREATE TABLE Estadisticas (
-    alumno_id INT PRIMARY KEY,
+    usuario_id INT PRIMARY KEY,
     valores JSON,
-    FOREIGN KEY (alumno_id) REFERENCES Alumnos(id)
+    FOREIGN KEY (usuario_id) REFERENCES Usuarios(id)
 );
 
 /*Valores

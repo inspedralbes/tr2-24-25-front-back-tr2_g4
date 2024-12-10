@@ -1,14 +1,20 @@
 <template>
     <v-container class="fill-height d-flex justify-center align-center">
-      <v-card max-width="500" class="pa-4">
+      <v-card min-width="400" class="pa-4">
         <v-card-title class="text-h5 text-center">Registro</v-card-title>
         <v-card-text>
-          <!-- Etapa 1: Ingresar Nombre y Correo -->
+          <!-- Etapa 1: Ingresar Nombre, Apellidos y Correo -->
           <div v-if="step === 1">
             <v-form ref="form" v-model="valid">
               <v-text-field
-                v-model="name"
-                label="Nombre Completo"
+                v-model="firstName"
+                label="Nombre"
+                required
+                :rules="[rules.required]"
+              ></v-text-field>
+              <v-text-field
+                v-model="lastName"
+                label="Apellidos"
                 required
                 :rules="[rules.required]"
               ></v-text-field>
@@ -67,14 +73,18 @@
   </template>
   
   <script>
+  import emailjs from "emailjs-com";
+  
   export default {
     name: "RegisterForm",
     data() {
       return {
         step: 1, // Controla el paso del formulario
-        name: "",
+        firstName: "", // Campo para el nombre
+        lastName: "", // Campo para los apellidos
         email: "",
         verificationCode: "",
+        verificationCodeNew: "",
         password: "",
         confirmPassword: "",
         valid: false,
@@ -96,25 +106,81 @@
       sendCode() {
         if (this.$refs.form.validate()) {
           console.log("Enviando código al correo:", this.email);
-          // Aquí va la lógica para enviar el código al correo.
-          // Ejemplo: Llamada a una API para enviar el código.
-          this.step = 2; // Avanza al paso 2
+  
+          // Generar un código de verificación aleatorio
+          this.verificationCodeNew = Math.floor(100000 + Math.random() * 900000);
+  
+          // Parámetros que se van a enviar en el template de EmailJS
+          const templateParams = {
+            to_name: `${this.firstName} ${this.lastName}`,
+            to_email: this.email,
+            code: this.verificationCodeNew,
+          };
+  
+          // Llamada a EmailJS para enviar el correo
+          emailjs
+            .send(
+              "service_kuduxwp",
+              "template_3i3jrdg",
+              templateParams,
+              "J-gLAvGvroJYft-OY"
+            )
+            .then((response) => {
+              console.log("Correo enviado con éxito:", response);
+              this.step = 2; // Avanzar al paso 2
+            })
+            .catch((error) => {
+              console.error("Error al enviar el correo:", error);
+            });
         }
       },
+  
       validateCode() {
         if (this.$refs.codeForm.validate()) {
-          console.log("Validando código:", this.verificationCode);
-          // Aquí va la lógica para validar el código con el backend.
-          // Ejemplo: Verificar que el código es correcto.
-          this.step = 3; // Avanza al paso 3
+          if (this.verificationCode == this.verificationCodeNew) {
+            this.step = 3; // Avanza al paso 3
+          } else {
+            alert("Código incorrecto");
+          }
         }
       },
-      createAccount() {
+  
+      async createAccount() {
         if (this.$refs.passwordForm.validate()) {
           console.log("Creando cuenta para:", this.email);
-          // Aquí va la lógica para crear la cuenta en el backend.
-          // Ejemplo: Guardar los datos en la base de datos.
-          this.$router.push("/login"); // Redirige al componente de login
+  
+          // Crear el objeto de datos para enviar al backend
+          const userData = {
+            nom: this.firstName,
+            cognom: this.lastName,
+            email: this.email,
+            password: this.password,
+          };
+  
+          try {
+            // Hacer el POST al backend
+            const response = await fetch("http://localhost:3000/addUser", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(userData),
+            });
+  
+            const result = await response.json();
+  
+            if (response.ok) {
+              // Usuario creado exitosamente
+              alert(result.message);
+              this.$emit('switch-to-login'); // Redirigir al login
+            } else {
+              // Mostrar errores del servidor
+              alert(result.error || "Error al crear la cuenta.");
+            }
+          } catch (error) {
+            console.error("Error al conectar con el servidor:", error);
+            alert("Hubo un problema al crear la cuenta.");
+          }
         }
       },
     },

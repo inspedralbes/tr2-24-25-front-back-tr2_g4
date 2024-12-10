@@ -52,9 +52,40 @@ export default {
     };
   },
   methods: {
-    submit() {
+    async submit() {
       if (this.$refs.form.validate()) {
-        console.log("Email:", this.email, "Password:", this.password);
+        try {
+          // Hacer la solicitud POST al backend para verificar el login
+          const response = await fetch('http://localhost:3000/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: this.email,
+              password: this.password,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Si el login es exitoso, verificar el rol (profesor o alumno)
+            if (data.profesor) {
+              // Si es profesor, redirigir a la página de profesores
+              this.$router.push('/profesor-dashboard');  // Página para profesores
+            } else {
+              // Si es alumno, redirigir a la página de alumnos
+              this.$router.push('/alumno-dashboard');   // Página para alumnos
+            }
+          } else {
+            // Si el login falla, mostrar un mensaje de error
+            alert(data.message || 'Credenciales incorrectas');
+          }
+        } catch (error) {
+          console.error('Error al autenticar:', error);
+          alert('Hubo un problema con la autenticación. Inténtalo nuevamente.');
+        }
       }
     },
   },
