@@ -54,6 +54,16 @@
       🧾
     </v-btn>
 
+    <!-- Botón flotante para abrir el tutorial -->
+    <v-btn
+      class="video-button"
+      icon
+      color="primary"
+      @click="showVideo = true"
+    >
+      🎥
+    </v-btn>
+
     <!-- Modal con las reglas de la partida -->
     <v-dialog
       v-model="showRules"
@@ -62,21 +72,42 @@
       <v-card>
         <v-card-title class="text-rules">📜 Reglas de la Partida</v-card-title>
         <v-card-text class="text-rules-color">
-                <p>
-        🎯 El objetivo del juego es llegar al final del carril de 40 casillas antes que los demás jugadores. ¡Prepárate para una carrera matemática llena de sorpresas!
-      </p>
-      <ul>
-        <li>🎲 Lanza el dado y avanza el número de casillas que indique.</li>
-        <li>❓ Responde preguntas matemáticas para poder avanzar. Si fallas, no podrás avanzar.</li>
-        <li>💣 Cuidado con las bombas (💣): si caes en una, retrocedes 2 casillas.</li>
-        <li>💰 Las casillas x2 (💰) duplican el avance en tu siguiente turno.</li>
-        <li>🏆 El primero en llegar a la última casilla gana la partida.</li>
-      </ul>
-      <p>🧠 Consejo: La rapidez y precisión en las respuestas son clave para ganar. ¡Buena suerte! 🚀</p>
-
+          <p>
+            🎯 El objetivo del juego es llegar al final del carril de 40 casillas antes que los demás jugadores. ¡Prepárate para una carrera matemática llena de sorpresas!
+          </p>
+          <ul>
+            <li>🎲 Lanza el dado y avanza el número de casillas que indique.</li>
+            <li>❓ Responde preguntas matemáticas para poder avanzar. Si fallas, no podrás avanzar.</li>
+            <li>💣 Cuidado con las bombas (💣): si caes en una, retrocedes 2 casillas.</li>
+            <li>💰 Las casillas x2 (💰) duplican el avance en tu siguiente turno.</li>
+            <li>🏆 El primero en llegar a la última casilla gana la partida.</li>
+          </ul>
+          <p>🧠 Consejo: La rapidez y precisión en las respuestas son clave para ganar. ¡Buena suerte! 🚀</p>
         </v-card-text>
         <v-card-actions class="text-rules">
           <v-btn color="white" text @click="showRules = false">Cerrar ❌</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal con el video tutorial -->
+    <v-dialog
+      v-model="showVideo"
+      max-width="800px"
+    >
+      <v-card>
+        <v-card-title class="text-video">🎥 Tutorial del Juego</v-card-title>
+        <v-card-text>
+          <iframe 
+            width="100%" 
+            height="400" 
+            src="https://www.youtube.com/embed/uLqKwB6QO4k" 
+            frameborder="0" 
+            allowfullscreen
+          ></iframe>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="white" text @click="showVideo = false">Cerrar ❌</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -91,6 +122,7 @@ export default {
       codigo: '', // Código ingresado por el usuario
       error: '',  // Mensaje de error si el código no es válido
       showRules: false, // Controla la visibilidad del modal de reglas
+      showVideo: false, // Controla la visibilidad del modal del tutorial en video
     };
   },
   methods: {
@@ -166,33 +198,56 @@ export default {
 
 .text-rules-color {
   background-color: #146591;
-
 }
 
-.text-rules {
+.text-rules, .text-video {
   background-color: #0288d1;
 }
 
-/* Botón flotante en la esquina inferior derecha */
+/* Botón flotante: Reglas */
 .rules-button {
   position: fixed;
-  bottom: 30px; /* Alineado un poco hacia arriba desde la parte inferior */
-  right: 100px; /* Desplazado más hacia el centro desde la derecha */
+  bottom: 100px; /* Ajustado para el nuevo botón */
+  right: 100px;
   background-color: #0288d1;
   color: white;
-  font-size: 26px; /* Tamaño de texto aún más grande */
-  width: 100px; /* Ancho del botón más grande */
-  height: 100px; /* Alto del botón más grande */
-  border-radius: 50%; /* Forma completamente circular */
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3); /* Sombra un poco más intensa */
-  display: flex; /* Centrar el icono dentro del botón */
+  font-size: 20px; /* Reducción del tamaño del texto */
+  width: 70px; /* Reducción del tamaño del botón */
+  height: 70px; /* Reducción del tamaño del botón */
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
   justify-content: center;
   align-items: center;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
+
 .rules-button:hover {
   background-color: #4fc3f7;
-  transform: scale(1.1); /* Aumenta ligeramente el tamaño al hacer hover */
-
+  transform: scale(1.1);
 }
+
+/* Botón flotante: Tutorial */
+.video-button {
+  position: fixed;
+  bottom: 20px; /* Ajustado para estar más cerca del botón de reglas */
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px; /* Reducción del tamaño del texto */
+  width: 70px; /* Reducción del tamaño del botón */
+  height: 70px; /* Reducción del tamaño del botón */
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.video-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
 </style>
