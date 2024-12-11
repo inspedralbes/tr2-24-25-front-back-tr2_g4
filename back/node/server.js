@@ -6,19 +6,17 @@ const express = require('express');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
+const bcrypt = require('bcryptjs');
 const path = require('path');
-const createDB = require(path.join(__dirname, 'configDB.js'));
-const enviarCodigoAlCorreo = require('./emailService');
+
+// Configuración del servidor y base de datos
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT ;
 
-/* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
-// CREAR UNA BASE DE DATOS
-//(async () => {
-  //await createDB();
-//})();
+app.use(cors());
+app.use(express.json()); // Middleware para manejar JSON
 
-// Crear pool de conexiones para manejar la base de datos
+// Configuración de la base de datos
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -28,38 +26,27 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  connectTimeout: 10000, // Timeout de conexión
+  debug: true // Activa el modo debug
 });
 
-// Middleware para CORS
-app.use(cors());
+// Funciones auxiliares de partida
+const getPartida = async (codigo) => {
+  const [rows] = await pool.query('SELECT * FROM Partida WHERE codigo = ?', [codigo]);
+  return rows.length > 0 ? { ...rows[0], alumnos: JSON.parse(rows[0].alumnos) } : null;
+};
 
-// Middleware para manejar JSON y datos enviados en formularios
-app.use(express.json()); // Analiza cuerpos JSON
-app.use(express.urlencoded({ extended: true })); // Analiza cuerpos URL-encoded
+const createPartida = async () => {
+  const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
+  await pool.query('INSERT INTO Partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
+  return codigo;
+};
 
-/* ---------------------------- SERVIDOR CON SOCKET.IO ---------------------------- */
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*", // Cambiar según necesidades de seguridad
-  },
-});
-
-io.on('connection', (socket) => {
-  console.log('Nuevo cliente conectado');
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado');
-  });
-});
-
-/* ---------------------------- RUTAS ---------------------------- */
-
-// Añadir usuario
-app.post('/addUser', async (req, res) => {
+// Función de registro de usuario
+const addUser = async (req, res) => {
   try {
     const { nom, cognom, email, password } = req.body;
 
-    // Validar que los campos requeridos están presentes
     if (!nom || !cognom || !email || !password) {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
@@ -70,7 +57,6 @@ app.post('/addUser', async (req, res) => {
 
     let profesor = false;
 
-    // Determinar el tipo de usuario
     if (alumnoRegex.test(email.split('@')[0])) {
       profesor = false; // Es un alumno
     } else if (profesorRegex.test(email.split('@')[0])) {
@@ -82,17 +68,19 @@ app.post('/addUser', async (req, res) => {
       });
     }
 
+    // Cifrar la contraseña antes de almacenarla
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Consulta SQL para insertar en la tabla Usuarios
     const query = `
       INSERT INTO Usuarios (nom, cognom, email, password, fecha, profesor) 
       VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
     `;
-    const values = [nom, cognom, email, password, profesor];
+    const values = [nom, cognom, email, hashedPassword, profesor];
 
     // Ejecutar la consulta
     const [result] = await pool.execute(query, values);
 
-    // Responder con éxito
     res.json({
       success: true,
       message: `Usuario ${email} añadido correctamente como ${profesor ? 'profesor' : 'alumno'}.`,
@@ -102,51 +90,30 @@ app.post('/addUser', async (req, res) => {
     console.error('Error al añadir usuario:', error);
     res.status(500).json({ success: false, message: 'Error al añadir usuario.', error: error.message });
   }
-});
+};
 
-// Ruta de ejemplo para obtener correos (ya existente en tu código)
-app.get('/getEmails', async (req, res) => {
-  try {
-    const [alumnos] = await pool.execute('SELECT email FROM Usuarios WHERE profesor = 0');
-    const [profesores] = await pool.execute('SELECT email FROM Usuarios WHERE profesor = 1');
-
-    const emails = [
-      ...alumnos.map((alumno) => alumno.email),
-      ...profesores.map((profesor) => profesor.email),
-    ];
-
-    res.json(emails);
-  } catch (error) {
-    console.error('Error al obtener los correos:', error);
-    res.status(500).json({ message: 'Error al obtener los correos', error: error.message });
-  }
-});
-// Ruta para login (verificar usuario y contraseña)
-app.post('/login', async (req, res) => {
+// Función de login de usuario
+const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validar que se han enviado los campos de email y contraseña
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
     }
 
-    // Consulta SQL para verificar si existe el usuario con el correo proporcionado
     const [rows] = await pool.execute('SELECT * FROM Usuarios WHERE email = ?', [email]);
 
-    // Si no se encuentra el usuario con ese correo
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Correo no registrado.' });
     }
 
-    // El usuario existe, pero ahora debemos verificar la contraseña
     const user = rows[0];
 
-    if (user.password !== password) {
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
     }
 
-    // Si la contraseña es correcta, podemos retornar una respuesta de éxito
     res.json({
       success: true,
       message: 'Usuario autenticado correctamente.',
@@ -156,15 +123,77 @@ app.post('/login', async (req, res) => {
       email: user.email,
       profesor: user.profesor
     });
-
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
     res.status(500).json({ success: false, message: 'Error al iniciar sesión.', error: error.message });
   }
+};
+
+// Rutas API de juego
+app.get('/game-code', async (req, res) => {
+  const { codigo } = req.query;
+  const partida = await getPartida(codigo);
+  const gameCode = partida ? codigo : await createPartida();
+  res.json({ gameCode });
 });
 
+app.get('/alumnos', async (req, res) => {
+  const { codigo } = req.query;
+  const partida = await getPartida(codigo);
+  if (!partida) {
+    return res.status(404).json({ error: 'Partida no encontrada' });
+  }
+  res.json(partida.alumnos);
+});
 
-// Iniciar el servidor
+// Rutas API de usuarios
+app.post('/addUser', addUser);
+app.post('/login', loginUser);
+
+// Configuración de Socket.IO
+const server = createServer(app);
+const io = new Server(server, {
+  cors: { origin: '*' },
+});
+
+// Mapa para guardar los últimos alumnos consultados por cada partida
+const lastAlumnosByCodigo = new Map();
+
+// Intervalo para verificar actualizaciones
+setInterval(async () => {
+  const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
+  partidas.forEach((partida) => {
+    const codigo = partida.codigo;
+    const alumnos = JSON.parse(partida.alumnos);
+
+    const lastAlumnos = lastAlumnosByCodigo.get(codigo) || [];
+    if (JSON.stringify(lastAlumnos) !== JSON.stringify(alumnos)) {
+      lastAlumnosByCodigo.set(codigo, alumnos); // Actualiza el cache
+      io.to(codigo).emit('update_alumnos', alumnos); // Envía actualizaciones solo si hay cambios
+    }
+  });
+}, 1000); // Verifica actualizaciones cada 1 segundo
+
+io.on('connection', (socket) => {
+  console.log('Nuevo cliente conectado:', socket.id);
+
+  // Unirse a una sala específica
+  socket.on('join_room', async ({ codigo }) => {
+    const partida = await getPartida(codigo);
+    if (!partida) {
+      return socket.emit('error', 'Código de partida no válido');
+    }
+    socket.join(codigo); // El cliente se une al room basado en el código
+    console.log(`Cliente ${socket.id} se unió a la sala ${codigo}`);
+    socket.emit('update_alumnos', partida.alumnos); // Enviar estado inicial de alumnos
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
+  });
+});
+
+// Iniciar servidor
 server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
