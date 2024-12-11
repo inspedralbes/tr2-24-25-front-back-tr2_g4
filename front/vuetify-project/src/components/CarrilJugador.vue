@@ -70,7 +70,7 @@
     <!-- Mostrar la pregunta actual -->
     <v-row class="mt-3" align="center" justify="center" v-if="preguntaActiva">
       <v-col cols="12">
-        <h2>{{ preguntaActual }}</h2>
+        <h2>{{ preguntaActual.text_pregunta }}</h2>
       </v-col>
     </v-row>
 
