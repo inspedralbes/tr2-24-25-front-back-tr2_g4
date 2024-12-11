@@ -1,20 +1,11 @@
+/* ---------------------------- CONSTANTES ---------------------------- */
 const mysql = require('mysql2/promise');
+const fs = require('fs');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-<<<<<<< HEAD
-
-// Configuración del servidor
-const app = express();
-const port = process.env.PORT || 3000;
-app.use(cors());
-app.use(express.json());
-
-// Configuración de la base de datos
-const dataConnection = {
-=======
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
@@ -27,32 +18,12 @@ app.use(express.json()); // Middleware para manejar JSON
 
 // Configuración de la base de datos
 const pool = mysql.createPool({
->>>>>>> origin/dev
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   waitForConnections: true,
-<<<<<<< HEAD
-};
-
-const dbPool = mysql.createPool(dataConnection);
-
-// Funciones auxiliares
-const getPartida = async (codigo) => {
-  const [rows] = await dbPool.query('SELECT * FROM Partida WHERE codigo = ?', [codigo]);
-  return rows.length > 0 ? { ...rows[0], alumnos: JSON.parse(rows[0].alumnos) } : null;
-};
-
-const createPartida = async () => {
-  const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
-  await dbPool.query('INSERT INTO Partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
-  return codigo;
-};
-
-// Rutas API
-=======
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 10000, // Timeout de conexión
@@ -159,7 +130,6 @@ const loginUser = async (req, res) => {
 };
 
 // Rutas API de juego
->>>>>>> origin/dev
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
   const partida = await getPartida(codigo);
@@ -176,13 +146,10 @@ app.get('/alumnos', async (req, res) => {
   res.json(partida.alumnos);
 });
 
-<<<<<<< HEAD
-=======
 // Rutas API de usuarios
 app.post('/addUser', addUser);
 app.post('/login', loginUser);
 
->>>>>>> origin/dev
 // Configuración de Socket.IO
 const server = createServer(app);
 const io = new Server(server, {
@@ -194,11 +161,7 @@ const lastAlumnosByCodigo = new Map();
 
 // Intervalo para verificar actualizaciones
 setInterval(async () => {
-<<<<<<< HEAD
-  const [partidas] = await dbPool.query('SELECT codigo, alumnos FROM Partida');
-=======
   const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
->>>>>>> origin/dev
   partidas.forEach((partida) => {
     const codigo = partida.codigo;
     const alumnos = JSON.parse(partida.alumnos);
