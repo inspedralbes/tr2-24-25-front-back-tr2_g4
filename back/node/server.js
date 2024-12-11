@@ -11,7 +11,9 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const createDB = require(path.join(__dirname, 'configDB.js'));
 const app = express();
+const mongoose = require('mongoose');
 const port = process.env.PORT;
+const Resultado = require('./models/valors');
 
 /* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
 // CREAR UNA BASE DE DATOS
@@ -41,9 +43,18 @@ const connectDB = async () => {
 
 connectDB();
 
+mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mongodb.net/valores')
+  .then(() => {
+    console.log('Conectado a MongoDB Atlas');
+  })
+  .catch((error) => {
+    console.error('Error al conectar a MongoDB Atlas:', error);
+  });
+
+
 // Middleware para CORS
 app.use(cors()); 
-
+app.use(express.json());
 
 // Ruta básica
 app.get('/', (req, res) => {
@@ -66,6 +77,42 @@ app.get('/preguntas', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener las preguntas:', error);
     res.status(500).send('Error al obtener las preguntas');
+  }
+});
+
+
+// Ruta para guardar resultados
+app.post('/guardar-resultado', async (req, res) => {
+  const { preguntaId, dificultad, esCorrecto, nombreAlumno } = req.body;
+
+  console.log('Datos recibidos:', req.body); // Verifica qué datos llegan al backend
+
+  try {
+    // Validar los datos recibidos
+    if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno) {
+      return res.status(400).json({ 
+        mensaje: 'Datos incompletos',
+        detalles: 'Faltan los siguientes campos: ' + 
+                  (preguntaId ? '' : 'preguntaId, ') + 
+                  (dificultad ? '' : 'dificultad, ') + 
+                  (esCorrecto === undefined ? 'esCorrecto, ' : '') + 
+                  (nombreAlumno ? '' : 'nombreAlumno')
+      });
+    }
+
+    // Crear un nuevo resultado
+    const nuevoResultado = new Resultado({
+      preguntaId,
+      dificultad,
+      esCorrecto,
+      nombreAlumno,
+    });
+    await nuevoResultado.save(); // Guardar en MongoDB
+
+    res.status(201).json({ mensaje: 'Resultado guardado exitosamente' });
+  } catch (error) {
+    console.error('Error al guardar el resultado:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
   }
 });
 

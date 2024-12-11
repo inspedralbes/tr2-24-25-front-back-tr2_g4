@@ -1,3 +1,4 @@
+import errorAudio from '@/assets/error.mp3';
 export default {
   data() {
     return {
@@ -34,10 +35,12 @@ export default {
       preguntaActiva: false, // Controla si la pregunta está activa
       bombas: [], // Posiciones de las bombas en el tablero
       multipliers: [], // Posiciones de los multiplicadores en el tablero
+      audioIncorrecto: null,
     };
   },
-  created() {
-    // Al crear el componente, generamos las posiciones de las bombas y multiplicadores
+  created() { 
+    // Cargar el archivo de audio
+    this.audioIncorrecto = new Audio(errorAudio);
     this.generateUniquePositions();
   },
   methods: {
@@ -96,7 +99,7 @@ export default {
     
         if (preguntas.length > 0) {
           const pregunta = preguntas[0]; // Tomamos la primera pregunta
-          this.preguntaActual = pregunta.text_pregunta;
+          this.preguntaActual = pregunta; // Guardamos la pregunta completa
           this.respuestaCorrecta = pregunta.respuesta_correcta;
     
           // Generación de respuestas aleatorias (si la respuesta correcta es un número)
@@ -104,19 +107,18 @@ export default {
     
           while (respuestasSimilares.size < 3) {
             let respuestaAleatoria;
-        
             // Generamos respuestas aleatorias cercanas a la respuesta correcta
             if (this.respuestaCorrecta <= 50) {
-                respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 41) + (this.respuestaCorrecta - 20));
+              respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 41) + (this.respuestaCorrecta - 20));
             } else if (this.respuestaCorrecta > 50 && this.respuestaCorrecta <= 150) {
-                respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 61) + (this.respuestaCorrecta - 30));
+              respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 61) + (this.respuestaCorrecta - 30));
             } else {
-                respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 201) + (this.respuestaCorrecta - 100));
+              respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 201) + (this.respuestaCorrecta - 100));
             }
-        
+    
             // Nos aseguramos de que las respuestas no se repitan ni sean la correcta
             if (respuestaAleatoria !== this.respuestaCorrecta && !respuestasSimilares.has(respuestaAleatoria)) {
-                respuestasSimilares.add(respuestaAleatoria);
+              respuestasSimilares.add(respuestaAleatoria);
             }
           }
           // Mezclamos las respuestas y las mostramos
@@ -133,44 +135,79 @@ export default {
         this.preguntaActiva = false;
       }
     },
-
+    
     // Método para verificar si la respuesta del jugador es correcta
     verificarRespuesta(respuesta) {
       if (respuesta === this.respuestaCorrecta) {
-        // Si la respuesta es correcta, avanzamos el carril
         let nuevaPosicion = this.carril.position + this.dado;
-    
-        // Verificamos si el carril está sobre un multiplicador (x2)
+
         if (this.isMultiplier(this.carril.position)) {
-          nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39); // Avanzamos el doble
+          nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39);
           this.mensajeRespuesta = 'Multiplicador, avanzando el doble';
         } else {
-          this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.'; // Respuesta correcta
+          this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.';
         }
-    
-        // Si el carril está sobre una bomba, no retrocedemos
+
         if (this.isBomb(this.carril.position)) {
           console.log("¡Bomba! No retrocede por respuesta correcta.");
         }
-    
-        this.carril.position = nuevaPosicion; // Actualizamos la posición del carril
-        this.scrollCarril(); // Hacemos scroll para mostrar la nueva posición
+
+        this.carril.position = nuevaPosicion;
+        this.scrollCarril();
       } else {
-        // Si la respuesta es incorrecta, retrocedemos 2 posiciones si estamos sobre una bomba
+        // Si la respuesta es incorrecta, reproducir el audio
+        if (this.audioIncorrecto) {
+          this.audioIncorrecto.play().catch((error) => {
+            console.error('Error al reproducir el audio:', error);
+          });
+        }
+
         if (this.isBomb(this.carril.position)) {
-          this.carril.position = Math.max(this.carril.position - 2, 0); // Retrocedemos 2 posiciones
+          this.carril.position = Math.max(this.carril.position - 2, 0);
           this.mensajeRespuesta = "¡Bomba! Retrocediendo 2 posiciones por respuesta incorrecta.";
         } else {
-          this.mensajeRespuesta = 'Respuesta incorrecta'; // Respuesta incorrecta
+          this.mensajeRespuesta = 'Respuesta incorrecta';
         }
       }
-    
-      // Desactivamos la pregunta después de responder
+      this.guardarResultado(respuesta);
       this.preguntaActiva = false;
       this.preguntaActual = null;
       this.opcionesRespuesta = [];
     },
-
+    async guardarResultado(respuesta) {
+      const esCorrecto = respuesta === this.respuestaCorrecta;
+      const nombreAlumno = "Juan Pérez"; // Asegúrate de que este campo esté bien definido
+    
+      // Accede a los campos 'id' y 'difficulty_level' de 'preguntaActual'
+      const preguntaId = this.preguntaActual.id; // Usamos el 'id' de la pregunta
+      const dificultad = this.preguntaActual.difficulty_level; // Usamos 'difficulty_level' de la pregunta
+    
+      try {
+        const response = await fetch('http://localhost:3000/guardar-resultado', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            preguntaId,
+            dificultad,
+            esCorrecto,
+            nombreAlumno,
+          }),
+        });
+    
+        const data = await response.json();
+        if (response.ok) {
+          console.log(data.mensaje); // "Resultado guardado exitosamente"
+        } else {
+          console.error(data.mensaje);
+        }
+      } catch (error) {
+        console.error('Error al guardar el resultado:', error);
+      }
+    },
+    
+    
     // Método para hacer scroll en el carril según la posición
     scrollCarril() {
       const carrilContainer = this.$refs.carrilContainer;
