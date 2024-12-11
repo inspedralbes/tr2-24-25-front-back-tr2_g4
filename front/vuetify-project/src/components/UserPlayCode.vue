@@ -5,45 +5,54 @@
       <v-toolbar-title class="title-center">GMaths</v-toolbar-title>
     </v-app-bar>
 
+    <!-- Botón flotante para silenciar el audio -->
+    <v-btn
+      class="mute-button"
+      icon
+      color="primary"
+      @click="toggleMute"
+    >
+      <span v-if="isMuted">🔇</span>
+      <span v-else>🔊</span>
+    </v-btn>
+
     <!-- Contenedor principal -->
     <v-container 
       class="d-flex justify-center align-center" 
       style="height: 100vh; background-color: #99a6e9;">
-    <div class="text-center">
-  <!-- Campo de entrada para el código -->
-  <v-text-field 
-    class="code-center"
-    v-model="codigo"
-    outlined
-    solo
-    color="white"
-    label="INGRESA EL CÓDIGO"
-    style="max-width: 600px; width: 100%;"
-  ></v-text-field>
+      <div class="text-center">
+        <!-- Campo de entrada para el código -->
+        <v-text-field 
+          class="code-center"
+          v-model="codigo"
+          outlined
+          solo
+          color="white"
+          label="INGRESA EL CÓDIGO"
+          style="max-width: 600px; width: 100%;"
+        ></v-text-field>
 
-  <!-- Botón de jugar -->
-  <v-btn
-    @click="jugar"
-    color="primary"
-    class="gradient-btn"
-    elevation="5"
-    style="background: linear-gradient(to bottom, #4fc3f7, #0288d1); color: white;"
-  >
-    ¡JUGAR! 
-  </v-btn>
+        <!-- Botón de jugar -->
+        <v-btn
+          @click="jugar"
+          color="primary"
+          class="gradient-btn"
+          elevation="5"
+          style="background: linear-gradient(to bottom, #4fc3f7, #0288d1); color: white;"
+        >
+          ¡JUGAR! 
+        </v-btn>
 
-  <!-- Mensajes de error -->
- <v-alert 
-  v-if="error" 
-  type="error" 
-  style="margin-top: 20px; max-width: 600px; width: 100%; word-wrap: break-word; padding: 35px; display: flex; justify-content: center; align-items: center; position: relative;"
->
-  <!-- Texto de error centrado -->
-  <span style="flex-grow: 1; text-align: center; display: inline-block;">{{ error }}</span>
-</v-alert>
-
-
-</div>
+        <!-- Mensajes de error -->
+        <v-alert 
+          v-if="error" 
+          type="error" 
+          style="margin-top: 20px; max-width: 600px; width: 100%; word-wrap: break-word; padding: 35px; display: flex; justify-content: center; align-items: center; position: relative;"
+        >
+          <!-- Texto de error centrado -->
+          <span style="flex-grow: 1; text-align: center; display: inline-block;">{{ error }}</span>
+        </v-alert>
+      </div>
     </v-container>
 
     <!-- Botón flotante para abrir las reglas -->
@@ -116,7 +125,10 @@
   </v-app>
 </template>
 
+
 <script>
+import waitingAudio from '@/assets/waiting.mp3'; // Asegúrate de que esta ruta sea correcta
+
 export default {
   name: "CustomScreen",
   data() {
@@ -125,9 +137,31 @@ export default {
       error: '',  // Mensaje de error si el código no es válido
       showRules: false, // Controla la visibilidad del modal de reglas
       showVideo: false, // Controla la visibilidad del modal del tutorial en video
+      isMuted: false,   // Controla si el audio está silenciado o no
+      audio: null,      // Referencia al objeto de audio
     };
   },
+  mounted() {
+    // Crear y configurar el objeto de audio
+    this.audio = new Audio(waitingAudio);
+    this.audio.loop = true;
+    this.audio.play().catch((err) => {
+      console.warn("El audio no pudo ser reproducido automáticamente:", err);
+    }); this.audio.volume = 1;
+  },
   methods: {
+    toggleMute() {
+      this.isMuted = !this.isMuted;
+      if (this.isMuted) {
+        this.audio.pause();
+        this.audio.volume = 0;
+      } else {
+        this.audio.volume = 1;
+        this.audio.play().catch((err) => {
+          console.warn("Error al reanudar el audio:", err);
+        });
+      }
+    },
     async jugar() {
       if (!this.codigo.trim()) {
         this.error = "Por favor, ingresa un código válido.";
@@ -167,7 +201,33 @@ export default {
 };
 </script>
 
+
 <style scoped>
+/* Botón flotante: Mute */
+.mute-button {
+  position: fixed;
+  top: 100px;
+  bottom: 80px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.mute-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
+/* Otros estilos preexistentes */
 .gradient-btn {
   width: 200px;
   height: 40px;
@@ -201,13 +261,13 @@ export default {
 /* Botón flotante: Reglas */
 .rules-button {
   position: fixed;
-  bottom: 80px; /* Ajustado para el nuevo botón */
+  bottom: 80px;
   right: 100px;
   background-color: #0288d1;
   color: white;
-  font-size: 20px; /* Reducción del tamaño del texto */
-  width: 70px; /* Reducción del tamaño del botón */
-  height: 70px; /* Reducción del tamaño del botón */
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -224,13 +284,13 @@ export default {
 /* Botón flotante: Tutorial */
 .video-button {
   position: fixed;
-  bottom: 20px; /* Ajustado para estar más cerca del botón de reglas */
+  bottom: 20px;
   right: 100px;
   background-color: #0288d1;
   color: white;
-  font-size: 20px; /* Reducción del tamaño del texto */
-  width: 70px; /* Reducción del tamaño del botón */
-  height: 70px; /* Reducción del tamaño del botón */
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -243,5 +303,4 @@ export default {
   background-color: #4fc3f7;
   transform: scale(1.1);
 }
-
 </style>
