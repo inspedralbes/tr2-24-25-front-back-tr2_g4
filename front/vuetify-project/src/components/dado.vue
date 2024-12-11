@@ -57,7 +57,7 @@
           // Generamos un número aleatorio entre 1 y 6
           this.dado = Math.floor(Math.random() * 6) + 1;
           this.lanzando = false; // Desactiva el estado de lanzando
-        }, 2000); // Espera 2 segundos antes de mostrar el resultado
+        }, 1000); // Espera 2 segundos antes de mostrar el resultado
       },
     },
   };

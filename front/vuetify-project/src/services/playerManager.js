@@ -46,7 +46,7 @@ export default {
   methods: {
     // Método para devolver un color aleatorio para las opciones de respuesta
     getOpcionColor(index) {
-      const colors = ['#5e81f4', '#f4a56e', '#68f497', '#f4796e']; // Colores predefinidos
+      const colors = ['#9C27B0', '#FF9800', '#E91E63', '#c3de30']; // Colores morado, naranja, rosa y amarillo
       return {
         backgroundColor: colors[index % colors.length], // Cicla entre los colores
       };
