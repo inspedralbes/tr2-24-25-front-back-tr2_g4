@@ -108,6 +108,7 @@ export default {
     // Crear y configurar el objeto de audio
     this.audio = new Audio(waitingAudio);
     this.audio.loop = true;
+    this.audio.volume = 1;
     this.audio.play().catch((err) => {
       console.warn("El audio no pudo ser reproducido automáticamente:", err);
     });

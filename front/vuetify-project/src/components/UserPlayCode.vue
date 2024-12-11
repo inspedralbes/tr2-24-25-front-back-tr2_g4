@@ -145,9 +145,18 @@ export default {
     // Crear y configurar el objeto de audio
     this.audio = new Audio(waitingAudio);
     this.audio.loop = true;
-    this.audio.play().catch((err) => {
-      console.warn("El audio no pudo ser reproducido automáticamente:", err);
-    }); this.audio.volume = 1;
+    this.audio.play();
+    
+    
+    // Reproducir el audio automáticamente solo si no está muteado
+    if (!this.isMuted) {
+        // Asegurarse de que el volumen esté al máximo
+      this.audio.play().catch((err) => {
+        console.warn("El audio no pudo ser reproducido automáticamente:", err);
+      });
+    } else {
+      this.audio.volume = 0;  // Si está muteado, no reproducir
+    }
   },
   methods: {
     toggleMute() {
@@ -173,7 +182,7 @@ export default {
         const data = await response.json();
 
         if (data.message === "Partida encontrada.") {
-          const usuario = 'UserDEF8'; // Esto debe ser asignado dinámicamente según el usuario actual
+          const usuario = 'UserDEF9'; // Esto debe ser asignado dinámicamente según el usuario actual
           const updateResponse = await fetch(`http://localhost:3000/update-partida`, {
             method: 'POST',
             headers: {
@@ -200,6 +209,7 @@ export default {
   },
 };
 </script>
+
 
 
 <style scoped>
