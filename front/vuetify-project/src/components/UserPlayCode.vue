@@ -127,7 +127,7 @@
 
 
 <script>
-import waitingAudio from '@/assets/waiting.mp3'; // Asegúrate de que esta ruta sea correcta
+import waitingAudio from '@/assets/PlayCodeMusic.mp3'; // Asegúrate de que esta ruta sea correcta
 
 export default {
   name: "CustomScreen",
@@ -173,7 +173,7 @@ export default {
         const data = await response.json();
 
         if (data.message === "Partida encontrada.") {
-          const usuario = 'UserDEF6'; // Esto debe ser asignado dinámicamente según el usuario actual
+          const usuario = 'UserDEF8'; // Esto debe ser asignado dinámicamente según el usuario actual
           const updateResponse = await fetch(`http://localhost:3000/update-partida`, {
             method: 'POST',
             headers: {
@@ -276,6 +276,15 @@ export default {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+.text-rules-color {
+  background-color: #0288d1;
+}
+
+.text-rules {
+
+  background-color: #0a4f74;
+}
+
 .rules-button:hover {
   background-color: #4fc3f7;
   transform: scale(1.1);
@@ -297,6 +306,11 @@ export default {
   justify-content: center;
   align-items: center;
   transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.text-video {
+
+  background-color: #0288d1;
 }
 
 .video-button:hover {
