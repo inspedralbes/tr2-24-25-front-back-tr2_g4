@@ -1,5 +1,6 @@
 <template>
-  <v-container class="fill-height d-flex justify-center align-center">
+  
+  <v-container class="fill-height d-flex justify-center align-center fondo">
     <v-card max-width="400" class="pa-4">
       <v-card-title class="text-h5 text-center">Iniciar Sesión</v-card-title>
       <v-card-text>
@@ -32,6 +33,7 @@
     </v-card>
   </v-container>
 </template>
+
 
 <script>
 export default {
@@ -91,3 +93,12 @@ export default {
   },
 };
 </script>
+
+
+
+<style scoped>
+.fondo {
+  background-color: #99a6e9;
+}
+</style>
+
