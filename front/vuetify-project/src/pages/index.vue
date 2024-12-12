@@ -1,13 +1,28 @@
 <template>
-  <UserPlayCode />
+  <v-container class="fill-height d-flex justify-center align-center">
 
+    <component 
+      :is="currentComponent" 
+      @switch-to-register="showRegisterForm" 
+      @switch-to-login="showLoginForm" />
+  </v-container>
 </template>
 
 <script setup>
-  // Verifica que la ruta sea correcta
-  import UserPlayCode from '@/components/UserPlayCode.vue' // O usa una ruta relativa './components/UserPlayCode.vue' si no usas alias
-  //import UserPlayWaiting from '@/components/UserPlayWaiting.vue' // O usa una ruta relativa './components/UserPlayCode.vue' si no usas alias
-  //<UserPlayWaiting />
+import { ref } from "vue";
+import LoginForm from "@/components/LoginForm.vue";
+import RegisterForm from "@/components/RegisterForm.vue";
 
 
+const currentComponent = ref(LoginForm);
+
+// Función para cambiar a RegisterForm
+const showRegisterForm = () => {
+  currentComponent.value = RegisterForm;
+};
+
+// Función para cambiar a LoginForm
+const showLoginForm = () => {
+  currentComponent.value = LoginForm;
+};
 </script>

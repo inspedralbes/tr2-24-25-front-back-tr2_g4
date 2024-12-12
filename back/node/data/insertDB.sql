@@ -1,4 +1,4 @@
-INSERT INTO pregunta (text_pregunta, difficulty_level, respuesta_correcta, type) VALUES
+INSERT INTO Pregunta (text_pregunta, difficulty_level, respuesta_correcta, type) VALUES
 ('2 + 2', 1, '4', 'suma'),
 ('1 + 1', 1, '2', 'suma'),
 ('5 - 3', 1, '2', 'resta'),
