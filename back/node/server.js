@@ -288,32 +288,6 @@ app.delete('/api/preguntas/:id', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Configuración de Socket.IO
 const server = createServer(app);
 const io = new Server(server, {
