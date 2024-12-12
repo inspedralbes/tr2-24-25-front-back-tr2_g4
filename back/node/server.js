@@ -14,6 +14,7 @@ const app = express();
 const mongoose = require('mongoose');
 const port = process.env.PORT;
 const Resultado = require('./models/valors');
+const { spawn } = require('child_process');
 
 /* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
 // CREAR UNA BASE DE DATOS
@@ -116,15 +117,14 @@ app.post('/guardar-resultado', async (req, res) => {
   }
 });
 
-// Ruta para obtener resultados por nombre de alumno
 app.get('/resultados/:nombreAlumno', async (req, res) => {
   const { nombreAlumno } = req.params;
 
   try {
     // Validar que el nombre del alumno esté presente
     if (!nombreAlumno) {
-      return res.status(400).json({ 
-        mensaje: 'El nombre del alumno es requerido' 
+      return res.status(400).json({
+        mensaje: 'El nombre del alumno es requerido',
       });
     }
 
@@ -133,19 +133,52 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
 
     // Validar si se encontraron resultados
     if (resultados.length === 0) {
-      return res.status(404).json({ 
-        mensaje: `No se encontraron resultados para el alumno ${nombreAlumno}` 
+      return res.status(404).json({
+        mensaje: `No se encontraron resultados para el alumno ${nombreAlumno}`,
       });
     }
 
-    // Responder con los resultados encontrados
-    res.status(200).json(resultados);
+    // Procesar los resultados para el script Python
+    const resultadosString = JSON.stringify(resultados);
+
+    // Ejecutar el script Python con `spawn`
+    const pythonProcess = spawn('py', [
+      '../python/estadisticaAlumno.py', // Nombre del script Python
+      nombreAlumno,
+      resultadosString,
+    ]);
+
+    let pythonOutput = '';
+
+    // Recoger la salida del script Python
+    pythonProcess.stdout.on('data', (data) => {
+      pythonOutput += data.toString();
+    });
+
+    // Manejar errores del script Python
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Error en el script Python: ${data}`);
+    });
+
+    // Finalizar el proceso y responder al cliente
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        return res.status(500).json({
+          mensaje: 'El script Python terminó con errores',
+        });
+      }
+
+      console.log(`Salida del script Python: ${pythonOutput}`);
+      res.status(200).json({
+        mensaje: 'Resultados obtenidos y gráfico generado con éxito',
+        resultados,
+      });
+    });
   } catch (error) {
     console.error('Error al obtener los resultados:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });
   }
 });
-
 
 
 /* ---------------------------- SERVIDOR CON SOCKET.IO ---------------------------- */
