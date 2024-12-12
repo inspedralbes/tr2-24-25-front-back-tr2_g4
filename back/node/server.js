@@ -8,6 +8,7 @@ const { Server } = require('socket.io');
 const { createServer } = require('http');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const createDB = require(path.join(__dirname, 'configDB.js'));
 
 // Configuración del servidor y base de datos
 const app = express();
@@ -16,7 +17,13 @@ const port = process.env.PORT ;
 app.use(cors());
 app.use(express.json()); // Middleware para manejar JSON
 
-// Configuración de la base de datos
+/* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
+// CREAR UNA BASE DE DATOS
+//(async () => {
+  //await createDB();
+//})();
+
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -26,9 +33,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000, // Timeout de conexión
-  debug: true // Activa el modo debug
 });
+
 
 // Funciones auxiliares de partida
 const getPartida = async (codigo) => {
@@ -149,6 +155,112 @@ app.get('/alumnos', async (req, res) => {
 // Rutas API de usuarios
 app.post('/addUser', addUser);
 app.post('/login', loginUser);
+
+
+
+// Rutas para manejar las preguntas en la API
+// Rutas para manejar las preguntas en la API
+
+// Obtener todas las preguntas
+app.get('/api/preguntas', async (req, res) => {
+  try {
+    const [preguntas] = await pool.query('SELECT * FROM Pregunta');
+    res.json(preguntas);
+  } catch (error) {
+    console.error('Error al obtener las preguntas:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener las preguntas.' });
+  }
+});
+
+// Crear una nueva pregunta
+app.post('/api/preguntas', async (req, res) => {
+  try {
+    const { text_pregunta, difficulty_level, respuesta_correcta, type } = req.body;
+
+    if (!text_pregunta || !difficulty_level || !respuesta_correcta || !type) {
+      return res.status(400).json({ success: false, message: 'Todos los campos son requeridos.' });
+    }
+
+    const query = `
+      INSERT INTO Pregunta (text_pregunta, difficulty_level, respuesta_correcta, type)
+      VALUES (?, ?, ?, ?)
+    `;
+    const values = [text_pregunta, difficulty_level, respuesta_correcta, type];
+
+    const [result] = await pool.execute(query, values);
+
+    res.status(201).json({
+      success: true,
+      message: 'Pregunta creada correctamente.',
+      preguntaId: result.insertId,
+    });
+  } catch (error) {
+    console.error('Error al crear la pregunta:', error);
+    res.status(500).json({ success: false, message: 'Error al crear la pregunta.' });
+  }
+});
+
+// Actualizar una pregunta existente
+app.put('/api/preguntas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text_pregunta, difficulty_level, respuesta_correcta, type } = req.body;
+
+    if (!text_pregunta || !difficulty_level || !respuesta_correcta || !type) {
+      return res.status(400).json({ success: false, message: 'Todos los campos son requeridos.' });
+    }
+
+    const query = `
+      UPDATE Pregunta
+      SET text_pregunta = ?, difficulty_level = ?, respuesta_correcta = ?, type = ?
+      WHERE id = ?
+    `;
+    const values = [text_pregunta, difficulty_level, respuesta_correcta, type, id];
+
+    const [result] = await pool.execute(query, values);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Pregunta no encontrada.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Pregunta actualizada correctamente.',
+    });
+  } catch (error) {
+    console.error('Error al actualizar la pregunta:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar la pregunta.' });
+  }
+});
+
+// Eliminar una pregunta
+app.delete('/api/preguntas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = 'DELETE FROM Pregunta WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Pregunta no encontrada.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Pregunta eliminada correctamente.',
+    });
+  } catch (error) {
+    console.error('Error al eliminar la pregunta:', error);
+    res.status(500).json({ success: false, message: 'Error al eliminar la pregunta.' });
+  }
+});
+
+
+
+
+
+
+
 
 // Configuración de Socket.IO
 const server = createServer(app);

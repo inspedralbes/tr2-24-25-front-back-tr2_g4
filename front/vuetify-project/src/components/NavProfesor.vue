@@ -10,12 +10,8 @@
     </nav>
 
     <main class="content">
-      <!-- Componente actual que se carga -->
       <component :is="currentComponent" />
     </main>
-
-    <!-- Botón para crear partida -->
-    <button class="crear-partida-btn" @click="loadComponent('CrearPartida')">Crear Partida</button>
   </div>
 </template>
 
@@ -25,7 +21,6 @@ import AdminPreguntas from "@/components/AdminPreguntas.vue";
 import AdminUsuarios from "@/components/AdminUsuarios.vue";
 import AdminAulas from "@/components/AdminAulas.vue";
 import Estadisticas from "@/components/Estadisticas.vue";
-import CrearPartida from "@/components/LoadingPartida.vue";
 
 // Define el componente inicial que se va a cargar
 const currentComponent = ref(AdminPreguntas);  // Componente predeterminado
@@ -44,9 +39,6 @@ const loadComponent = (componentName) => {
       break;
     case 'Estadisticas':
       currentComponent.value = Estadisticas;
-      break;
-    case 'CrearPartida':
-      currentComponent.value = CrearPartida;
       break;
     default:
       currentComponent.value = AdminPreguntas;
@@ -85,26 +77,5 @@ nav li:hover {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-}
-
-/* Estilo del botón Crear Partida - fijo en la parte inferior derecha */
-.crear-partida-btn {
-  position: fixed;  /* Fija el botón */
-  bottom: 20px;     /* 20px desde el fondo */
-  right: 20px;      /* 20px desde la derecha */
-  width: 200px;     /* Ancho del botón */
-  padding: 15px;    /* Espaciado interno */
-  background-color: #4CAF50;
-  color: white;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px; /* Bordes redondeados */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.crear-partida-btn:hover {
-  background-color: #45a049;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 </style>
