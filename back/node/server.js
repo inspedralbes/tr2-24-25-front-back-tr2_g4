@@ -6,14 +6,16 @@ const express = require('express');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const bcrypt = require('bcryptjs');
 const path = require('path');
 const createDB = require(path.join(__dirname, 'configDB.js'));
 
-// Configuración del servidor y base de datos
-const app = express();
-const port = process.env.PORT ;
+//(async () => {
+//await createDB();
+//})();
 
+// Configuración del servidor
+const app = express();
+const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json()); // Middleware para manejar JSON
 
@@ -33,13 +35,27 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  connectTimeout: 10000, // Timeout de conexión
 });
 
 
-// Funciones auxiliares de partida
+// Funciones auxiliares
 const getPartida = async (codigo) => {
   const [rows] = await pool.query('SELECT * FROM Partida WHERE codigo = ?', [codigo]);
-  return rows.length > 0 ? { ...rows[0], alumnos: JSON.parse(rows[0].alumnos) } : null;
+  if (rows.length === 0) {
+    return null;
+  }
+
+  let alumnos = [];
+  try {
+    // Verifica si 'alumnos' tiene un valor y si es un JSON válido
+    alumnos = rows[0].alumnos ? JSON.parse(rows[0].alumnos) : [];
+  } catch (error) {
+    console.error("Error al parsear los alumnos", error);
+    alumnos = []; // Si no se puede parsear, asigna un array vacío
+  }
+
+  return { ...rows[0], alumnos };
 };
 
 const createPartida = async () => {
@@ -48,7 +64,7 @@ const createPartida = async () => {
   return codigo;
 };
 
-// Función de registro de usuario
+// Función para agregar un usuario
 const addUser = async (req, res) => {
   try {
     const { nom, cognom, email, password } = req.body;
@@ -57,12 +73,10 @@ const addUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
 
-    // Expresiones regulares para determinar si el usuario es alumno o profesor
     const alumnoRegex = /^a\d{2}/i; // Correo que empieza con 'a' seguido de dos números
     const profesorRegex = /^[a-zA-Z]+$/; // Correo que contiene solo letras antes del '@'
 
     let profesor = false;
-
     if (alumnoRegex.test(email.split('@')[0])) {
       profesor = false; // Es un alumno
     } else if (profesorRegex.test(email.split('@')[0])) {
@@ -74,17 +88,13 @@ const addUser = async (req, res) => {
       });
     }
 
-    // Cifrar la contraseña antes de almacenarla
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Consulta SQL para insertar en la tabla Usuarios
+    // Aquí ya no se encripta la contraseña, simplemente se guarda tal cual
     const query = `
       INSERT INTO Usuarios (nom, cognom, email, password, fecha, profesor) 
       VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
     `;
-    const values = [nom, cognom, email, hashedPassword, profesor];
+    const values = [nom, cognom, email, password, profesor];
 
-    // Ejecutar la consulta
     const [result] = await pool.execute(query, values);
 
     res.json({
@@ -103,6 +113,9 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Log de los datos que se van a enviar para el login
+    console.log("Intentando iniciar sesión con los siguientes datos:", { email, password });
+
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
     }
@@ -114,9 +127,8 @@ const loginUser = async (req, res) => {
     }
 
     const user = rows[0];
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    // Aquí ya no se compara la contraseña encriptada, se verifica si coinciden directamente
+    if (password !== user.password) {
       return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
     }
 
@@ -127,7 +139,7 @@ const loginUser = async (req, res) => {
       nom: user.nom,
       cognom: user.cognom,
       email: user.email,
-      profesor: user.profesor
+      profesor: user.profesor,
     });
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
@@ -135,14 +147,15 @@ const loginUser = async (req, res) => {
   }
 };
 
-// Rutas API de juego
+// Ruta para obtener el código de la partida o crear uno nuevo
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
   const partida = await getPartida(codigo);
   const gameCode = partida ? codigo : await createPartida();
-  res.json({ gameCode });
+  res.json({ message: partida ? 'Partida encontrada.' : 'Nueva partida creada.', gameCode });
 });
 
+// Ruta para obtener los alumnos de una partida
 app.get('/alumnos', async (req, res) => {
   const { codigo } = req.query;
   const partida = await getPartida(codigo);
@@ -150,6 +163,26 @@ app.get('/alumnos', async (req, res) => {
     return res.status(404).json({ error: 'Partida no encontrada' });
   }
   res.json(partida.alumnos);
+});
+
+// Ruta para actualizar la partida con un nuevo alumno
+app.post('/update-partida', async (req, res) => {
+  const { codigo, usuario } = req.body;
+  const partida = await getPartida(codigo);
+  if (!partida) {
+    return res.status(404).json({ error: 'Partida no encontrada' });
+  }
+
+  const alumnos = partida.alumnos || [];
+
+  if (!alumnos.some(alumno => alumno.name === usuario)) {
+    alumnos.push({ name: usuario }); // Agregar el nuevo alumno a la lista
+    await pool.query('UPDATE Partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+    io.to(codigo).emit('new-participant', { usuario, codigo });
+    return res.json({ success: true, message: 'Partida actualizada' });
+  } else {
+    return res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+  }
 });
 
 // Rutas API de usuarios
@@ -287,42 +320,56 @@ const io = new Server(server, {
   cors: { origin: '*' },
 });
 
-// Mapa para guardar los últimos alumnos consultados por cada partida
-const lastAlumnosByCodigo = new Map();
-
-// Intervalo para verificar actualizaciones
-setInterval(async () => {
-  const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
-  partidas.forEach((partida) => {
-    const codigo = partida.codigo;
-    const alumnos = JSON.parse(partida.alumnos);
-
-    const lastAlumnos = lastAlumnosByCodigo.get(codigo) || [];
-    if (JSON.stringify(lastAlumnos) !== JSON.stringify(alumnos)) {
-      lastAlumnosByCodigo.set(codigo, alumnos); // Actualiza el cache
-      io.to(codigo).emit('update_alumnos', alumnos); // Envía actualizaciones solo si hay cambios
-    }
-  });
-}, 1000); // Verifica actualizaciones cada 1 segundo
-
 io.on('connection', (socket) => {
   console.log('Nuevo cliente conectado:', socket.id);
 
-  // Unirse a una sala específica
-  socket.on('join_room', async ({ codigo }) => {
+  socket.on('join-room', async ({ codigo }) => {
     const partida = await getPartida(codigo);
     if (!partida) {
       return socket.emit('error', 'Código de partida no válido');
     }
-    socket.join(codigo); // El cliente se une al room basado en el código
+
+    socket.join(codigo);
     console.log(`Cliente ${socket.id} se unió a la sala ${codigo}`);
-    socket.emit('update_alumnos', partida.alumnos); // Enviar estado inicial de alumnos
+    socket.emit('update-alumnos', partida.alumnos); // Enviar estado inicial de alumnos
   });
 
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);
   });
+
+  socket.on('new-participant', ({ usuario, codigo }) => {
+    io.to(codigo).emit('new-participant', { usuario, codigo });
+  });
 });
+
+// Verificar la lista de participantes en la base de datos periódicamente
+setInterval(async () => {
+  try {
+    const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
+    partidas.forEach((partida) => {
+      const codigo = partida.codigo;
+      let alumnos = [];
+
+      try {
+        // Asegurarse de que 'alumnos' sea una cadena antes de intentar parsearlo
+        if (typeof partida.alumnos === 'string' && partida.alumnos.trim() !== '') {
+          alumnos = JSON.parse(partida.alumnos); // Parsear solo si es una cadena
+        } else if (Array.isArray(partida.alumnos)) {
+          alumnos = partida.alumnos; // Si 'alumnos' ya es un array, no lo parseamos
+        }
+      } catch (error) {
+        console.error("Error al parsear alumnos en setInterval", error);
+        alumnos = []; // En caso de error, asignar un array vacío
+      }
+
+      io.to(codigo).emit('update-alumnos', alumnos); // Emitir actualización de los alumnos a todos los miembros de la sala
+    });
+  } catch (error) {
+    console.error("Error al actualizar lista de participantes:", error);
+  }
+}, 1000);
+
 
 // Iniciar servidor
 server.listen(port, () => {
