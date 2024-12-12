@@ -244,7 +244,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
       res.status(200).json({
         mensaje: 'Resultados obtenidos y gráfico generado con éxito',
         resultados, // Devolvemos los resultados
-        imagen: `/static/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
+        imagen: `../static/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
       });
     });
   } catch (error) {
