@@ -159,7 +159,7 @@ app.post('/login', loginUser);
 
 
 // Rutas para manejar las preguntas en la API
-// Rutas para manejar las preguntas en la API
+
 
 // Obtener todas las preguntas
 app.get('/api/preguntas', async (req, res) => {
@@ -254,6 +254,25 @@ app.delete('/api/preguntas/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error al eliminar la pregunta.' });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -54,7 +54,6 @@ const loadComponent = (componentName) => {
 
 nav {
   width: 200px;
-  background-color: #333;
   color: white;
   padding: 1rem;
 }
