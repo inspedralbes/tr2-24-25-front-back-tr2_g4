@@ -1,8 +1,6 @@
 <template>
   <div class="container">
     <h1>Administrar Preguntas</h1>
-
-    <!-- Agregar nueva pregunta -->
     <div class="form-container">
       <h2>Agregar Nueva Pregunta</h2>
       <form @submit.prevent="addQuestion">
