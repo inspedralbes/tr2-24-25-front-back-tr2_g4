@@ -61,7 +61,36 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('¡Hola, mundo!');
 });
+app.get('/alumno/:id', async (req, res) => {
+  try {
+    // Obtener el ID del alumno desde la URL
+    const idAlumno = req.params.id;
 
+    // Crear conexión a la base de datos de manera asíncrona
+    const connection = await mysql.createConnection(dataConnection);
+
+    // Realizar la consulta a la base de datos para obtener el alumno por ID
+    const [results] = await connection.execute('SELECT id, nom FROM alumnos WHERE id = ?', [idAlumno]);
+
+    // Cerrar la conexión después de la consulta
+    await connection.end();
+
+    // Verificar si se encontró el alumno
+    if (results.length > 0) {
+      // Si se encuentra al alumno, devolver el id y el nombre
+      res.json({
+        id: results[0].id,
+        nom: results[0].nom
+      });
+    } else {
+      // Si no se encuentra el alumno, devolver un error 404
+      res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+  } catch (error) {
+    console.error('Error al obtener el alumno:', error);
+    res.status(500).send('Error al obtener el alumno');
+  }
+});
 app.get('/preguntas', async (req, res) => {
   try {
     // Crear conexión a la base de datos
@@ -86,29 +115,57 @@ app.get('/preguntas', async (req, res) => {
 app.post('/guardar-resultado', async (req, res) => {
   const { preguntaId, dificultad, esCorrecto, nombreAlumno } = req.body;
 
-  console.log('Datos recibidos:', req.body); // Verifica qué datos llegan al backend
+  console.log('Datos recibidos:', req.body);
 
   try {
     // Validar los datos recibidos
     if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         mensaje: 'Datos incompletos',
-        detalles: 'Faltan los siguientes campos: ' + 
-                  (preguntaId ? '' : 'preguntaId, ') + 
-                  (dificultad ? '' : 'dificultad, ') + 
-                  (esCorrecto === undefined ? 'esCorrecto, ' : '') + 
+        detalles: 'Faltan los siguientes campos: ' +
+                  (preguntaId ? '' : 'preguntaId, ') +
+                  (dificultad ? '' : 'dificultad, ') +
+                  (esCorrecto === undefined ? 'esCorrecto, ' : '') +
                   (nombreAlumno ? '' : 'nombreAlumno')
       });
     }
 
-    // Crear un nuevo resultado
+    // Guardar el resultado en MongoDB (como lo estás haciendo)
     const nuevoResultado = new Resultado({
       preguntaId,
       dificultad,
       esCorrecto,
       nombreAlumno,
     });
-    await nuevoResultado.save(); // Guardar en MongoDB
+    await nuevoResultado.save();
+
+    // Crear conexión a MySQL
+    const connection = await mysql.createConnection(dataConnection);
+
+    // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
+    const [alumno] = await connection.execute('SELECT id FROM alumnos WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+
+    // Buscar si el alumno ya tiene estadísticas en la tabla `Estadisticas`
+    const [estadisticas] = await connection.execute('SELECT * FROM estadisticas WHERE alumno_id = ?', [alumno_id]);
+
+    if (estadisticas.length > 0) {
+      // Si el alumno ya tiene estadísticas, actualizamos el campo `valores`
+      const resultadosActualizados = JSON.parse(estadisticas[0].valores);  // Parseamos el JSON almacenado
+      resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno});
+
+      // Actualizamos la base de datos con los nuevos resultados
+      await connection.execute('UPDATE estadisticas SET valores = ? WHERE alumno_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
+    } else {
+      // Si no tiene estadísticas, creamos un nuevo registro
+      const valoresIniciales = [{ preguntaId, dificultad, esCorrecto }];
+      await connection.execute('INSERT INTO estadisticas (alumno_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
+    }
 
     res.status(201).json({ mensaje: 'Resultado guardado exitosamente' });
   } catch (error) {
@@ -116,6 +173,7 @@ app.post('/guardar-resultado', async (req, res) => {
     res.status(500).json({ mensaje: 'Error interno del servidor' });
   }
 });
+
 
 app.get('/resultados/:nombreAlumno', async (req, res) => {
   const { nombreAlumno } = req.params;
@@ -128,22 +186,36 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
       });
     }
 
-    // Buscar los resultados en la base de datos
-    const resultados = await Resultado.find({ nombreAlumno });
+    // Crear conexión a MySQL
+    const connection = await mysql.createConnection(dataConnection);
 
-    // Validar si se encontraron resultados
-    if (resultados.length === 0) {
+    // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
+    const [alumno] = await connection.execute('SELECT id FROM alumnos WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+
+    // Buscar las estadísticas del alumno en la tabla `Estadisticas`
+    const [estadisticas] = await connection.execute('SELECT * FROM estadisticas WHERE alumno_id = ?', [alumno_id]);
+
+    if (estadisticas.length === 0) {
       return res.status(404).json({
-        mensaje: `No se encontraron resultados para el alumno ${nombreAlumno}`,
+        mensaje: `No se encontraron estadísticas para el alumno ${nombreAlumno}`,
       });
     }
+
+    // Obtener los resultados almacenados en JSON
+    const resultados = JSON.parse(estadisticas[0].valores);
 
     // Procesar los resultados para el script Python
     const resultadosString = JSON.stringify(resultados);
 
     // Ejecutar el script Python con `spawn`
     const pythonProcess = spawn('py', [
-      '../python/estadisticaAlumno.py', // Nombre del script Python
+      '../python/estadisticaAlumno.py', // Ruta al script Python
       nombreAlumno,
       resultadosString,
     ]);
@@ -171,7 +243,8 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
       console.log(`Salida del script Python: ${pythonOutput}`);
       res.status(200).json({
         mensaje: 'Resultados obtenidos y gráfico generado con éxito',
-        resultados,
+        resultados, // Devolvemos los resultados
+        imagen: `/static/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
       });
     });
   } catch (error) {

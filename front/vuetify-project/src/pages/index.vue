@@ -1,7 +1,7 @@
 <template>
   <!--<CarrilesCarrera />-->
-  <Estadisticas />
-  <!--<CarrilJugador /> -->
+  <!--<Estadisticas />-->
+  <CarrilJugador />
   <!--<dado />-->
 </template>
 

@@ -53,17 +53,34 @@ def generar_grafico(nombre_alumno, datos):
 
 
 if __name__ == "__main__":
-    # Leer los argumentos del script
     try:
+        # Leer los argumentos del script
+        if len(sys.argv) < 3:
+            print("Error: Faltan argumentos. El script espera dos argumentos: nombre_alumno y resultados_json.")
+            sys.exit(1)
+
         nombre_alumno = sys.argv[1]
         resultados_json = sys.argv[2]
 
         # Convertir los resultados a un diccionario
-        resultados = json.loads(resultados_json)
+        try:
+            resultados = json.loads(resultados_json)
+        except json.JSONDecodeError:
+            print(f"Error al decodificar el JSON: {resultados_json}")
+            sys.exit(1)
+
+        if not isinstance(resultados, list):
+            print("Error: Los resultados deben ser una lista de objetos.")
+            sys.exit(1)
 
         # Procesar los resultados para el gráfico
         datos = {}
         for resultado in resultados:
+            # Validar que los datos tengan la estructura correcta
+            if 'dificultad' not in resultado or 'esCorrecto' not in resultado:
+                print(f"Error: El objeto de resultado está mal formado: {resultado}")
+                sys.exit(1)
+
             dificultad = resultado['dificultad']
             es_correcto = resultado['esCorrecto']
 

@@ -36,14 +36,31 @@ export default {
       bombas: [], // Posiciones de las bombas en el tablero
       multipliers: [], // Posiciones de los multiplicadores en el tablero
       audioIncorrecto: null,
+      nom: '', // Aquí se guarda el nombre del alumno
     };
   },
   created() { 
     // Cargar el archivo de audio
     this.audioIncorrecto = new Audio(errorAudio);
     this.generateUniquePositions();
+    this.obtenerAlumno(); // Cargar el alumno
   },
   methods: {
+    // Método para obtener el nombre del alumno
+    async obtenerAlumno() {
+      try {
+        const response = await fetch('http://localhost:3000/alumno/2'); // Suponiendo que el id del alumno es 1
+        const data = await response.json();
+        if (data.nom) {
+          this.nom = data.nom; // Asignamos el nombre del alumno
+        } else {
+          console.error("Alumno no encontrado");
+        }
+      } catch (error) {
+        console.error('Error al obtener el alumno:', error);
+      }
+    },
+
     // Método para devolver un color aleatorio para las opciones de respuesta
     getOpcionColor(index) {
       const colors = ['#9C27B0', '#FF9800', '#E91E63', '#c3de30']; // Colores morado, naranja, rosa y amarillo
@@ -51,6 +68,7 @@ export default {
         backgroundColor: colors[index % colors.length], // Cicla entre los colores
       };
     },
+
     // Método que simula el giro del dado
     async lanzarDado() {
       // Si el dado está girando o hay una pregunta activa, no se puede girar de nuevo
@@ -90,7 +108,7 @@ export default {
         }
       }, 400); // 400ms por giro, por lo que el dado gira durante 4 segundos
     },
-    
+
     // Método para obtener una pregunta desde la API
     async obtenerPregunta() {
       try {
@@ -135,7 +153,7 @@ export default {
         this.preguntaActiva = false;
       }
     },
-    
+
     // Método para verificar si la respuesta del jugador es correcta
     verificarRespuesta(respuesta) {
       if (respuesta === this.respuestaCorrecta) {
@@ -174,14 +192,16 @@ export default {
       this.preguntaActual = null;
       this.opcionesRespuesta = [];
     },
+
+    // Método para guardar el resultado
     async guardarResultado(respuesta) {
       const esCorrecto = respuesta === this.respuestaCorrecta;
-      const nombreAlumno = "DonPollo"; // Asegúrate de que este campo esté bien definido
-    
+      const nombreAlumno = this.nom; // Usamos el nombre del alumno
+
       // Accede a los campos 'id' y 'difficulty_level' de 'preguntaActual'
       const preguntaId = this.preguntaActual.id; // Usamos el 'id' de la pregunta
       const dificultad = this.preguntaActual.difficulty_level; // Usamos 'difficulty_level' de la pregunta
-    
+
       try {
         const response = await fetch('http://localhost:3000/guardar-resultado', {
           method: 'POST',
@@ -195,7 +215,7 @@ export default {
             nombreAlumno,
           }),
         });
-    
+
         const data = await response.json();
         if (response.ok) {
           console.log(data.mensaje); // "Resultado guardado exitosamente"
@@ -206,8 +226,7 @@ export default {
         console.error('Error al guardar el resultado:', error);
       }
     },
-    
-    
+
     // Método para hacer scroll en el carril según la posición
     scrollCarril() {
       const carrilContainer = this.$refs.carrilContainer;
