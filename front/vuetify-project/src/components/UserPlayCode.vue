@@ -25,7 +25,7 @@
         <v-text-field 
           class="code-center"
           v-model="codigo"
-          outlined
+          outlineded
           solo
           color="white"
           label="INGRESA EL CÓDIGO"

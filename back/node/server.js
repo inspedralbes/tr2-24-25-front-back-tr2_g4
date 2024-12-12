@@ -8,6 +8,11 @@ const { Server } = require('socket.io');
 const { createServer } = require('http');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const createDB = require(path.join(__dirname, 'configDB.js'));
+
+//(async () => {
+  //await createDB();
+//})();
 
 // Configuración del servidor
 const app = express();

@@ -108,31 +108,9 @@ export default {
     // Crear y configurar el objeto de audio
     this.audio = new Audio(waitingAudio);
     this.audio.loop = true;
-    this.audio.volume = 1;
+    this.audio.volume = this.isMuted ? 0 : 1; // El volumen depende del estado de mute
     this.audio.play().catch((err) => {
       console.warn("El audio no pudo ser reproducido automáticamente:", err);
-    });
-    this.audio.volume = 1;
-  },
-  created() {
-    this.codigo = this.$route.params.codigo; // Obtener el código de la URL
-
-    // Conectar con el servidor de Socket.io
-    this.socket = io('http://localhost:3000');
-
-    // Unirse a la sala de la partida
-    this.socket.emit('join-room', { codigo: this.codigo });
-
-    // Escuchar actualizaciones de los participantes
-    this.socket.on('update-alumnos', (alumnos) => {
-      this.participants = alumnos; // Actualizar la lista de participantes
-    });
-
-    // Manejar nuevos participantes
-    this.socket.on('new-participant', (data) => {
-      if (data.codigo === this.codigo) {
-        this.participants.push({ name: data.usuario });
-      }
     });
 
     // Animación de puntos
@@ -141,21 +119,44 @@ export default {
       count = (count + 1) % 4;
       this.dots = '.'.repeat(count);
     }, 500);
+
+    // Conexión al socket y manejo de participantes
+    this.codigo = this.$route.params.codigo; // Obtener el código de la URL
+    this.socket = io('http://localhost:3000'); // Conectar con el servidor de Socket.io
+
+    // Unirse a la sala de la partida
+    this.socket.emit('join-room', { codigo: this.codigo });
+
+    // Actualización de la lista de participantes
+    this.socket.on('update-alumnos', (alumnos) => {
+      this.participants = alumnos;
+    });
+
+    // Manejar nuevos participantes
+    this.socket.on('new-participant', (data) => {
+      if (data.codigo === this.codigo) {
+        this.participants.push({ name: data.usuario });
+      }
+    });
   },
   destroyed() {
-    // Desconectar cuando el componente se destruya
+    // Desconectar al destruir el componente
     if (this.socket) {
       this.socket.disconnect();
+    }
+    // Asegurarse de que el audio se detenga al destruir el componente
+    if (this.audio) {
+      this.audio.pause();
     }
   },
   methods: {
     toggleMute() {
-      this.isMuted = !this.isMuted;
+      this.isMuted = !this.isMuted; // Cambiar estado de mute
       if (this.isMuted) {
-        this.audio.pause();
-        this.audio.volume = 0;
+        this.audio.volume = 0; // Silenciar audio
+        this.audio.pause(); // Pausar audio
       } else {
-        this.audio.volume = 1;
+        this.audio.volume = 1; // Reanudar volumen
         this.audio.play().catch((err) => {
           console.warn("Error al reanudar el audio:", err);
         });
