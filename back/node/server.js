@@ -116,6 +116,36 @@ app.post('/guardar-resultado', async (req, res) => {
   }
 });
 
+// Ruta para obtener resultados por nombre de alumno
+app.get('/resultados/:nombreAlumno', async (req, res) => {
+  const { nombreAlumno } = req.params;
+
+  try {
+    // Validar que el nombre del alumno esté presente
+    if (!nombreAlumno) {
+      return res.status(400).json({ 
+        mensaje: 'El nombre del alumno es requerido' 
+      });
+    }
+
+    // Buscar los resultados en la base de datos
+    const resultados = await Resultado.find({ nombreAlumno });
+
+    // Validar si se encontraron resultados
+    if (resultados.length === 0) {
+      return res.status(404).json({ 
+        mensaje: `No se encontraron resultados para el alumno ${nombreAlumno}` 
+      });
+    }
+
+    // Responder con los resultados encontrados
+    res.status(200).json(resultados);
+  } catch (error) {
+    console.error('Error al obtener los resultados:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
 
 
 /* ---------------------------- SERVIDOR CON SOCKET.IO ---------------------------- */

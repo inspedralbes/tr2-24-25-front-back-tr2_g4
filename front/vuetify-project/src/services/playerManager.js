@@ -176,7 +176,7 @@ export default {
     },
     async guardarResultado(respuesta) {
       const esCorrecto = respuesta === this.respuestaCorrecta;
-      const nombreAlumno = "Juan Pérez"; // Asegúrate de que este campo esté bien definido
+      const nombreAlumno = "DonPollo"; // Asegúrate de que este campo esté bien definido
     
       // Accede a los campos 'id' y 'difficulty_level' de 'preguntaActual'
       const preguntaId = this.preguntaActual.id; // Usamos el 'id' de la pregunta
