@@ -6,12 +6,11 @@ const express = require('express');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
-const bcrypt = require('bcryptjs');
 const path = require('path');
 const createDB = require(path.join(__dirname, 'configDB.js'));
 
 //(async () => {
-  //await createDB();
+//await createDB();
 //})();
 
 // Configuración del servidor
@@ -36,7 +35,20 @@ const pool = mysql.createPool({
 // Funciones auxiliares
 const getPartida = async (codigo) => {
   const [rows] = await pool.query('SELECT * FROM Partida WHERE codigo = ?', [codigo]);
-  return rows.length > 0 ? { ...rows[0], alumnos: JSON.parse(rows[0].alumnos) } : null;
+  if (rows.length === 0) {
+    return null;
+  }
+
+  let alumnos = [];
+  try {
+    // Verifica si 'alumnos' tiene un valor y si es un JSON válido
+    alumnos = rows[0].alumnos ? JSON.parse(rows[0].alumnos) : [];
+  } catch (error) {
+    console.error("Error al parsear los alumnos", error);
+    alumnos = []; // Si no se puede parsear, asigna un array vacío
+  }
+
+  return { ...rows[0], alumnos };
 };
 
 const createPartida = async () => {
@@ -69,13 +81,12 @@ const addUser = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Aquí ya no se encripta la contraseña, simplemente se guarda tal cual
     const query = `
       INSERT INTO Usuarios (nom, cognom, email, password, fecha, profesor) 
       VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
     `;
-    const values = [nom, cognom, email, hashedPassword, profesor];
+    const values = [nom, cognom, email, password, profesor];
 
     const [result] = await pool.execute(query, values);
 
@@ -95,6 +106,9 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Log de los datos que se van a enviar para el login
+    console.log("Intentando iniciar sesión con los siguientes datos:", { email, password });
+
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
     }
@@ -106,8 +120,8 @@ const loginUser = async (req, res) => {
     }
 
     const user = rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    // Aquí ya no se compara la contraseña encriptada, se verifica si coinciden directamente
+    if (password !== user.password) {
       return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
     }
 
@@ -199,14 +213,31 @@ io.on('connection', (socket) => {
 
 // Verificar la lista de participantes en la base de datos periódicamente
 setInterval(async () => {
-  const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
-  partidas.forEach((partida) => {
-    const codigo = partida.codigo;
-    const alumnos = JSON.parse(partida.alumnos);
+  try {
+    const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
+    partidas.forEach((partida) => {
+      const codigo = partida.codigo;
+      let alumnos = [];
 
-    io.to(codigo).emit('update-alumnos', alumnos); // Emitir actualización de alumnos a todos los miembros de la sala
-  });
-}, 1000); // Verifica las actualizaciones cada 1 segundo
+      try {
+        // Asegurarse de que 'alumnos' sea una cadena antes de intentar parsearlo
+        if (typeof partida.alumnos === 'string' && partida.alumnos.trim() !== '') {
+          alumnos = JSON.parse(partida.alumnos); // Parsear solo si es una cadena
+        } else if (Array.isArray(partida.alumnos)) {
+          alumnos = partida.alumnos; // Si 'alumnos' ya es un array, no lo parseamos
+        }
+      } catch (error) {
+        console.error("Error al parsear alumnos en setInterval", error);
+        alumnos = []; // En caso de error, asignar un array vacío
+      }
+
+      io.to(codigo).emit('update-alumnos', alumnos); // Emitir actualización de los alumnos a todos los miembros de la sala
+    });
+  } catch (error) {
+    console.error("Error al actualizar lista de participantes:", error);
+  }
+}, 1000);
+
 
 // Iniciar servidor
 server.listen(port, () => {
