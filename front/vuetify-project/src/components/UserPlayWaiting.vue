@@ -102,6 +102,7 @@ export default {
       isMuted: false,   // Controla si el audio está silenciado o no
       audio: null,      // Referencia al objeto de audio
       showRules: false, // Controla la visibilidad del modal de reglas
+      usuario: null,    // Nombre completo del usuario logueado
     };
   },
   mounted() {
@@ -120,12 +121,22 @@ export default {
       this.dots = '.'.repeat(count);
     }, 500);
 
+    // Recuperar el nombre del usuario logueado
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      this.usuario = `${user.nombre} ${user.apellido}`;
+    } else {
+      console.error("Usuario no encontrado en localStorage. Redirigiendo a login...");
+      this.$router.push('/login'); // Redirigir si el usuario no está logueado
+      return;
+    }
+
     // Conexión al socket y manejo de participantes
     this.codigo = this.$route.params.codigo; // Obtener el código de la URL
     this.socket = io('http://localhost:3000'); // Conectar con el servidor de Socket.io
 
     // Unirse a la sala de la partida
-    this.socket.emit('join-room', { codigo: this.codigo });
+    this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
 
     // Actualización de la lista de participantes
     this.socket.on('update-alumnos', (alumnos) => {

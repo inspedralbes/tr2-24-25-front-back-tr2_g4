@@ -178,6 +178,27 @@ app.post('/update-partida', async (req, res) => {
   }
 });
 
+//User Pinia
+
+const login = async () => {
+  const response = await fetch('http://localhost:3000/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await response.json();
+  if (data.success) {
+    localStorage.setItem('user', JSON.stringify(data.user));
+    // Redirige a la pantalla principal
+    this.$router.push('/main-screen');
+  } else {
+    this.error = data.message;
+  }
+};
+
+
+
 // Rutas API de usuarios
 app.post('/addUser', addUser);
 app.post('/login', loginUser);
