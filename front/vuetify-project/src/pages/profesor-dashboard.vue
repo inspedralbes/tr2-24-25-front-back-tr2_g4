@@ -10,29 +10,26 @@
     </nav>
 
     <main class="content">
-      <!-- Componente actual que se carga -->
       <component :is="currentComponent" />
     </main>
 
-    <!-- Botón para crear partida -->
-    <button class="crear-partida-btn" @click="loadComponent('CrearPartida')">Crear Partida</button>
+    <button class="crear-partida-btn" @click="irACrearPartida">Crear Partida</button>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import AdminPreguntas from "@/components/AdminPreguntas.vue";
-import AdminUsuarios from "@/components/AdminUsuarios.vue";
-import AdminAulas from "@/components/AdminAulas.vue";
-import Estadisticas from "@/components/Estadisticas.vue";
-import CrearPartida from "@/components/LoadingPartida.vue";
+import { useRouter } from 'vue-router';
+import AdminPreguntas from '@/components/AdminPreguntas.vue';
+import AdminUsuarios from '@/components/AdminUsuarios.vue';
+import AdminAulas from '@/components/AdminAulas.vue';
+import Estadisticas from '@/components/Estadisticas.vue';
 
-// Define el componente inicial que se va a cargar
-const currentComponent = ref(AdminPreguntas);  // Componente predeterminado
+const router = useRouter();
+const currentComponent = ref(AdminPreguntas);
 
-// Función que cambia el componente según el nombre que se pase
 const loadComponent = (componentName) => {
-  switch(componentName) {
+  switch (componentName) {
     case 'AdminPreguntas':
       currentComponent.value = AdminPreguntas;
       break;
@@ -45,12 +42,13 @@ const loadComponent = (componentName) => {
     case 'Estadisticas':
       currentComponent.value = Estadisticas;
       break;
-    case 'CrearPartida':
-      currentComponent.value = CrearPartida;
-      break;
     default:
       currentComponent.value = AdminPreguntas;
   }
+};
+
+const irACrearPartida = () => {
+  router.push('/crear-partida'); // Redirige a la ruta de Crear Partida
 };
 </script>
 
@@ -87,19 +85,18 @@ nav li:hover {
   overflow-y: auto;
 }
 
-/* Estilo del botón Crear Partida - fijo en la parte inferior derecha */
 .crear-partida-btn {
-  position: fixed;  /* Fija el botón */
-  bottom: 20px;     /* 20px desde el fondo */
-  right: 20px;      /* 20px desde la derecha */
-  width: 200px;     /* Ancho del botón */
-  padding: 15px;    /* Espaciado interno */
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 200px;
+  padding: 15px;
   background-color: #4CAF50;
   color: white;
   font-size: 18px;
   border: none;
   cursor: pointer;
-  border-radius: 8px; /* Bordes redondeados */
+  border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 

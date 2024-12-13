@@ -9,6 +9,8 @@ import { createRouter, createWebHistory } from 'vue-router/auto'
 import { routes as autoRoutes } from 'vue-router/auto-routes'  // Renombramos 'routes' a 'autoRoutes' para evitar conflicto
 import UserPlayCode from '@/components/UserPlayCode.vue';
 import UserPlayWaiting from '@/components/UserPlayWaiting.vue';
+import CrearPartida from '@/components/LoadingPartida.vue';
+
 
 // Combina las rutas automáticas con las manuales
 const routes = [
@@ -25,6 +27,11 @@ const routes = [
     props: true, // Habilita el paso de props desde la URL
 
     
+  },
+  {
+    path: '/crear-partida',
+    name: 'CrearPartida',
+    component: CrearPartida, // Componente para la pantalla de "Crear Partida"
   },
 ];
 

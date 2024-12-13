@@ -60,15 +60,19 @@ const users = ref([]);
 const socket = io('http://localhost:3000');
 
 onMounted(async () => {
+  // Obtener el código de la partida
   const response = await axios.get('http://localhost:3000/game-code');
   gameCode.value = response.data.gameCode;
 
+  // Obtener los alumnos de la partida
   const alumnosResponse = await axios.get('http://localhost:3000/alumnos', { params: { codigo: gameCode.value } });
   users.value = alumnosResponse.data;
 
-  socket.emit('join_room', { codigo: gameCode.value });
+  // Unirse a la sala en el backend con el código de la partida
+  socket.emit('join-room', { codigo: gameCode.value });
 
-  socket.on('update_alumnos', (alumnos) => {
+  // Escuchar actualizaciones de alumnos
+  socket.on('update-alumnos', (alumnos) => {
     users.value = alumnos;
   });
 
@@ -76,6 +80,7 @@ onMounted(async () => {
     alert(error);
   });
 });
+
 
 const removeUser = (userId) => {
   socket.emit('remove_alumno', { codigo: gameCode.value, alumnoId: userId });
