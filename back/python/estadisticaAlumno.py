@@ -84,7 +84,7 @@ if __name__ == "__main__":
             dificultad = resultado['dificultad']
             es_correcto = resultado['esCorrecto']
 
-            if dificultad not in range(1, 5):  # Filtrar dificultades no válidas
+            if dificultad not in range(1, 6):  # Filtrar dificultades no válidas
                 continue
 
             if dificultad not in datos:

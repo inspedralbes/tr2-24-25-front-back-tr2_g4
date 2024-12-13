@@ -49,7 +49,7 @@ export default {
     // Método para obtener el nombre del alumno
     async obtenerAlumno() {
       try {
-        const response = await fetch('http://localhost:3000/alumno/2'); // Suponiendo que el id del alumno es 1
+        const response = await fetch('http://localhost:3000/alumno/1'); // Suponiendo que el id del alumno es 1
         const data = await response.json();
         if (data.nom) {
           this.nom = data.nom; // Asignamos el nombre del alumno
@@ -201,6 +201,7 @@ export default {
       // Accede a los campos 'id' y 'difficulty_level' de 'preguntaActual'
       const preguntaId = this.preguntaActual.id; // Usamos el 'id' de la pregunta
       const dificultad = this.preguntaActual.difficulty_level; // Usamos 'difficulty_level' de la pregunta
+      const tipoPregunta = this.preguntaActual.type;
 
       try {
         const response = await fetch('http://localhost:3000/guardar-resultado', {
@@ -213,6 +214,7 @@ export default {
             dificultad,
             esCorrecto,
             nombreAlumno,
+            tipoPregunta,
           }),
         });
 

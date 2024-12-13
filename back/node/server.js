@@ -141,20 +141,21 @@ app.get('/preguntas', async (req, res) => {
 
 // Ruta para guardar resultados
 app.post('/guardar-resultado', async (req, res) => {
-  const { preguntaId, dificultad, esCorrecto, nombreAlumno } = req.body;
+  const { preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta } = req.body;
 
   console.log('Datos recibidos:', req.body);
 
   try {
     // Validar los datos recibidos
-    if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno) {
+    if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno ||!tipoPregunta) {
       return res.status(400).json({
         mensaje: 'Datos incompletos',
         detalles: 'Faltan los siguientes campos: ' +
                   (preguntaId ? '' : 'preguntaId, ') +
                   (dificultad ? '' : 'dificultad, ') +
                   (esCorrecto === undefined ? 'esCorrecto, ' : '') +
-                  (nombreAlumno ? '' : 'nombreAlumno')
+                  (nombreAlumno ? '' : 'nombreAlumno') +
+                  (tipoPregunta ? '' : 'tipoPregunta')
       });
     }
 
@@ -164,6 +165,7 @@ app.post('/guardar-resultado', async (req, res) => {
       dificultad,
       esCorrecto,
       nombreAlumno,
+      tipoPregunta,
     });
     await nuevoResultado.save();
 
@@ -185,13 +187,13 @@ app.post('/guardar-resultado', async (req, res) => {
     if (estadisticas.length > 0) {
       // Si el alumno ya tiene estadísticas, actualizamos el campo `valores`
       const resultadosActualizados = JSON.parse(estadisticas[0].valores);  // Parseamos el JSON almacenado
-      resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno});
+      resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta});
 
       // Actualizamos la base de datos con los nuevos resultados
       await connection.execute('UPDATE estadisticas SET valores = ? WHERE alumno_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
     } else {
       // Si no tiene estadísticas, creamos un nuevo registro
-      const valoresIniciales = [{ preguntaId, dificultad, esCorrecto }];
+      const valoresIniciales = [{ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta }];
       await connection.execute('INSERT INTO estadisticas (alumno_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
     }
 

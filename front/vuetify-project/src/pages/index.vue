@@ -1,8 +1,8 @@
 <template>
-  <!--<CarrilesCarrera />-->
-  <Estadisticas />
-  <!--<CarrilJugador />-->
-  <!--<dado />-->
+   <!-- <CarrilesCarrera />
+  <dado />
+  <CarrilJugador /> -->
+  <Estadisticas /> 
 </template>
 
 <script setup>
