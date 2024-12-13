@@ -56,6 +56,9 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
 // Middleware para CORS
 app.use(cors()); 
 app.use(express.json());
+// Servir archivos estáticos desde la carpeta 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 // Ruta básica
 app.get('/', (req, res) => {
@@ -91,6 +94,31 @@ app.get('/alumno/:id', async (req, res) => {
     res.status(500).send('Error al obtener el alumno');
   }
 });
+app.get('/api/alumnos', async (req, res) => {
+  try {
+    // Crear conexión a la base de datos
+    const connection = await mysql.createConnection(dataConnection);
+
+    // Realizar la consulta para obtener los correos electrónicos y nombres
+    const [results] = await connection.execute('SELECT  nom FROM alumnos');
+
+    // Cerrar la conexión después de realizar la consulta
+    await connection.end();
+
+    // Enviar la lista de alumnos como respuesta en formato JSON
+    res.json(results);
+  } catch (error) {
+    console.error('Error al obtener la lista de alumnos:', error);
+
+    // Responder con un mensaje de error si algo falla
+    res.status(500).json({
+      mensaje: 'Error al obtener la lista de alumnos',
+      error: error.message,
+    });
+  }
+});
+
+
 app.get('/preguntas', async (req, res) => {
   try {
     // Crear conexión a la base de datos
@@ -244,7 +272,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
       res.status(200).json({
         mensaje: 'Resultados obtenidos y gráfico generado con éxito',
         resultados, // Devolvemos los resultados
-        imagen: `../static/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
+        imagen: `http://localhost:3000/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
       });
     });
   } catch (error) {

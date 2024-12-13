@@ -46,7 +46,7 @@ def generar_grafico(nombre_alumno, datos):
     agregar_valores(barras_incorrectas)
 
     # Guardar gráfico como archivo PNG
-    ruta_salida = f"static/{nombre_alumno}-graph.png"
+    ruta_salida = f"../node/public/{nombre_alumno}-graph.png"
     plt.tight_layout()
     plt.savefig(ruta_salida)
     print(f"Gráfico guardado en {ruta_salida}")
