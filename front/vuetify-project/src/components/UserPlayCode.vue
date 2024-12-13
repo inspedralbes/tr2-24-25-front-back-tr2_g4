@@ -125,9 +125,9 @@
   </v-app>
 </template>
 
-
 <script>
 import waitingAudio from '@/assets/PlayCodeMusic.mp3'; // Asegúrate de que esta ruta sea correcta
+import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
 
 export default {
   name: "CustomScreen",
@@ -146,7 +146,6 @@ export default {
     this.audio = new Audio(waitingAudio);
     this.audio.loop = true;
     this.audio.play();
-    
     
     // Reproducir el audio automáticamente solo si no está muteado
     if (!this.isMuted) {
@@ -182,13 +181,17 @@ export default {
         const data = await response.json();
 
         if (data.message === "Partida encontrada.") {
-          const usuario = 'UserDEF9'; // Esto debe ser asignado dinámicamente según el usuario actual
+          // Obtener el correo del usuario desde Pinia
+          const userStore = useUserStore();
+          const email = userStore.user.email; // El correo guardado en el store
+          const username = email.split('@')[0]; // Extraer la parte antes del '@' como nombre de usuario
+
           const updateResponse = await fetch(`http://localhost:3000/update-partida`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ codigo: this.codigo, usuario }),
+            body: JSON.stringify({ codigo: this.codigo, usuario: username }),
           });
 
           const updateData = await updateResponse.json();
@@ -209,7 +212,6 @@ export default {
   },
 };
 </script>
-
 
 
 <style scoped>
