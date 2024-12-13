@@ -283,6 +283,76 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
   }
 });
 
+app.get('/resultados/:nombreAlumno/:tipoPregunta', async (req, res) => { 
+  const { nombreAlumno, tipoPregunta } = req.params;
+
+  try {
+    if (!nombreAlumno || !tipoPregunta) {
+      return res.status(400).json({ mensaje: 'El nombre del alumno y el tipo de problema son requeridos' });
+    }
+
+    const connection = await mysql.createConnection(dataConnection);
+    const [alumno] = await connection.execute('SELECT id FROM alumnos WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+    const [estadisticas] = await connection.execute(
+      'SELECT * FROM estadisticas WHERE alumno_id = ?',
+      [alumno_id]
+    );
+
+    if (estadisticas.length === 0) {
+      return res.status(404).json({ mensaje: `No se encontraron estadísticas para el alumno ${nombreAlumno}` });
+    }
+
+    // Aquí parseamos los valores del JSON
+    const resultados = JSON.parse(estadisticas[0].valores);
+
+    // Filtramos los resultados por el tipo de pregunta (suma, resta, multiplicación, división)
+    const resultadosFiltrados = resultados.filter((resultado) => resultado.tipoPregunta === tipoPregunta);
+
+    if (resultadosFiltrados.length === 0) {
+      return res.status(404).json({ mensaje: `No se encontraron resultados para el tipo de pregunta: ${tipoPregunta}` });
+    }
+
+    // Ahora ejecutamos el script Python
+    const resultadosString = JSON.stringify(resultadosFiltrados);
+
+    const pythonProcess = spawn('py', [
+      '../python/estadisticaAlumnoTipo.py',  // Ruta del script Python
+      nombreAlumno,
+      tipoPregunta,
+      resultadosString,
+    ]);
+
+    let pythonOutput = '';
+    pythonProcess.stdout.on('data', (data) => {
+      pythonOutput += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Error en el script Python: ${data}`);
+    });
+
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        return res.status(500).json({ mensaje: 'Error al generar el gráfico' });
+      }
+
+      res.status(200).json({
+        imagen: `http://localhost:3000/${nombreAlumno}-${tipoPregunta}-graph.png`,
+      });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
+
 
 /* ---------------------------- SERVIDOR CON SOCKET.IO ---------------------------- */
 const server = createServer(app);
