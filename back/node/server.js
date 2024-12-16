@@ -288,6 +288,131 @@ app.delete('/api/preguntas/:id', async (req, res) => {
   }
 });
 
+
+
+
+
+
+// CRUD para gestionar Aulas
+
+// Obtener todas las aulas
+app.get('/api/aulas', async (req, res) => {
+  try {
+      const [aulas] = await pool.query('SELECT * FROM Aulas');
+      res.json({ success: true, aulas: aulas.map(aula => ({ 
+          nombre: aula.nombre, 
+          alumnos: JSON.parse(aula.alumnos) 
+      })) });
+  } catch (error) {
+      console.error('Error al obtener las aulas:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener las aulas.' });
+  }
+});
+
+// Crear una nueva aula
+app.post('/api/aulas', async (req, res) => {
+  try {
+      const { nombre, alumnos } = req.body;
+
+      if (!nombre || !alumnos || !Array.isArray(alumnos)) {
+          return res.status(400).json({ success: false, message: 'El nombre del aula y una lista de alumnos son obligatorios.' });
+      }
+
+      const query = 'INSERT INTO Aulas (nombre, alumnos) VALUES (?, ?)';
+      const values = [nombre, JSON.stringify(alumnos)];
+
+      await pool.execute(query, values);
+
+      res.status(201).json({ success: true, message: 'Aula creada correctamente.' });
+  } catch (error) {
+      console.error('Error al crear el aula:', error);
+      if (error.code === 'ER_DUP_ENTRY') {
+          res.status(409).json({ success: false, message: 'El aula ya existe.' });
+      } else {
+          res.status(500).json({ success: false, message: 'Error al crear el aula.' });
+      }
+  }
+});
+
+// Actualizar un aula existente
+app.put('/api/aulas/:nombre', async (req, res) => {
+  try {
+      const { nombre } = req.params;
+      const { alumnos } = req.body;
+
+      if (!alumnos || !Array.isArray(alumnos)) {
+          return res.status(400).json({ success: false, message: 'La lista de alumnos es obligatoria.' });
+      }
+
+      const query = 'UPDATE Aulas SET alumnos = ? WHERE nombre = ?';
+      const values = [JSON.stringify(alumnos), nombre];
+
+      const [result] = await pool.execute(query, values);
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
+      }
+
+      res.json({ success: true, message: 'Aula actualizada correctamente.' });
+  } catch (error) {
+      console.error('Error al actualizar el aula:', error);
+      res.status(500).json({ success: false, message: 'Error al actualizar el aula.' });
+  }
+});
+
+// Eliminar un aula
+app.delete('/api/aulas/:nombre', async (req, res) => {
+  try {
+      const { nombre } = req.params;
+
+      const query = 'DELETE FROM Aulas WHERE nombre = ?';
+      const [result] = await pool.execute(query, [nombre]);
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
+      }
+
+      res.json({ success: true, message: 'Aula eliminada correctamente.' });
+  } catch (error) {
+      console.error('Error al eliminar el aula:', error);
+      res.status(500).json({ success: false, message: 'Error al eliminar el aula.' });
+  }
+});
+
+// Obtener los alumnos de un aula específica
+app.get('/api/aulas/:nombre/alumnos', async (req, res) => {
+  try {
+      const { nombre } = req.params;
+
+      const [rows] = await pool.query('SELECT alumnos FROM Aulas WHERE nombre = ?', [nombre]);
+
+      if (rows.length === 0) {
+          return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
+      }
+
+      const alumnos = JSON.parse(rows[0].alumnos);
+      res.json({ success: true, alumnos });
+  } catch (error) {
+      console.error('Error al obtener los alumnos del aula:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener los alumnos del aula.' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Configuración de Socket.IO
 const server = createServer(app);
 const io = new Server(server, {
