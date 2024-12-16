@@ -49,7 +49,7 @@ export default {
     // Método para obtener el nombre del alumno
     async obtenerAlumno() {
       try {
-        const response = await fetch('http://localhost:3000/alumno/3'); // Suponiendo que el id del alumno es 1
+        const response = await fetch('http://localhost:3000/alumno/1'); // Suponiendo que el id del alumno es 1
         const data = await response.json();
         if (data.nom) {
           this.nom = data.nom; // Asignamos el nombre del alumno

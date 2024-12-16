@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+
+    
 const ResultadoSchema = new mongoose.Schema({
   preguntaId: { type: Number, required: true },
   dificultad: { type: Number, required: true },

@@ -5,7 +5,7 @@
         <li @click="loadComponent('AdminPreguntas')">Preguntas</li>
         <li @click="loadComponent('AdminUsuarios')">Usuarios</li>
         <li @click="loadComponent('AdminAulas')">Aulas</li>
-        <li @click="loadComponent('Estadisticas')">Estadísticas</li>
+        <li @click="loadComponent('CarrilJugador')">Estadísticas</li>
       </ul>
     </nav>
 
@@ -24,6 +24,8 @@ import AdminPreguntas from '@/components/AdminPreguntas.vue';
 import AdminUsuarios from '@/components/AdminUsuarios.vue';
 import AdminAulas from '@/components/AdminAulas.vue';
 import Estadisticas from '@/components/Estadisticas.vue';
+import CarrilJugador from '@/components/CarrilJugador.vue';
+
 
 const router = useRouter();
 const currentComponent = ref(AdminPreguntas);
@@ -40,10 +42,10 @@ const loadComponent = (componentName) => {
       currentComponent.value = AdminAulas;
       break;
     case 'Estadisticas':
-      currentComponent.value = Estadisticas;
+      currentComponent.value = CarrilJugador;
       break;
     default:
-      currentComponent.value = AdminPreguntas;
+      currentComponent.value = CarrilJugador;
   }
 };
 

@@ -75,7 +75,7 @@ app.get('/alumno/:id', async (req, res) => {
       
   
       // Realizar la consulta a la base de datos para obtener el alumno por ID
-      const [results] = await pool.execute('SELECT id, nom FROM alumnos WHERE id = ?', [idAlumno]);
+      const [results] = await pool.execute('SELECT id, nom FROM Usuarios WHERE id = ?', [idAlumno]);
   
      
   
@@ -99,7 +99,7 @@ app.get('/alumno/:id', async (req, res) => {
     try {
  
       // Realizar la consulta para obtener los correos electrónicos y nombres
-      const [results] = await pool.execute('SELECT  nom FROM alumnos');
+      const [results] = await pool.execute('SELECT  nom FROM Usuarios');
   
       // Enviar la lista de alumnos como respuesta en formato JSON
       res.json(results);
@@ -234,147 +234,189 @@ app.post('/update-partida', async (req, res) => {
 });
 /* ---------------------------- RUTAS DE ESTADISTICAS ---------------------------- */
 app.post('/guardar-resultado', async (req, res) => {
-    const { preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta } = req.body;
-  
-    console.log('Datos recibidos:', req.body);
-  
-    try {
-      // Validar los datos recibidos
-      if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno ||!tipoPregunta) {
-        return res.status(400).json({
-          mensaje: 'Datos incompletos',
-          detalles: 'Faltan los siguientes campos: ' +
-                    (preguntaId ? '' : 'preguntaId, ') +
-                    (dificultad ? '' : 'dificultad, ') +
-                    (esCorrecto === undefined ? 'esCorrecto, ' : '') +
-                    (nombreAlumno ? '' : 'nombreAlumno') +
-                    (tipoPregunta ? '' : 'tipoPregunta')
-        });
-      }
-  
-      // Guardar el resultado en MongoDB (como lo estás haciendo)
-      const nuevoResultado = new Resultado({
-        preguntaId,
-        dificultad,
-        esCorrecto,
-        nombreAlumno,
-        tipoPregunta,
+  const { preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta } = req.body;
+
+  // Verificar si el cuerpo de la solicitud está vacío
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({ mensaje: 'Cuerpo de la solicitud vacío' });
+  }
+
+  console.log('Datos recibidos:', req.body);
+
+  try {
+    // Validar los datos recibidos
+    if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno || !tipoPregunta) {
+      return res.status(400).json({
+        mensaje: 'Datos incompletos',
+        detalles: 'Faltan los siguientes campos: ' +
+                  (preguntaId ? '' : 'preguntaId, ') +
+                  (dificultad ? '' : 'dificultad, ') +
+                  (esCorrecto === undefined ? 'esCorrecto, ' : '') +
+                  (nombreAlumno ? '' : 'nombreAlumno') +
+                  (tipoPregunta ? '' : 'tipoPregunta')
       });
-      await nuevoResultado.save();
-  
-      // Crear conexión a MySQL
-      
-  
-      // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
-      const [alumno] = await pool.execute('SELECT id FROM alumnos WHERE nom = ?', [nombreAlumno]);
-  
-      if (alumno.length === 0) {
-        return res.status(404).json({ mensaje: 'Alumno no encontrado' });
-      }
-  
-      const alumno_id = alumno[0].id;
-  
-      // Buscar si el alumno ya tiene estadísticas en la tabla `Estadisticas`
-      const [estadisticas] = await pool.execute('SELECT * FROM estadisticas WHERE alumno_id = ?', [alumno_id]);
-  
-      if (estadisticas.length > 0) {
-        // Si el alumno ya tiene estadísticas, actualizamos el campo `valores`
-        const resultadosActualizados = JSON.parse(estadisticas[0].valores);  // Parseamos el JSON almacenado
-        resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta});
-  
-        // Actualizamos la base de datos con los nuevos resultados
-        await pool.execute('UPDATE estadisticas SET valores = ? WHERE alumno_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
+    }
+
+    // Guardar el resultado en MongoDB (como lo estás haciendo)
+    const nuevoResultado = new Resultado({
+      preguntaId,
+      dificultad,
+      esCorrecto,
+      nombreAlumno,
+      tipoPregunta,
+    });
+    await nuevoResultado.save();
+
+    // Crear conexión a MySQL
+
+    // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
+    const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+
+    // Buscar si el alumno ya tiene estadísticas en la tabla `Estadisticas`
+    const [estadisticas] = await pool.execute('SELECT * FROM Estadisticas WHERE usuario_id = ?', [alumno_id]);
+
+    let resultadosActualizados = [];
+
+    if (estadisticas.length > 0) {
+      // Verificamos si el campo `valores` ya está en formato JSON (cadena JSON)
+      const valores = estadisticas[0].valores;
+
+      // Si el campo `valores` es un objeto (lo que indica que ya fue deserializado anteriormente)
+      if (typeof valores === 'object') {
+        // Usamos directamente el objeto si ya está deserializado
+        resultadosActualizados = valores;
       } else {
-        // Si no tiene estadísticas, creamos un nuevo registro
-        const valoresIniciales = [{ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta }];
-        await pool.execute('INSERT INTO estadisticas (alumno_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
-      }
-  
-      res.status(201).json({ mensaje: 'Resultado guardado exitosamente' });
-    } catch (error) {
-      console.error('Error al guardar el resultado:', error);
-      res.status(500).json({ mensaje: 'Error interno del servidor' });
-    }
-  });
-  
-  
-  app.get('/resultados/:nombreAlumno', async (req, res) => {
-    const { nombreAlumno } = req.params;
-  
-    try {
-      // Validar que el nombre del alumno esté presente
-      if (!nombreAlumno) {
-        return res.status(400).json({
-          mensaje: 'El nombre del alumno es requerido',
-        });
-      }
-  
-      // Crear conexión a MySQL
-      
-  
-      // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
-      const [alumno] = await pool.execute('SELECT id FROM alumnos WHERE nom = ?', [nombreAlumno]);
-  
-      if (alumno.length === 0) {
-        return res.status(404).json({ mensaje: 'Alumno no encontrado' });
-      }
-  
-      const alumno_id = alumno[0].id;
-  
-      // Buscar las estadísticas del alumno en la tabla `Estadisticas`
-      const [estadisticas] = await pool.execute('SELECT * FROM estadisticas WHERE alumno_id = ?', [alumno_id]);
-  
-      if (estadisticas.length === 0) {
-        return res.status(404).json({
-          mensaje: `No se encontraron estadísticas para el alumno ${nombreAlumno}`,
-        });
-      }
-  
-      // Obtener los resultados almacenados en JSON
-      const resultados = JSON.parse(estadisticas[0].valores);
-  
-      // Procesar los resultados para el script Python
-      const resultadosString = JSON.stringify(resultados);
-  
-      // Ejecutar el script Python con `spawn`
-      const pythonProcess = spawn('py', [
-        '../python/estadisticaAlumno.py', // Ruta al script Python
-        nombreAlumno,
-        resultadosString,
-      ]);
-  
-      let pythonOutput = '';
-  
-      // Recoger la salida del script Python
-      pythonProcess.stdout.on('data', (data) => {
-        pythonOutput += data.toString();
-      });
-  
-      // Manejar errores del script Python
-      pythonProcess.stderr.on('data', (data) => {
-        console.error(`Error en el script Python: ${data}`);
-      });
-  
-      // Finalizar el proceso y responder al cliente
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          return res.status(500).json({
-            mensaje: 'El script Python terminó con errores',
-          });
+        // Si no es un objeto, intentamos parsearlo como JSON
+        try {
+          resultadosActualizados = JSON.parse(valores);
+        } catch (error) {
+          console.error('Error al parsear el JSON de estadísticas:', error);
+          resultadosActualizados = [];  // Si no se puede parsear, inicializamos un arreglo vacío
         }
-  
-        console.log(`Salida del script Python: ${pythonOutput}`);
-        res.status(200).json({
-          mensaje: 'Resultados obtenidos y gráfico generado con éxito',
-          resultados, // Devolvemos los resultados
-          imagen: `http://localhost:3000/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
-        });
-      });
-    } catch (error) {
-      console.error('Error al obtener los resultados:', error);
-      res.status(500).json({ mensaje: 'Error interno del servidor' });
+      }
+
+      // Agregar el nuevo resultado a los resultados existentes
+      resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta });
+
+      // Actualizamos la base de datos con los nuevos resultados (NO sobrescribimos, solo agregamos al final)
+      await pool.execute('UPDATE Estadisticas SET valores = ? WHERE usuario_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
+    } else {
+      // Si no tiene estadísticas, creamos un nuevo registro
+      const valoresIniciales = [{ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta }];
+      await pool.execute('INSERT INTO Estadisticas (usuario_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
     }
-  });
+
+    // Enviar respuesta de éxito
+    res.status(201).json({ mensaje: 'Resultado guardado exitosamente' });
+  } catch (error) {
+    console.error('Error al guardar el resultado:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
+
+app.get('/resultados/:nombreAlumno', async (req, res) => {
+  const { nombreAlumno } = req.params;
+
+  try {
+    // Validar que el nombre del alumno esté presente
+    if (!nombreAlumno) {
+      return res.status(400).json({
+        mensaje: 'El nombre del alumno es requerido',
+      });
+    }
+
+    // Crear conexión a MySQL
+
+    // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
+    const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+
+    // Buscar las estadísticas del alumno en la tabla `Estadisticas`
+    const [estadisticas] = await pool.execute('SELECT * FROM Estadisticas WHERE usuario_id = ?', [alumno_id]);
+
+    if (estadisticas.length === 0) {
+      return res.status(404).json({
+        mensaje: `No se encontraron estadísticas para el alumno ${nombreAlumno}`,
+      });
+    }
+
+    // Verificamos si 'valores' es una cadena JSON o ya es un objeto
+    let resultados = estadisticas[0].valores;
+
+    // Si 'valores' es una cadena, la parseamos
+    if (typeof resultados === 'string') {
+      try {
+        resultados = JSON.parse(resultados);
+      } catch (error) {
+        console.error('Error al parsear el JSON:', error);
+        return res.status(500).json({
+          mensaje: 'Error al procesar los resultados del alumno',
+        });
+      }
+    } 
+
+    // Si 'valores' ya es un objeto, lo usamos directamente
+    if (typeof resultados !== 'object') {
+      return res.status(500).json({
+        mensaje: 'El campo valores no contiene datos válidos',
+      });
+    }
+
+    // Procesar los resultados para el script Python
+    const resultadosString = JSON.stringify(resultados);
+
+    // Ejecutar el script Python con `spawn`
+    const pythonProcess = spawn('python3', [
+      '../python/estadisticaAlumno.py', // Ruta al script Python
+      nombreAlumno,
+      resultadosString,
+    ]);
+
+    let pythonOutput = '';
+
+    // Recoger la salida del script Python
+    pythonProcess.stdout.on('data', (data) => {
+      pythonOutput += data.toString();
+    });
+
+    // Manejar errores del script Python
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Error en el script Python: ${data}`);
+    });
+
+    // Finalizar el proceso y responder al cliente
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        return res.status(500).json({
+          mensaje: 'El script Python terminó con errores',
+        });
+      }
+
+      console.log(`Salida del script Python: ${pythonOutput}`);
+      res.status(200).json({
+        mensaje: 'Resultados obtenidos y gráfico generado con éxito',
+        resultados, // Devolvemos los resultados
+        imagen: `http://localhost:3000/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
+      });
+    });
+  } catch (error) {
+    console.error('Error al obtener los resultados:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
   
   app.get('/resultados/:nombreAlumno/:tipoPregunta', async (req, res) => { 
     const { nombreAlumno, tipoPregunta } = req.params;
@@ -385,7 +427,7 @@ app.post('/guardar-resultado', async (req, res) => {
       }
   
       
-      const [alumno] = await pool.execute('SELECT id FROM alumnos WHERE nom = ?', [nombreAlumno]);
+      const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
   
       if (alumno.length === 0) {
         return res.status(404).json({ mensaje: 'Alumno no encontrado' });
@@ -393,7 +435,7 @@ app.post('/guardar-resultado', async (req, res) => {
   
       const alumno_id = alumno[0].id;
       const [estadisticas] = await pool.execute(
-        'SELECT * FROM estadisticas WHERE alumno_id = ?',
+        'SELECT * FROM Estadisticas WHERE alumno_id = ?',
         [alumno_id]
       );
   
@@ -463,7 +505,7 @@ app.get('/preguntas', async (req, res) => {
     try {
 
       // Realizar consulta a la base de datos
-      const [results] = await pool.execute('SELECT * FROM pregunta ORDER BY RAND() LIMIT 1');
+      const [results] = await pool.execute('SELECT * FROM Pregunta ORDER BY RAND() LIMIT 1');
 
   
       // Enviar las preguntas como respuesta
