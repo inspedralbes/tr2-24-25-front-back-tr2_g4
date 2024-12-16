@@ -1,4 +1,3 @@
-
 /**
  * router/index.ts
  *
@@ -7,12 +6,39 @@
 
 // Composables
 import { createRouter, createWebHistory } from 'vue-router/auto'
-import { routes } from 'vue-router/auto-routes'
+import { routes as autoRoutes } from 'vue-router/auto-routes'  // Renombramos 'routes' a 'autoRoutes' para evitar conflicto
+import UserPlayCode from '@/components/UserPlayCode.vue';
+import UserPlayWaiting from '@/components/UserPlayWaiting.vue';
+import CrearPartida from '@/components/LoadingPartida.vue';
+
+
+// Combina las rutas automáticas con las manuales
+const routes = [
+  ...autoRoutes, // Incluye las rutas automáticas
+  {
+    path: '/',
+    name: 'Home',
+    component: UserPlayCode, // La pantalla inicial para ingresar el código
+  },
+  {
+    path: '/UserPlayWaiting/:codigo',
+    name: 'UserPlayWaiting',
+    component: UserPlayWaiting, // La pantalla de espera
+    props: true, // Habilita el paso de props desde la URL
+
+    
+  },
+  {
+    path: '/crear-partida',
+    name: 'CrearPartida',
+    component: CrearPartida, // Componente para la pantalla de "Crear Partida"
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-})
+});
 
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {
@@ -33,4 +59,4 @@ router.isReady().then(() => {
   localStorage.removeItem('vuetify:dynamic-reload')
 })
 
-export default router
+export default router;
