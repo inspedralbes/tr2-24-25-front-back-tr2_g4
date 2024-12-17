@@ -9,6 +9,7 @@
       <div class="form-group">
         <label for="alumno">Alumno:</label>
         <select id="alumno" v-model="selectedAlumno" class="select-field">
+          <option value="" disabled selected>Selecciona Alumno</option> <!-- Opción por defecto -->
           <option v-for="alumno in alumnos" :key="alumno.nom" :value="alumno.nom">
             {{ alumno.nom }}
           </option>
@@ -31,10 +32,10 @@
       </div>
     </div>
 
-    <!-- Mensaje de Error -->
-    <div v-if="error" class="error-message">
+    <!-- Mensaje de Error con v-alert -->
+    <v-alert v-if="error" type="error" dismissible>
       {{ error }}
-    </div>
+    </v-alert>
 
     <!-- Mostrar Gráfico -->
     <div v-if="grafico" class="grafico-container card">
@@ -70,7 +71,7 @@ export default {
         }
         this.alumnos = await response.json();
       } catch (err) {
-        this.error = `Error: ${err.message}`;
+        this.error = `${err.message}`;
       }
     },
 
@@ -98,7 +99,7 @@ export default {
         const data = await response.json();
         this.grafico = data.imagen;
       } catch (err) {
-        this.error = `Error: ${err.message}`;
+        this.error = `${err.message}`;
       }
     },
   },
@@ -117,7 +118,9 @@ export default {
   margin: 0 auto;
   padding: 20px;
   color: #333;
-  background-color: #f8f9fa;
+  background-color: #97a5e4; /* Aquí cambiamos el color de fondo */
+  border-radius: 20px; /* Bordes redondeados para el contenedor */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para resaltar el contenedor */
 }
 
 .title {
@@ -203,17 +206,13 @@ export default {
   background-color: #303f9f;
 }
 
-/* Mensaje de Error */
-.error-message {
-  color: #d32f2f;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
 /* Gráfico */
 .grafico-container {
   text-align: center;
+  border-radius: 10px; /* Bordes redondeados */
+  padding: 20px;
+  background-color: #f9f9f9; /* Fondo suave */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para destacar el área */
 }
 
 .grafico-container h2 {
@@ -226,7 +225,17 @@ export default {
   max-width: 100%;
   height: auto;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 10px; /* Bordes redondeados para la imagen */
 }
 
+/* Diseño del Alert */
+.v-alert {
+  margin-top: 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  padding: 20px;
+  color: #fff;
+  background-color: #d32f2f; /* Color rojo de error */
+  border: 2px solid #b71c1c;
+}
 </style>
