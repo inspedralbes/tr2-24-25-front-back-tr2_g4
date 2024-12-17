@@ -25,6 +25,8 @@ import AdminUsuarios from '@/components/AdminUsuarios.vue';
 import AdminAulas from '@/components/AdminAulas.vue';
 import Estadisticas from '@/components/Estadisticas.vue';
 
+
+
 const router = useRouter();
 const currentComponent = ref(AdminPreguntas);
 
