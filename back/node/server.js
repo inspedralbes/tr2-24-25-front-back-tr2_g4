@@ -469,15 +469,21 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Eliminar un usuario
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Primero elimina los registros relacionados si es necesario
+    // Primero elimina las relaciones en las tablas Aulas y Partida
+    // Eliminar al usuario de los campos 'alumnos' en Aulas
+    await pool.execute('UPDATE Aulas SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+
+    // Eliminar al usuario de los campos 'alumnos' en Partida
+    await pool.execute('UPDATE Partida SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+
+    // Luego elimina los registros en la tabla Estadisticas si existen
     await pool.execute('DELETE FROM Estadisticas WHERE usuario_id = ?', [id]);
 
-    // Luego elimina el usuario
+    // Finalmente, elimina el usuario de la tabla Usuarios
     const [result] = await pool.execute('DELETE FROM Usuarios WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {
@@ -490,6 +496,8 @@ app.delete('/api/users/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error al eliminar el usuario.', error: error.message });
   }
 });
+
+
 
 
 
