@@ -7,12 +7,29 @@
       <form @submit.prevent="saveAula">
         <div class="form-group">
           <label>Nombre del Aula:</label>
-          <input type="text" v-model="aula.nombre" required class="form-input" placeholder="Nombre del aula" :class="{ 'input-editing': editMode }"/>
+          <input
+            type="text"
+            v-model="aula.nombre"
+            required
+            class="form-input"
+            placeholder="Nombre del aula"
+            :class="{ 'input-editing': editMode }"
+          />
         </div>
 
         <div class="form-group">
-          <label>Alumnos (separados por coma):</label>
-          <input type="text" v-model="alumnosInput" placeholder="Ej: Juan, Maria, Ana" class="form-input" :class="{ 'input-editing': editMode }"/>
+          <label>Alumnos:</label>
+          <div class="checkbox-group">
+            <div v-for="user in users" :key="user.id" class="checkbox-item">
+              <input
+                type="checkbox"
+                :value="user.nom + ' ' + user.cognom"
+                v-model="aula.alumnos"
+                :id="'user-' + user.id"
+              />
+              <label :for="'user-' + user.id">{{ user.nom }} {{ user.cognom }}</label>
+            </div>
+          </div>
         </div>
 
         <div class="button-group">
@@ -54,11 +71,11 @@ export default {
   data() {
     return {
       aulas: [], // Lista de aulas obtenidas del servidor
+      users: [], // Lista de usuarios obtenidos del servidor
       aula: {
         nombre: "",
         alumnos: [],
       },
-      alumnosInput: "", // Campo de texto para editar los alumnos
       editMode: false, // Indica si estamos en modo edición
     };
   },
@@ -71,11 +88,16 @@ export default {
         console.error("Error al obtener las aulas:", error);
       }
     },
+    async fetchUsers() {
+      try {
+        const response = await axios.get("http://localhost:3000/api/users");
+        this.users = response.data.users;
+      } catch (error) {
+        console.error("Error al obtener los usuarios:", error);
+      }
+    },
     async saveAula() {
       try {
-        const alumnosArray = this.alumnosInput.split(",").map((alumno) => alumno.trim());
-        this.aula.alumnos = alumnosArray;
-
         if (this.editMode) {
           // Actualizar un aula existente
           await axios.put(`http://localhost:3000/api/aulas/${this.aula.nombre}`, {
@@ -97,7 +119,6 @@ export default {
     },
     editAula(aula) {
       this.aula = { ...aula };
-      this.alumnosInput = aula.alumnos.join(", ");
       this.editMode = true;
     },
     async deleteAula(nombre) {
@@ -117,12 +138,12 @@ export default {
     },
     resetForm() {
       this.aula = { nombre: "", alumnos: [] };
-      this.alumnosInput = "";
       this.editMode = false;
     },
   },
   mounted() {
     this.fetchAulas();
+    this.fetchUsers(); // Obtener usuarios al cargar la página
   },
 };
 </script>
@@ -131,20 +152,21 @@ export default {
 .container {
   max-width: 800px;
   margin: 0 auto;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   background: #f4f6f9;
   padding: 20px;
   border-radius: 8px;
+  color: #000; /* Asegurar que el texto por defecto sea negro */
 }
 .title {
   text-align: center;
   margin-bottom: 20px;
-  color: #333;
+  color: #000; /* Cambiar el color a negro */
   font-size: 2rem;
 }
 .subtitle {
   margin-top: 20px;
-  color: #333;
+  color: #000; /* Cambiar el color a negro */
   font-size: 1.5rem;
 }
 .form-container {
@@ -152,9 +174,23 @@ export default {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  color: #000; /* Asegurar texto negro en el formulario */
 }
 .form-group {
   margin-bottom: 15px;
+}
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.checkbox-item label {
+  color: #000; /* Asegurar texto negro para etiquetas de checkbox */
 }
 .form-input {
   width: 100%;
@@ -163,7 +199,7 @@ export default {
   border-radius: 6px;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
-  color: #333; /* Asegura que el texto sea visible */
+  color: #000; /* Cambiar el color del texto del input a negro */
 }
 .form-input:focus {
   border-color: #007bff;
@@ -223,16 +259,10 @@ export default {
 }
 .card-body {
   padding: 15px;
-  color: #333;
+  color: #000; /* Cambiar texto del cuerpo de la tarjeta a negro */
 }
 .card-body p {
   font-size: 1rem;
-  color: #555;
-}
-
-/* Agregar estilos para inputs en modo de edición */
-.input-editing {
-  background-color: #f4f6f9;
-  border-color: #007bff;
+  color: #000; /* Cambiar el texto de los párrafos a negro */
 }
 </style>

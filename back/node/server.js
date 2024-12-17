@@ -190,10 +190,7 @@
   app.post('/login', loginUser);
 
 
-
-  // Rutas para manejar las preguntas en la API
-
-
+  /* ---------------------------- API PREGUNTAS ---------------------------- */
   // Obtener todas las preguntas
   app.get('/api/preguntas', async (req, res) => {
     try {
@@ -289,12 +286,7 @@
   });
 
 
-
-
-
-
-  // CRUD para gestionar Aulas
-
+  /* ---------------------------- API AULAS ---------------------------- */
   // Obtener todas las aulas
   app.get('/api/aulas', async (req, res) => {
     try {
@@ -401,77 +393,58 @@
 
 
 
-  // CRUD para gestionar Alumnos
-  // Ruta para añadir un alumno
-app.post('/api/alumnos', async (req, res) => {
+/* ---------------------------- API USUARIOS ---------------------------- */
+
+// Obtener todos los usuarios
+app.get('/api/users', async (req, res) => {
   try {
-    const { nom, cognom, email, password } = req.body;
-
-    // Validación de campos requeridos
-    if (!nom || !cognom || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
-    }
-
-    // Verificación de si el usuario es alumno (con el formato del correo)
-    const alumnoRegex = /^a\d{2}/i; // Correo que empieza con 'a' seguido de dos números
-    if (!alumnoRegex.test(email.split('@')[0])) {
-      return res.status(400).json({
-        success: false,
-        message: 'El correo debe comenzar con "a" seguido de dos números para ser considerado un alumno.',
-      });
-    }
-
-    const query = `
-      INSERT INTO Usuarios (nom, cognom, email, password, fecha, profesor)
-      VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
-    `;
-    const values = [nom, cognom, email, password, false]; // El campo 'profesor' es false para los alumnos
-
-    const [result] = await pool.execute(query, values);
-
-    res.status(201).json({
-      success: true,
-      message: `Alumno ${email} añadido correctamente.`,
-      alumnoId: result.insertId,
-    });
+    const [rows] = await pool.query('SELECT * FROM Usuarios');
+    res.json({ success: true, users: rows });
   } catch (error) {
-    console.error('Error al añadir alumno:', error);
-    res.status(500).json({ success: false, message: 'Error al añadir alumno.', error: error.message });
+    console.error('Error al obtener los usuarios:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener los usuarios.' });
   }
 });
 
-
-
-// Ruta para obtener un alumno por su ID
-app.get('/api/alumnos/:id', async (req, res) => {
+// Obtener un usuario por su ID
+app.get('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-
-    const [rows] = await pool.execute('SELECT * FROM Usuarios WHERE id = ? AND profesor = false', [id]);
+    const [rows] = await pool.query('SELECT * FROM Usuarios WHERE id = ?', [id]);
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Alumno no encontrado.' });
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
     }
 
-    const alumno = rows[0];
-    res.json({
-      success: true,
-      alumno: {
-        id: alumno.id,
-        nom: alumno.nom,
-        cognom: alumno.cognom,
-        email: alumno.email,
-      },
-    });
+    res.json({ success: true, user: rows[0] });
   } catch (error) {
-    console.error('Error al obtener el alumno:', error);
-    res.status(500).json({ success: false, message: 'Error al obtener el alumno.', error: error.message });
+    console.error('Error al obtener el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener el usuario.', error: error.message });
   }
 });
 
+// Crear un nuevo usuario
+app.post('/api/users', async (req, res) => {
+  try {
+    const { nom, cognom, email, password, profesor } = req.body;
 
-// Ruta para actualizar un alumno
-app.put('/api/alumnos/:id', async (req, res) => {
+    if (!nom || !cognom || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
+    }
+
+    const query = `INSERT INTO Usuarios (nom, cognom, email, password, profesor) VALUES (?, ?, ?, ?, ?)`;
+    const values = [nom, cognom, email, password, profesor];
+
+    const [result] = await pool.execute(query, values);
+    res.status(201).json({ success: true, message: 'Usuario creado correctamente.', userId: result.insertId });
+  } catch (error) {
+    console.error('Error al crear el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al crear el usuario.', error: error.message });
+  }
+});
+
+// Actualizar un usuario
+app.put('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { nom, cognom, email, password } = req.body;
@@ -480,140 +453,43 @@ app.put('/api/alumnos/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
 
-    const query = `
-      UPDATE Usuarios 
-      SET nom = ?, cognom = ?, email = ?, password = ?
-      WHERE id = ? AND profesor = false
-    `;
+    const query = `UPDATE Usuarios SET nom = ?, cognom = ?, email = ?, password = ? WHERE id = ?`;
     const values = [nom, cognom, email, password, id];
 
     const [result] = await pool.execute(query, values);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Alumno no encontrado.' });
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
     }
 
-    res.json({ success: true, message: 'Alumno actualizado correctamente.' });
+    res.json({ success: true, message: 'Usuario actualizado correctamente.' });
   } catch (error) {
-    console.error('Error al actualizar el alumno:', error);
-    res.status(500).json({ success: false, message: 'Error al actualizar el alumno.', error: error.message });
+    console.error('Error al actualizar el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar el usuario.', error: error.message });
   }
 });
 
-
-
-// Ruta para eliminar un alumno
-app.delete('/api/alumnos/:id', async (req, res) => {
+// Eliminar un usuario
+app.delete('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const query = 'DELETE FROM Usuarios WHERE id = ? AND profesor = false';
-    const [result] = await pool.execute(query, [id]);
+    // Primero elimina los registros relacionados si es necesario
+    await pool.execute('DELETE FROM Estadisticas WHERE usuario_id = ?', [id]);
+
+    // Luego elimina el usuario
+    const [result] = await pool.execute('DELETE FROM Usuarios WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Alumno no encontrado.' });
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
     }
 
-    res.json({ success: true, message: 'Alumno eliminado correctamente.' });
+    res.json({ success: true, message: 'Usuario eliminado correctamente.' });
   } catch (error) {
-    console.error('Error al eliminar el alumno:', error);
-    res.status(500).json({ success: false, message: 'Error al eliminar el alumno.', error: error.message });
+    console.error('Error al eliminar el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al eliminar el usuario.', error: error.message });
   }
 });
-
-  // Obtener todos los usuarios
-  app.get('/api/users', async (req, res) => {
-    try {
-      const [rows] = await pool.query('SELECT * FROM Usuarios');
-      res.json({ success: true, users: rows });
-    } catch (error) {
-      console.error('Error al obtener los usuarios:', error);
-      res.status(500).json({ success: false, message: 'Error al obtener los usuarios.' });
-    }
-  });
-
-  // Obtener un usuario por su ID
-  app.get('/api/users/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const [rows] = await pool.query('SELECT * FROM Usuarios WHERE id = ?', [id]);
-
-      if (rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
-      }
-
-      const user = rows[0];
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          nom: user.nom,
-          cognom: user.cognom,
-          email: user.email,
-          profesor: user.profesor,
-        },
-      });
-    } catch (error) {
-      console.error('Error al obtener el usuario:', error);
-      res.status(500).json({ success: false, message: 'Error al obtener el usuario.', error: error.message });
-    }
-  });
-
-  // Actualizar un usuario
-  app.put('/api/users/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { nom, cognom, email, password } = req.body;
-
-      if (!nom || !cognom || !email || !password) {
-        return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
-      }
-
-      const query = `UPDATE Usuarios SET nom = ?, cognom = ?, email = ?, password = ? WHERE id = ?`;
-      const values = [nom, cognom, email, password, id];
-
-      const [result] = await pool.execute(query, values);
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
-      }
-
-      res.json({ success: true, message: 'Usuario actualizado correctamente.' });
-    } catch (error) {
-      console.error('Error al actualizar el usuario:', error);
-      res.status(500).json({ success: false, message: 'Error al actualizar el usuario.', error: error.message });
-    }
-  });
-
-  // Eliminar un usuario
-  app.delete('/api/users/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      const query = 'DELETE FROM Usuarios WHERE id = ?';
-      const [result] = await pool.execute(query, [id]);
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
-      }
-
-      res.json({ success: true, message: 'Usuario eliminado correctamente.' });
-    } catch (error) {
-      console.error('Error al eliminar el usuario:', error);
-      res.status(500).json({ success: false, message: 'Error al eliminar el usuario.', error: error.message });
-    }
-  });
-
-
-
-
-
-
-
-
-
-
-
 
 
 

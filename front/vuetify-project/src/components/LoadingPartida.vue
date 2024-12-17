@@ -1,110 +1,158 @@
 <template>
-  <v-container class="game-theme">
-    <v-row justify="center" class="text-center mt-6">
-      <v-col cols="12">
-        <h1 class="display-1 font-weight-bold text-white">¡Únete al juego!</h1>
-        <v-chip color="black" class="pa-4 text-h5 font-weight-bold">
-          Código: <span class="ml-2">{{ gameCode }}</span>
-        </v-chip>
-      </v-col>
-    </v-row>
+  <div id="app">
+    <h1>Gestión de Usuarios</h1>
 
-    <v-row justify="center" class="mt-10">
-      <v-col cols="12" md="6">
-        <v-card color="black" outlined>
-          <h2 class="text-center mt-4 text-h4 font-weight-bold">
-            Participantes:
-          </h2>
-          <v-list dense>
-            <template v-for="(user, index) in users" :key="index">
-              <v-list-item>
-                <v-list-item-avatar color="deep-purple lighten-3" class="text-white text-h6">
-                  <span>{{ index + 1 }}</span>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title class="text-h6">{{ user.name }}</v-list-item-title>
-                </v-list-item-content>
-                <v-list-item-action>
-                  <v-chip color="red lighten-1" class="white--text font-weight-bold" small @click="removeUser(user.id)">
-                    <v-icon left small>mdi-delete</v-icon> Eliminar
-                  </v-chip>
-                </v-list-item-action>
-              </v-list-item>
-              <v-divider v-if="index < users.length - 1"></v-divider>
-            </template>
-          </v-list>
-        </v-card>
-      </v-col>
-    </v-row>
+    <!-- Listar usuarios -->
+    <section>
+      <h2>Lista de Usuarios</h2>
+      <button @click="fetchUsers">Cargar Usuarios</button>
+      <ul v-if="users.length">
+        <li v-for="user in users" :key="user.id">
+          {{ user.nom }} {{ user.cognom }} - {{ user.email }}
+          <button @click="editUser(user)">Editar</button>
+          <button @click="deleteUser(user.id)">Eliminar</button>
+        </li>
+      </ul>
+      <p v-else>No hay usuarios disponibles.</p>
+    </section>
 
-    <v-row justify="center" class="mt-8">
-      <v-chip
-        color="green darken-2"
-        class="text-h6 font-weight-bold white--text pa-3"
-        :disabled="users.length === 0"
-        @click="startGame"
-      >
-        <v-icon left small>mdi-play</v-icon> ¡Comenzar partida!
-      </v-chip>
-    </v-row>
-  </v-container>
+    <!-- Crear o editar usuario -->
+    <section>
+      <h2>{{ isEditing ? 'Editar Usuario' : 'Crear Usuario' }}</h2>
+      <form @submit.prevent="isEditing ? updateUser() : createUser()">
+        <input v-model="form.nom" placeholder="Nombre" required />
+        <input v-model="form.cognom" placeholder="Apellido" required />
+        <input v-model="form.email" type="email" placeholder="Email" required />
+        <input v-model="form.password" type="password" placeholder="Contraseña" required />
+        <label>
+          Profesor:
+          <input v-model="form.profesor" type="checkbox" />
+        </label>
+        <button type="submit">{{ isEditing ? 'Actualizar' : 'Crear' }}</button>
+        <button type="button" v-if="isEditing" @click="cancelEdit">Cancelar</button>
+      </form>
+    </section>
+  </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import { io } from 'socket.io-client';
+<script>
 import axios from 'axios';
 
-const gameCode = ref('');
-const users = ref([]);
-const socket = io('http://localhost:3000');
-
-onMounted(async () => {
-  // Obtener el código de la partida
-  const response = await axios.get('http://localhost:3000/game-code');
-  gameCode.value = response.data.gameCode;
-
-  // Obtener los alumnos de la partida
-  const alumnosResponse = await axios.get('http://localhost:3000/alumnos', { params: { codigo: gameCode.value } });
-  users.value = alumnosResponse.data;
-
-  // Unirse a la sala en el backend con el código de la partida
-  socket.emit('join-room', { codigo: gameCode.value });
-
-  // Escuchar actualizaciones de alumnos
-  socket.on('update-alumnos', (alumnos) => {
-    users.value = alumnos;
-  });
-
-  socket.on('error', (error) => {
-    alert(error);
-  });
-});
-
-
-const removeUser = (userId) => {
-  socket.emit('remove_alumno', { codigo: gameCode.value, alumnoId: userId });
-};
-
-const startGame = () => {
-  alert('¡La partida ha comenzado!');
+export default {
+  data() {
+    return {
+      users: [],
+      form: {
+        id: null,
+        nom: '',
+        cognom: '',
+        email: '',
+        password: '',
+        profesor: false,
+      },
+      isEditing: false,
+    };
+  },
+  methods: {
+    // Obtener todos los usuarios
+    async fetchUsers() {
+      try {
+        const response = await axios.get('/api/users');
+        if (response.data.success) {
+          this.users = response.data.users;
+        } else {
+          alert('Error al cargar usuarios.');
+        }
+      } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+      }
+    },
+    // Crear un nuevo usuario
+    async createUser() {
+      try {
+        const response = await axios.post('/api/users', this.form);
+        if (response.data.success) {
+          alert(response.data.message);
+          this.fetchUsers();
+          this.resetForm();
+        } else {
+          alert('Error al crear usuario.');
+        }
+      } catch (error) {
+        console.error('Error al crear usuario:', error);
+      }
+    },
+    // Editar un usuario
+    editUser(user) {
+      this.isEditing = true;
+      this.form = { ...user };
+    },
+    // Actualizar un usuario existente
+    async updateUser() {
+      try {
+        const response = await axios.put(`/api/users/${this.form.id}`, this.form);
+        if (response.data.success) {
+          alert(response.data.message);
+          this.fetchUsers();
+          this.resetForm();
+        } else {
+          alert('Error al actualizar usuario.');
+        }
+      } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+      }
+    },
+    // Eliminar un usuario
+    async deleteUser(id) {
+      if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+      try {
+        const response = await axios.delete(`/api/users/${id}`);
+        if (response.data.success) {
+          alert(response.data.message);
+          this.fetchUsers();
+        } else {
+          alert('Error al eliminar usuario.');
+        }
+      } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+      }
+    },
+    // Cancelar edición
+    cancelEdit() {
+      this.resetForm();
+    },
+    // Resetear formulario
+    resetForm() {
+      this.form = {
+        id: null,
+        nom: '',
+        cognom: '',
+        email: '',
+        password: '',
+        profesor: false,
+      };
+      this.isEditing = false;
+    },
+  },
+  mounted() {
+    this.fetchUsers();
+  },
 };
 </script>
 
-<style scoped>
-.game-theme {
-  background: #99a6e9;
-  color: white;
-  min-height: 100vh;
-  padding: 0 16px;
+<style>
+#app {
+  font-family: Arial, sans-serif;
+  margin: 20px;
 }
-
-.v-chip {
-  font-size: 1.5rem;
-  border-radius: 50px;
+form {
+  margin-top: 20px;
 }
-
-.v-card {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+form input {
+  display: block;
+  margin: 5px 0;
+}
+form button {
+  margin-right: 10px;
 }
 </style>
