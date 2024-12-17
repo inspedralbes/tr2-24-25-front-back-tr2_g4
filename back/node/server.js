@@ -378,7 +378,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
     const resultadosString = JSON.stringify(resultados);
 
     // Ejecutar el script Python con `spawn`
-    const pythonProcess = spawn('python3', [
+    const pythonProcess = spawn('py', [
       '../python/estadisticaAlumno.py', // Ruta al script Python
       nombreAlumno,
       resultadosString,
@@ -435,7 +435,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
   
       const alumno_id = alumno[0].id;
       const [estadisticas] = await pool.execute(
-        'SELECT * FROM Estadisticas WHERE alumno_id = ?',
+        'SELECT * FROM Estadisticas WHERE usuario_id = ?',
         [alumno_id]
       );
   
