@@ -8,6 +8,7 @@ const { Server } = require('socket.io');
 const { createServer } = require('http');
 const path = require('path');
 const createDB = require(path.join(__dirname, 'configDB.js'));
+const bodyParser = require('body-parser');
 
 //(async () => {
 //await createDB();
@@ -18,6 +19,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json()); // Middleware para manejar JSON
+app.use(bodyParser.json());
 
 // Configuración de la base de datos
 const pool = mysql.createPool({
@@ -29,26 +31,37 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000, // Timeout de conexión
+  connectTimeout: 10000 // Timeout de conexión
 });
 
 // Funciones auxiliares
-const getPartida = async (codigo) => {
-  const [rows] = await pool.query('SELECT * FROM Partida WHERE codigo = ?', [codigo]);
-  if (rows.length === 0) {
-    return null;
-  }
-
-  let alumnos = [];
+async function getAlumnos(codigo) {
   try {
-    // Verifica si 'alumnos' tiene un valor y si es un JSON válido
-    alumnos = rows[0].alumnos ? JSON.parse(rows[0].alumnos) : [];
-  } catch (error) {
-    console.error("Error al parsear los alumnos", error);
-    alumnos = []; // Si no se puede parsear, asigna un array vacío
-  }
+    // Realizar la consulta para obtener la partida por código
+    const [partida] = await pool.query('SELECT alumnos FROM Partida WHERE codigo = ?', [codigo]);
+    
+    // Verificar si la partida existe
+    if (!partida || partida.length === 0) {
+      throw new Error('Partida no encontrada');
+    }
 
-  return { ...rows[0], alumnos };
+    // Obtener el campo alumnos (en formato JSON si está guardado correctamente)
+    const alumnos = partida[0].alumnos;
+
+    // Verificar si el campo alumnos está presente
+    if (!alumnos) {
+      throw new Error('La partida no tiene alumnos');
+    }
+
+    // Verificar si los datos de alumnos son un arreglo
+    if (!Array.isArray(alumnos)) {
+      throw new Error('Los datos de los alumnos están malformados');
+    }
+
+    return alumnos;
+  } catch (error) {
+    throw new Error(error.message || 'Hubo un error al obtener los alumnos');
+  }
 };
 
 const createPartida = async () => {
@@ -143,7 +156,7 @@ const loginUser = async (req, res) => {
 // Ruta para obtener el código de la partida o crear uno nuevo
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
-  const partida = await getPartida(codigo);
+  const partida = await getAlumnos(codigo);
   const gameCode = partida ? codigo : await createPartida();
   res.json({ message: partida ? 'Partida encontrada.' : 'Nueva partida creada.', gameCode });
 });
@@ -151,7 +164,7 @@ app.get('/game-code', async (req, res) => {
 // Ruta para obtener los alumnos de una partida
 app.get('/alumnos', async (req, res) => {
   const { codigo } = req.query;
-  const partida = await getPartida(codigo);
+  const partida = await getAlumnos(codigo);
   if (!partida) {
     return res.status(404).json({ error: 'Partida no encontrada' });
   }
@@ -159,24 +172,42 @@ app.get('/alumnos', async (req, res) => {
 });
 
 // Ruta para actualizar la partida con un nuevo alumno
+
 app.post('/update-partida', async (req, res) => {
   const { codigo, usuario } = req.body;
-  const partida = await getPartida(codigo);
-  if (!partida) {
-    return res.status(404).json({ error: 'Partida no encontrada' });
-  }
 
-  const alumnos = partida.alumnos || [];
+  try {
+    // Obtener los alumnos de la partida con el código proporcionado
+    const alumnos = await getAlumnos(codigo);
 
-  if (!alumnos.some(alumno => alumno.name === usuario)) {
-    alumnos.push({ name: usuario }); // Agregar el nuevo alumno a la lista
-    await pool.query('UPDATE Partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
-    io.to(codigo).emit('new-participant', { usuario, codigo });
-    return res.json({ success: true, message: 'Partida actualizada' });
-  } else {
-    return res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+    // Verificar si el usuario ya está en la partida
+    if (!alumnos.some(alumno => alumno.name === usuario)) {
+      // Agregar el nuevo alumno al arreglo de alumnos
+      alumnos.push({ name: usuario });
+
+      // Actualizar la partida en la base de datos con el nuevo arreglo de alumnos
+      console.log("Los alumnos nuevos son: " + JSON.stringify(alumnos));
+
+      await pool.query('UPDATE Partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+
+      // Emitir un evento para notificar a los demás participantes sobre el nuevo participante
+      io.to(codigo).emit('new-participant', { usuario, codigo });
+
+      return res.json({ success: true, message: 'Partida actualizada' });
+    } else {
+      return res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+    }
+  } catch (error) {
+    // Manejo de errores
+    console.error(error);
+    return res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
   }
 });
+
+
+
+
+
 
 //User Pinia
 
@@ -213,7 +244,7 @@ io.on('connection', (socket) => {
   console.log('Nuevo cliente conectado:', socket.id);
 
   socket.on('join-room', async ({ codigo }) => {
-    const partida = await getPartida(codigo);
+    const partida = await getAlumnos(codigo);
     if (!partida) {
       return socket.emit('error', 'Código de partida no válido');
     }

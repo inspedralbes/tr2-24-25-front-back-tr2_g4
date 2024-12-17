@@ -101,7 +101,6 @@ export default {
       dots: '', // Animación de puntos
       isMuted: false,   // Controla si el audio está silenciado o no
       audio: null,      // Referencia al objeto de audio
-      showRules: false, // Controla la visibilidad del modal de reglas
       usuario: null,    // Nombre completo del usuario logueado
     };
   },
@@ -124,7 +123,7 @@ export default {
     // Recuperar el nombre del usuario logueado
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
-      this.usuario = `${user.nombre} ${user.apellido}`;
+      this.usuario = `${user.nom} ${user.cognom}`;
     } else {
       console.error("Usuario no encontrado en localStorage. Redirigiendo a login...");
       this.$router.push('/login'); // Redirigir si el usuario no está logueado
@@ -136,20 +135,37 @@ export default {
     this.socket = io('http://localhost:3000'); // Conectar con el servidor de Socket.io
 
     // Unirse a la sala de la partida
-    this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
+    this.socket.emit('join-room', { codigo: this.codigo });
 
     // Actualización de la lista de participantes
     this.socket.on('update-alumnos', (alumnos) => {
       this.participants = alumnos;
+
+      // Actualizar participantes en `localStorage`
+      let participants = JSON.parse(localStorage.getItem('participants')) || [];
+      alumnos.forEach(alumno => {
+        if (!participants.some(p => p === alumno.name)) {
+          participants.push(alumno.name);
+        }
+      });
+      localStorage.setItem('participants', JSON.stringify(participants));
     });
 
     // Manejar nuevos participantes
     this.socket.on('new-participant', (data) => {
       if (data.codigo === this.codigo) {
         this.participants.push({ name: data.usuario });
+
+        // Actualizar en `localStorage`
+        let participants = JSON.parse(localStorage.getItem('participants')) || [];
+        if (!participants.includes(data.usuario)) {
+          participants.push(data.usuario);
+          localStorage.setItem('participants', JSON.stringify(participants));
+        }
       }
     });
   },
+
   destroyed() {
     // Desconectar al destruir el componente
     if (this.socket) {
@@ -160,6 +176,7 @@ export default {
       this.audio.pause();
     }
   },
+
   methods: {
     toggleMute() {
       this.isMuted = !this.isMuted; // Cambiar estado de mute
@@ -175,6 +192,7 @@ export default {
     }
   }
 };
+
 </script>
 
 <style scoped>
@@ -202,6 +220,37 @@ export default {
   transform: scale(1.1);
 }
 
+/* Otros estilos preexistentes */
+.gradient-btn {
+  width: 200px;
+  height: 40px;
+  margin-top: 20px;
+}
+
+.title-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  height: 200%;
+  width: 100%;
+}
+
+.text-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  height: 10%;
+  width: 100%;
+}
+
+.code-center {
+  margin-bottom: 20px;
+}
+
 /* Botón flotante: Reglas */
 .rules-button {
   position: fixed;
@@ -220,11 +269,6 @@ export default {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.rules-button:hover {
-  background-color: #4fc3f7;
-  transform: scale(1.1);
-}
-
 .text-rules-color {
   background-color: #0288d1;
 }
@@ -234,9 +278,36 @@ export default {
   background-color: #0a4f74;
 }
 
-/* Estilo para chips */
-.color-chips {
-  background-color: #020c11;
-  color: black;
+.rules-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
+/* Botón flotante: Tutorial */
+.video-button {
+  position: fixed;
+  bottom: 20px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.text-video {
+
+  background-color: #0288d1;
+}
+
+.video-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
 }
 </style>

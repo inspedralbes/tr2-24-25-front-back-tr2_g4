@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { useUserStore } from '@/stores/userStore'; // Importa el store de Pinia
+import { useUserStore } from '@/stores/userStore';
 
 export default {
   name: "LoginForm",
@@ -79,15 +79,15 @@ export default {
           const data = await response.json();
 
           if (data.success) {
-            // Si la autenticación es exitosa, guarda el usuario en el store de Pinia
             const userStore = useUserStore();
-            userStore.setUser({
+            const userData = {
               email: this.email,
-              name: data.userName, // Asume que 'userName' viene de la respuesta
-              role: data.profesor ? 'profesor' : 'alumno', // Ejemplo de rol
-            });
+              name: data.userName,
+              role: data.profesor ? 'profesor' : 'alumno',
+            };
+            userStore.setUser(userData); // Guardar el usuario en Pinia
 
-            // Redirige según el rol del usuario
+            // Redirige según el rol
             if (data.profesor) {
               this.$router.push('/profesor-dashboard');
             } else {
@@ -105,6 +105,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .fondo {
