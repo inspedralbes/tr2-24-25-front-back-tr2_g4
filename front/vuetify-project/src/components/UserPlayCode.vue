@@ -126,17 +126,12 @@
 </template>
 
 <script>
-import RulesDialog from '@/components/RulesDialog.vue';
-import VideoTutorialDialog from '@/components/VideoTutorialDialog.vue';
 import waitingAudio from '@/assets/PlayCodeMusic.mp3'; // Asegúrate de que esta ruta sea correcta
 import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
 
 export default {
   name: "CustomScreen",
-  components: {
-    RulesDialog,
-    VideoTutorialDialog,
-  },
+ 
   data() {
     return {
       codigo: '', // Código ingresado por el usuario
