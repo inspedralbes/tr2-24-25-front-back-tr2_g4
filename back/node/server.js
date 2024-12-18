@@ -48,7 +48,7 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
 async function getAlumnos(codigo) {
     try {
       // Realizar la consulta para obtener la partida por código
-      const [partida] = await pool.query('SELECT alumnos FROM Partida WHERE codigo = ?', [codigo]);
+      const [partida] = await pool.query('SELECT alumnos FROM partida WHERE codigo = ?', [codigo]);
       
       // Verificar si la partida existe
       if (!partida || partida.length === 0) {
@@ -77,7 +77,7 @@ async function getAlumnos(codigo) {
 
 const createPartida = async () => {
   const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
-  await pool.query('INSERT INTO Partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
+  await pool.query('INSERT INTO partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
   return codigo;
 };
 /* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
@@ -90,7 +90,7 @@ app.get('/alumno/:id', async (req, res) => {
       
   
       // Realizar la consulta a la base de datos para obtener el alumno por ID
-      const [results] = await pool.execute('SELECT id, nom FROM Usuarios WHERE id = ?', [idAlumno]);
+      const [results] = await pool.execute('SELECT id, nom FROM usuarios WHERE id = ?', [idAlumno]);
   
      
   
@@ -114,7 +114,7 @@ app.get('/alumno/:id', async (req, res) => {
     try {
  
       // Realizar la consulta para obtener los correos electrónicos y nombres
-      const [results] = await pool.execute('SELECT  nom FROM Usuarios');
+      const [results] = await pool.execute('SELECT  nom FROM usuarios');
   
       // Enviar la lista de alumnos como respuesta en formato JSON
       res.json(results);
@@ -155,7 +155,7 @@ app.post('/addUser', async (req, res) => {
     }
 
     const query = `
-      INSERT INTO Usuarios (nom, cognom, email, password, fecha, profesor) 
+      INSERT INTO usuarios (nom, cognom, email, password, fecha, profesor) 
       VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
     `;
     const values = [nom, cognom, email, password, profesor];
@@ -182,7 +182,7 @@ app.post('/login', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
       }
 
-      const [rows] = await pool.execute('SELECT * FROM Usuarios WHERE email = ?', [email]);
+      const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
 
       if (rows.length === 0) {
         return res.status(404).json({ success: false, message: 'Correo no registrado.' });
@@ -245,7 +245,7 @@ app.post('/update-partida', async (req, res) => {
         // Actualizar la partida en la base de datos con el nuevo arreglo de alumnos
         console.log("Los alumnos nuevos son: " + JSON.stringify(alumnos));
   
-        await pool.query('UPDATE Partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+        await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
   
         // Emitir un evento para notificar a los demás participantes sobre el nuevo participante
         io.to(codigo).emit('new-participant', { usuario, codigo });
@@ -298,7 +298,7 @@ app.post('/guardar-resultado', async (req, res) => {
     // Crear conexión a MySQL
 
     // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
-    const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+    const [alumno] = await pool.execute('SELECT id FROM usuarios WHERE nom = ?', [nombreAlumno]);
 
     if (alumno.length === 0) {
       return res.status(404).json({ mensaje: 'Alumno no encontrado' });
@@ -307,7 +307,7 @@ app.post('/guardar-resultado', async (req, res) => {
     const alumno_id = alumno[0].id;
 
     // Buscar si el alumno ya tiene estadísticas en la tabla `Estadisticas`
-    const [estadisticas] = await pool.execute('SELECT * FROM Estadisticas WHERE usuario_id = ?', [alumno_id]);
+    const [estadisticas] = await pool.execute('SELECT * FROM estadisticas WHERE usuario_id = ?', [alumno_id]);
 
     let resultadosActualizados = [];
 
@@ -333,11 +333,11 @@ app.post('/guardar-resultado', async (req, res) => {
       resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta });
 
       // Actualizamos la base de datos con los nuevos resultados (NO sobrescribimos, solo agregamos al final)
-      await pool.execute('UPDATE Estadisticas SET valores = ? WHERE usuario_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
+      await pool.execute('UPDATE estadisticas SET valores = ? WHERE usuario_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
     } else {
       // Si no tiene estadísticas, creamos un nuevo registro
       const valoresIniciales = [{ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta }];
-      await pool.execute('INSERT INTO Estadisticas (usuario_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
+      await pool.execute('INSERT INTO estadisticas (usuario_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
     }
 
     // Enviar respuesta de éxito
@@ -363,7 +363,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
     // Crear conexión a MySQL
 
     // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
-    const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+    const [alumno] = await pool.execute('SELECT id FROM usuarios WHERE nom = ?', [nombreAlumno]);
 
     if (alumno.length === 0) {
       return res.status(404).json({ mensaje: 'Alumno no encontrado' });
@@ -372,7 +372,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
     const alumno_id = alumno[0].id;
 
     // Buscar las estadísticas del alumno en la tabla `Estadisticas`
-    const [estadisticas] = await pool.execute('SELECT * FROM Estadisticas WHERE usuario_id = ?', [alumno_id]);
+    const [estadisticas] = await pool.execute('SELECT * FROM estadisticas WHERE usuario_id = ?', [alumno_id]);
 
     if (estadisticas.length === 0) {
       return res.status(404).json({
@@ -455,7 +455,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
       }
   
       
-      const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+      const [alumno] = await pool.execute('SELECT id FROM usuarios WHERE nom = ?', [nombreAlumno]);
   
       if (alumno.length === 0) {
         return res.status(404).json({ mensaje: 'Alumno no encontrado' });
@@ -463,7 +463,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
   
       const alumno_id = alumno[0].id;
       const [estadisticas] = await pool.execute(
-        'SELECT * FROM Estadisticas WHERE usuario_id = ?',
+        'SELECT * FROM estadisticas WHERE usuario_id = ?',
         [alumno_id]
       );
   
@@ -520,7 +520,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
 // Obtener todas las preguntas
 app.get('/api/preguntas', async (req, res) => {
   try {
-    const [preguntas] = await pool.query('SELECT * FROM Pregunta');
+    const [preguntas] = await pool.query('SELECT * FROM pregunta');
     res.json(preguntas);
   } catch (error) {
     console.error('Error al obtener las preguntas:', error);
@@ -533,7 +533,7 @@ app.get('/preguntas', async (req, res) => {
     try {
 
       // Realizar consulta a la base de datos
-      const [results] = await pool.execute('SELECT * FROM Pregunta ORDER BY RAND() LIMIT 1');
+      const [results] = await pool.execute('SELECT * FROM pregunta ORDER BY RAND() LIMIT 1');
 
   
       // Enviar las preguntas como respuesta
@@ -610,7 +610,7 @@ app.get('/preguntas', async (req, res) => {
     try {
       const { id } = req.params;
 
-      const query = 'DELETE FROM Pregunta WHERE id = ?';
+      const query = 'DELETE FROM pregunta WHERE id = ?';
       const [result] = await pool.execute(query, [id]);
 
       if (result.affectedRows === 0) {
@@ -632,7 +632,7 @@ app.get('/preguntas', async (req, res) => {
   // Obtener todas las aulas
   app.get('/api/aulas', async (req, res) => {
     try {
-        const [aulas] = await pool.query('SELECT * FROM Aulas');
+        const [aulas] = await pool.query('SELECT * FROM aulas');
         res.json({ success: true, aulas: aulas.map(aula => ({ 
             nombre: aula.nombre, 
             alumnos: JSON.parse(aula.alumnos) 
@@ -652,7 +652,7 @@ app.get('/preguntas', async (req, res) => {
             return res.status(400).json({ success: false, message: 'El nombre del aula y una lista de alumnos son obligatorios.' });
         }
 
-        const query = 'INSERT INTO Aulas (nombre, alumnos) VALUES (?, ?)';
+        const query = 'INSERT INTO aulas (nombre, alumnos) VALUES (?, ?)';
         const values = [nombre, JSON.stringify(alumnos)];
 
         await pool.execute(query, values);
@@ -678,7 +678,7 @@ app.get('/preguntas', async (req, res) => {
             return res.status(400).json({ success: false, message: 'La lista de alumnos es obligatoria.' });
         }
 
-        const query = 'UPDATE Aulas SET alumnos = ? WHERE nombre = ?';
+        const query = 'UPDATE aulas SET alumnos = ? WHERE nombre = ?';
         const values = [JSON.stringify(alumnos), nombre];
 
         const [result] = await pool.execute(query, values);
@@ -699,7 +699,7 @@ app.get('/preguntas', async (req, res) => {
     try {
         const { nombre } = req.params;
 
-        const query = 'DELETE FROM Aulas WHERE nombre = ?';
+        const query = 'DELETE FROM aulas WHERE nombre = ?';
         const [result] = await pool.execute(query, [nombre]);
 
         if (result.affectedRows === 0) {
@@ -718,7 +718,7 @@ app.get('/preguntas', async (req, res) => {
     try {
         const { nombre } = req.params;
 
-        const [rows] = await pool.query('SELECT alumnos FROM Aulas WHERE nombre = ?', [nombre]);
+        const [rows] = await pool.query('SELECT alumnos FROM aulas WHERE nombre = ?', [nombre]);
 
         if (rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
@@ -740,7 +740,7 @@ app.get('/preguntas', async (req, res) => {
 // Obtener todos los usuarios
 app.get('/api/users', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM Usuarios');
+    const [rows] = await pool.query('SELECT * FROM usuarios');
     res.json({ success: true, users: rows });
   } catch (error) {
     console.error('Error al obtener los usuarios:', error);
@@ -752,7 +752,7 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM Usuarios WHERE id = ?', [id]);
+    const [rows] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
@@ -774,7 +774,7 @@ app.post('/api/users', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
 
-    const query = `INSERT INTO Usuarios (nom, cognom, email, password, profesor) VALUES (?, ?, ?, ?, ?)`;
+    const query = `INSERT INTO usuarios (nom, cognom, email, password, profesor) VALUES (?, ?, ?, ?, ?)`;
     const values = [nom, cognom, email, password, profesor];
 
     const [result] = await pool.execute(query, values);
@@ -795,7 +795,7 @@ app.put('/api/users/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
 
-    const query = `UPDATE Usuarios SET nom = ?, cognom = ?, email = ?, password = ? WHERE id = ?`;
+    const query = `UPDATE usuarios SET nom = ?, cognom = ?, email = ?, password = ? WHERE id = ?`;
     const values = [nom, cognom, email, password, id];
 
     const [result] = await pool.execute(query, values);
@@ -817,16 +817,16 @@ app.delete('/api/users/:id', async (req, res) => {
 
     // Primero elimina las relaciones en las tablas Aulas y Partida
     // Eliminar al usuario de los campos 'alumnos' en Aulas
-    await pool.execute('UPDATE Aulas SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+    await pool.execute('UPDATE aulas SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
 
     // Eliminar al usuario de los campos 'alumnos' en Partida
-    await pool.execute('UPDATE Partida SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+    await pool.execute('UPDATE partida SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
 
     // Luego elimina los registros en la tabla Estadisticas si existen
-    await pool.execute('DELETE FROM Estadisticas WHERE usuario_id = ?', [id]);
+    await pool.execute('DELETE FROM estadisticas WHERE usuario_id = ?', [id]);
 
     // Finalmente, elimina el usuario de la tabla Usuarios
-    const [result] = await pool.execute('DELETE FROM Usuarios WHERE id = ?', [id]);
+    const [result] = await pool.execute('DELETE FROM usuarios WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
@@ -878,7 +878,7 @@ const io = new Server(server, {
 /* ---------------------------- TAREAS PERIÓDICAS ---------------------------- */
 setInterval(async () => {
   try {
-    const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
+    const [partidas] = await pool.query('SELECT codigo, alumnos FROM partida');
     partidas.forEach((partida) => {
       const codigo = partida.codigo;
       let alumnos = [];

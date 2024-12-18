@@ -14,7 +14,7 @@
           v-model="newQuestion.difficulty_level" 
           type="number" 
           placeholder="Nivel de dificultad (1-4)" 
-          min="1" max="4" 
+          min="1" max="5" 
           required 
         />
         <input 
@@ -23,12 +23,14 @@
           placeholder="Respuesta correcta" 
           required 
         />
-        <input 
-          v-model="newQuestion.type" 
-          type="text" 
-          placeholder="Tipo (suma, resta, etc.)" 
-          required 
-        />
+        <!-- Cambiado a un desplegable -->
+        <select v-model="newQuestion.type" class="input-field" required>
+          <option disabled value="">Selecciona un tipo</option>
+          <option value="suma">Suma</option>
+          <option value="resta">Resta</option>
+          <option value="multiplicacion">Multiplicación</option>
+          <option value="division">División</option>
+        </select>
         <button type="submit" class="btn-submit">Agregar Pregunta</button>
       </form>
     </div>
@@ -66,7 +68,7 @@
           v-model="editingQuestion.difficulty_level" 
           type="number" 
           placeholder="Nivel de dificultad (1-4)" 
-          min="1" max="4" 
+          min="1" max="5" 
           required 
         />
         <input 
@@ -75,12 +77,14 @@
           placeholder="Respuesta correcta" 
           required 
         />
-        <input 
-          v-model="editingQuestion.type" 
-          type="text" 
-          placeholder="Tipo (suma, resta, etc.)" 
-          required 
-        />
+        <!-- Cambiado a un desplegable -->
+        <select v-model="newQuestion.type" class="input-field" required>
+          <option disabled value="">Selecciona un tipo</option>
+          <option value="suma">Suma</option>
+          <option value="resta">Resta</option>
+          <option value="multiplicacion">Multiplicación</option>
+          <option value="division">División</option>
+        </select>
         <div class="modal-actions">
           <button type="submit" class="btn-submit">Actualizar</button>
           <button @click="cancelEdit" class="btn-cancel">Cancelar</button>
@@ -89,6 +93,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "axios";
@@ -166,6 +171,25 @@ export default {
 </script>
 
 <style scoped>
+/* Aplicar estilos al select */
+select.input-field {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: black; /* Texto negro */
+  background-color: white; /* Fondo blanco */
+  cursor: pointer;
+  font-size: 16px; /* Tamaño del texto */
+}
+
+select.input-field:focus {
+  border-color: #007bff; /* Color azul al enfocar */
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Sombra azul al enfocar */
+}
+
 .container {
   max-width: 800px;
   margin: 0 auto;
