@@ -7,21 +7,23 @@ const cors = require('cors');
 const { Server } = require('socket.io');
 const { createServer } = require('http');
 const path = require('path');
+const multer = require('multer');
+const bcrypt = require('bcrypt');
 const createDB = require(path.join(__dirname, 'configDB.js'));
+const mongoose = require('mongoose');
+const Resultado = require('./models/valors');
+const { spawn } = require('child_process');
 const bodyParser = require('body-parser');
-
-//(async () => {
-//await createDB();
-//})();
 
 // Configuración del servidor
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 app.use(cors());
 app.use(express.json()); // Middleware para manejar JSON
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 
-// Configuración de la base de datos
+/* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -31,62 +33,120 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000 // Timeout de conexión
+  connectTimeout: 10000, // Timeout de conexión
 });
 
-// Funciones auxiliares
+mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mongodb.net/valores')
+  .then(() => {
+    console.log('Conectado a MongoDB Atlas');
+  })
+  .catch((error) => {
+    console.error('Error al conectar a MongoDB Atlas:', error);
+  });
+
+/* ---------------------------- FUNCIONES AUXILIARES ---------------------------- */
 async function getAlumnos(codigo) {
-  try {
-    // Realizar la consulta para obtener la partida por código
-    const [partida] = await pool.query('SELECT alumnos FROM Partida WHERE codigo = ?', [codigo]);
-    
-    // Verificar si la partida existe
-    if (!partida || partida.length === 0) {
-      throw new Error('Partida no encontrada');
+    try {
+      // Realizar la consulta para obtener la partida por código
+      const [partida] = await pool.query('SELECT alumnos FROM Partida WHERE codigo = ?', [codigo]);
+      
+      // Verificar si la partida existe
+      if (!partida || partida.length === 0) {
+        throw new Error('Partida no encontrada');
+      }
+  
+      // Obtener el campo alumnos (en formato JSON si está guardado correctamente)
+      const alumnos = partida[0].alumnos;
+  
+      // Verificar si el campo alumnos está presente
+      if (!alumnos) {
+        throw new Error('La partida no tiene alumnos');
+      }
+  
+      // Verificar si los datos de alumnos son un arreglo
+      if (!Array.isArray(alumnos)) {
+        throw new Error('Los datos de los alumnos están malformados');
+      }
+  
+      return alumnos;
+    } catch (error) {
+      throw new Error(error.message || 'Hubo un error al obtener los alumnos');
     }
-
-    // Obtener el campo alumnos (en formato JSON si está guardado correctamente)
-    const alumnos = partida[0].alumnos;
-
-    // Verificar si el campo alumnos está presente
-    if (!alumnos) {
-      throw new Error('La partida no tiene alumnos');
-    }
-
-    // Verificar si los datos de alumnos son un arreglo
-    if (!Array.isArray(alumnos)) {
-      throw new Error('Los datos de los alumnos están malformados');
-    }
-
-    return alumnos;
-  } catch (error) {
-    throw new Error(error.message || 'Hubo un error al obtener los alumnos');
-  }
-};
+  };
+  
 
 const createPartida = async () => {
   const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
   await pool.query('INSERT INTO Partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
   return codigo;
 };
+/* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
+app.get('/alumno/:id', async (req, res) => {
+    try {
+      // Obtener el ID del alumno desde la URL
+      const idAlumno = req.params.id;
+  
+      // Crear conexión a la base de datos de manera asíncrona
+      
+  
+      // Realizar la consulta a la base de datos para obtener el alumno por ID
+      const [results] = await pool.execute('SELECT id, nom FROM Usuarios WHERE id = ?', [idAlumno]);
+  
+     
+  
+      // Verificar si se encontró el alumno
+      if (results.length > 0) {
+        // Si se encuentra al alumno, devolver el id y el nombre
+        res.json({
+          id: results[0].id,
+          nom: results[0].nom
+        });
+      } else {
+        // Si no se encuentra el alumno, devolver un error 404
+        res.status(404).json({ error: 'Alumno no encontrado' });
+      }
+    } catch (error) {
+      console.error('Error al obtener el alumno:', error);
+      res.status(500).send('Error al obtener el alumno');
+    }
+  });
+  app.get('/api/alumnos', async (req, res) => {
+    try {
+ 
+      // Realizar la consulta para obtener los correos electrónicos y nombres
+      const [results] = await pool.execute('SELECT  nom FROM Usuarios');
+  
+      // Enviar la lista de alumnos como respuesta en formato JSON
+      res.json(results);
+    } catch (error) {
+      console.error('Error al obtener la lista de alumnos:', error);
+  
+      // Responder con un mensaje de error si algo falla
+      res.status(500).json({
+        mensaje: 'Error al obtener la lista de alumnos',
+        error: error.message,
+      });
+    }
+  });
+/* ---------------------------- RUTAS DE USUARIOS ---------------------------- */
 
-// Función para agregar un usuario
-const addUser = async (req, res) => {
+// Crear un usuario
+app.post('/addUser', async (req, res) => {
   try {
     const { nom, cognom, email, password } = req.body;
 
-    if (!nom || !cognom || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
-    }
+      if (!nom || !cognom || !email || !password) {
+        return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
+      }
 
-    const alumnoRegex = /^a\d{2}/i; // Correo que empieza con 'a' seguido de dos números
-    const profesorRegex = /^[a-zA-Z]+$/; // Correo que contiene solo letras antes del '@'
+    const alumnoRegex = /^a\d{2}/i;
+    const profesorRegex = /^[a-zA-Z]+$/;
 
     let profesor = false;
     if (alumnoRegex.test(email.split('@')[0])) {
-      profesor = false; // Es un alumno
+      profesor = false;
     } else if (profesorRegex.test(email.split('@')[0])) {
-      profesor = true; // Es un profesor
+      profesor = true;
     } else {
       return res.status(400).json({
         success: false,
@@ -94,14 +154,13 @@ const addUser = async (req, res) => {
       });
     }
 
-    // Aquí ya no se encripta la contraseña, simplemente se guarda tal cual
     const query = `
       INSERT INTO Usuarios (nom, cognom, email, password, fecha, profesor) 
       VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
     `;
     const values = [nom, cognom, email, password, profesor];
 
-    const [result] = await pool.execute(query, values);
+      const [result] = await pool.execute(query, values);
 
     res.json({
       success: true,
@@ -112,25 +171,22 @@ const addUser = async (req, res) => {
     console.error('Error al añadir usuario:', error);
     res.status(500).json({ success: false, message: 'Error al añadir usuario.', error: error.message });
   }
-};
+});
 
-// Función de login de usuario
-const loginUser = async (req, res) => {
+// Login de usuario
+app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Log de los datos que se van a enviar para el login
-    console.log("Intentando iniciar sesión con los siguientes datos:", { email, password });
+      if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
+      }
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
-    }
+      const [rows] = await pool.execute('SELECT * FROM Usuarios WHERE email = ?', [email]);
 
-    const [rows] = await pool.execute('SELECT * FROM Usuarios WHERE email = ?', [email]);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Correo no registrado.' });
-    }
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Correo no registrado.' });
+      }
 
     const user = rows[0];
     // Aquí ya no se compara la contraseña encriptada, se verifica si coinciden directamente
@@ -151,9 +207,11 @@ const loginUser = async (req, res) => {
     console.error('Error al iniciar sesión:', error);
     res.status(500).json({ success: false, message: 'Error al iniciar sesión.', error: error.message });
   }
-};
+});
 
-// Ruta para obtener el código de la partida o crear uno nuevo
+/* ---------------------------- RUTAS DE PARTIDAS ---------------------------- */
+
+// Obtener o crear código de partida
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
   const partida = await getAlumnos(codigo);
@@ -161,7 +219,7 @@ app.get('/game-code', async (req, res) => {
   res.json({ message: partida ? 'Partida encontrada.' : 'Nueva partida creada.', gameCode });
 });
 
-// Ruta para obtener los alumnos de una partida
+// Obtener alumnos de una partida
 app.get('/alumnos', async (req, res) => {
   const { codigo } = req.query;
   const partida = await getAlumnos(codigo);
@@ -171,36 +229,613 @@ app.get('/alumnos', async (req, res) => {
   res.json(partida.alumnos);
 });
 
-// Ruta para actualizar la partida con un nuevo alumno
-
+// Actualizar partida con un nuevo alumno
 app.post('/update-partida', async (req, res) => {
-  const { codigo, usuario } = req.body;
+    const { codigo, usuario } = req.body;
+  
+    try {
+      // Obtener los alumnos de la partida con el código proporcionado
+      const alumnos = await getAlumnos(codigo);
+  
+      // Verificar si el usuario ya está en la partida
+      if (!alumnos.some(alumno => alumno.name === usuario)) {
+        // Agregar el nuevo alumno al arreglo de alumnos
+        alumnos.push({ name: usuario });
+  
+        // Actualizar la partida en la base de datos con el nuevo arreglo de alumnos
+        console.log("Los alumnos nuevos son: " + JSON.stringify(alumnos));
+  
+        await pool.query('UPDATE Partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+  
+        // Emitir un evento para notificar a los demás participantes sobre el nuevo participante
+        io.to(codigo).emit('new-participant', { usuario, codigo });
+  
+        return res.json({ success: true, message: 'Partida actualizada' });
+      } else {
+        return res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+      }
+    } catch (error) {
+      // Manejo de errores
+      console.error(error);
+      return res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
+    }
+  });
+/* ---------------------------- RUTAS DE ESTADISTICAS ---------------------------- */
+app.post('/guardar-resultado', async (req, res) => {
+  const { preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta } = req.body;
+
+  // Verificar si el cuerpo de la solicitud está vacío
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({ mensaje: 'Cuerpo de la solicitud vacío' });
+  }
+
+  console.log('Datos recibidos:', req.body);
 
   try {
-    // Obtener los alumnos de la partida con el código proporcionado
-    const alumnos = await getAlumnos(codigo);
-
-    // Verificar si el usuario ya está en la partida
-    if (!alumnos.some(alumno => alumno.name === usuario)) {
-      // Agregar el nuevo alumno al arreglo de alumnos
-      alumnos.push({ name: usuario });
-
-      // Actualizar la partida en la base de datos con el nuevo arreglo de alumnos
-      console.log("Los alumnos nuevos son: " + JSON.stringify(alumnos));
-
-      await pool.query('UPDATE Partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
-
-      // Emitir un evento para notificar a los demás participantes sobre el nuevo participante
-      io.to(codigo).emit('new-participant', { usuario, codigo });
-
-      return res.json({ success: true, message: 'Partida actualizada' });
-    } else {
-      return res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+    // Validar los datos recibidos
+    if (!preguntaId || !dificultad || esCorrecto === undefined || !nombreAlumno || !tipoPregunta) {
+      return res.status(400).json({
+        mensaje: 'Datos incompletos',
+        detalles: 'Faltan los siguientes campos: ' +
+                  (preguntaId ? '' : 'preguntaId, ') +
+                  (dificultad ? '' : 'dificultad, ') +
+                  (esCorrecto === undefined ? 'esCorrecto, ' : '') +
+                  (nombreAlumno ? '' : 'nombreAlumno') +
+                  (tipoPregunta ? '' : 'tipoPregunta')
+      });
     }
+
+    // Guardar el resultado en MongoDB (como lo estás haciendo)
+    const nuevoResultado = new Resultado({
+      preguntaId,
+      dificultad,
+      esCorrecto,
+      nombreAlumno,
+      tipoPregunta,
+    });
+    await nuevoResultado.save();
+
+    // Crear conexión a MySQL
+
+    // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
+    const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+
+    // Buscar si el alumno ya tiene estadísticas en la tabla `Estadisticas`
+    const [estadisticas] = await pool.execute('SELECT * FROM Estadisticas WHERE usuario_id = ?', [alumno_id]);
+
+    let resultadosActualizados = [];
+
+    if (estadisticas.length > 0) {
+      // Verificamos si el campo `valores` ya está en formato JSON (cadena JSON)
+      const valores = estadisticas[0].valores;
+
+      // Si el campo `valores` es un objeto (lo que indica que ya fue deserializado anteriormente)
+      if (typeof valores === 'object') {
+        // Usamos directamente el objeto si ya está deserializado
+        resultadosActualizados = valores;
+      } else {
+        // Si no es un objeto, intentamos parsearlo como JSON
+        try {
+          resultadosActualizados = JSON.parse(valores);
+        } catch (error) {
+          console.error('Error al parsear el JSON de estadísticas:', error);
+          resultadosActualizados = [];  // Si no se puede parsear, inicializamos un arreglo vacío
+        }
+      }
+
+      // Agregar el nuevo resultado a los resultados existentes
+      resultadosActualizados.push({ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta });
+
+      // Actualizamos la base de datos con los nuevos resultados (NO sobrescribimos, solo agregamos al final)
+      await pool.execute('UPDATE Estadisticas SET valores = ? WHERE usuario_id = ?', [JSON.stringify(resultadosActualizados), alumno_id]);
+    } else {
+      // Si no tiene estadísticas, creamos un nuevo registro
+      const valoresIniciales = [{ preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta }];
+      await pool.execute('INSERT INTO Estadisticas (usuario_id, valores) VALUES (?, ?)', [alumno_id, JSON.stringify(valoresIniciales)]);
+    }
+
+    // Enviar respuesta de éxito
+    res.status(201).json({ mensaje: 'Resultado guardado exitosamente' });
   } catch (error) {
-    // Manejo de errores
-    console.error(error);
-    return res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
+    console.error('Error al guardar el resultado:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
+
+app.get('/resultados/:nombreAlumno', async (req, res) => {
+  const { nombreAlumno } = req.params;
+
+  try {
+    // Validar que el nombre del alumno esté presente
+    if (!nombreAlumno) {
+      return res.status(400).json({
+        mensaje: 'El nombre del alumno es requerido',
+      });
+    }
+
+    // Crear conexión a MySQL
+
+    // Obtener el id del alumno (suponiendo que tienes una tabla de alumnos)
+    const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+
+    if (alumno.length === 0) {
+      return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+    }
+
+    const alumno_id = alumno[0].id;
+
+    // Buscar las estadísticas del alumno en la tabla `Estadisticas`
+    const [estadisticas] = await pool.execute('SELECT * FROM Estadisticas WHERE usuario_id = ?', [alumno_id]);
+
+    if (estadisticas.length === 0) {
+      return res.status(404).json({
+        mensaje: `No se encontraron estadísticas para el alumno ${nombreAlumno}`,
+      });
+    }
+
+    // Verificamos si 'valores' es una cadena JSON o ya es un objeto
+    let resultados = estadisticas[0].valores;
+
+    // Si 'valores' es una cadena, la parseamos
+    if (typeof resultados === 'string') {
+      try {
+        resultados = JSON.parse(resultados);
+      } catch (error) {
+        console.error('Error al parsear el JSON:', error);
+        return res.status(500).json({
+          mensaje: 'Error al procesar los resultados del alumno',
+        });
+      }
+    } 
+
+    // Si 'valores' ya es un objeto, lo usamos directamente
+    if (typeof resultados !== 'object') {
+      return res.status(500).json({
+        mensaje: 'El campo valores no contiene datos válidos',
+      });
+    }
+
+    // Procesar los resultados para el script Python
+    const resultadosString = JSON.stringify(resultados);
+
+    // Ejecutar el script Python con `spawn`
+    const pythonProcess = spawn('py', [
+      '../python/estadisticaAlumno.py', // Ruta al script Python
+      nombreAlumno,
+      resultadosString,
+    ]);
+
+    let pythonOutput = '';
+
+    // Recoger la salida del script Python
+    pythonProcess.stdout.on('data', (data) => {
+      pythonOutput += data.toString();
+    });
+
+    // Manejar errores del script Python
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Error en el script Python: ${data}`);
+    });
+
+    // Finalizar el proceso y responder al cliente
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        return res.status(500).json({
+          mensaje: 'El script Python terminó con errores',
+        });
+      }
+
+      console.log(`Salida del script Python: ${pythonOutput}`);
+      res.status(200).json({
+        mensaje: 'Resultados obtenidos y gráfico generado con éxito',
+        resultados, // Devolvemos los resultados
+        imagen: `http://localhost:3000/${nombreAlumno}-graph.png`, // Ruta del gráfico generado
+      });
+    });
+  } catch (error) {
+    console.error('Error al obtener los resultados:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
+  
+  app.get('/resultados/:nombreAlumno/:tipoPregunta', async (req, res) => { 
+    const { nombreAlumno, tipoPregunta } = req.params;
+  
+    try {
+      if (!nombreAlumno || !tipoPregunta) {
+        return res.status(400).json({ mensaje: 'El nombre del alumno y el tipo de problema son requeridos' });
+      }
+  
+      
+      const [alumno] = await pool.execute('SELECT id FROM Usuarios WHERE nom = ?', [nombreAlumno]);
+  
+      if (alumno.length === 0) {
+        return res.status(404).json({ mensaje: 'Alumno no encontrado' });
+      }
+  
+      const alumno_id = alumno[0].id;
+      const [estadisticas] = await pool.execute(
+        'SELECT * FROM Estadisticas WHERE usuario_id = ?',
+        [alumno_id]
+      );
+  
+      if (estadisticas.length === 0) {
+        return res.status(404).json({ mensaje: `No se encontraron estadísticas para el alumno ${nombreAlumno}` });
+      }
+  
+      // Aquí parseamos los valores del JSON
+      const resultados = JSON.parse(estadisticas[0].valores);
+  
+      // Filtramos los resultados por el tipo de pregunta (suma, resta, multiplicación, división)
+      const resultadosFiltrados = resultados.filter((resultado) => resultado.tipoPregunta === tipoPregunta);
+  
+      if (resultadosFiltrados.length === 0) {
+        return res.status(404).json({ mensaje: `No se encontraron resultados para el tipo de pregunta: ${tipoPregunta}` });
+      }
+  
+      // Ahora ejecutamos el script Python
+      const resultadosString = JSON.stringify(resultadosFiltrados);
+  
+      const pythonProcess = spawn('py', [
+        '../python/estadisticaAlumnoTipo.py',  // Ruta del script Python
+        nombreAlumno,
+        tipoPregunta,
+        resultadosString,
+      ]);
+  
+      let pythonOutput = '';
+      pythonProcess.stdout.on('data', (data) => {
+        pythonOutput += data.toString();
+      });
+  
+      pythonProcess.stderr.on('data', (data) => {
+        console.error(`Error en el script Python: ${data}`);
+      });
+  
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          return res.status(500).json({ mensaje: 'Error al generar el gráfico' });
+        }
+  
+        res.status(200).json({
+          imagen: `http://localhost:3000/${nombreAlumno}-${tipoPregunta}-graph.png`,
+        });
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: 'Error interno del servidor' });
+    }
+  });
+  
+/* ---------------------------- RUTAS DE PREGUNTAS ---------------------------- */
+
+// Obtener todas las preguntas
+app.get('/api/preguntas', async (req, res) => {
+  try {
+    const [preguntas] = await pool.query('SELECT * FROM Pregunta');
+    res.json(preguntas);
+  } catch (error) {
+    console.error('Error al obtener las preguntas:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener las preguntas.' });
+  }
+});
+ 
+//JUEGO DADO PREGUNTA
+app.get('/preguntas', async (req, res) => {
+    try {
+
+      // Realizar consulta a la base de datos
+      const [results] = await pool.execute('SELECT * FROM Pregunta ORDER BY RAND() LIMIT 1');
+
+  
+      // Enviar las preguntas como respuesta
+      res.json(results);
+    } catch (error) {
+      console.error('Error al obtener las preguntas:', error);
+      res.status(500).send('Error al obtener las preguntas');
+    }
+  });
+
+  // Crear una nueva pregunta
+  app.post('/api/preguntas', async (req, res) => {
+    try {
+      const { text_pregunta, difficulty_level, respuesta_correcta, type } = req.body;
+
+      if (!text_pregunta || !difficulty_level || !respuesta_correcta || !type) {
+        return res.status(400).json({ success: false, message: 'Todos los campos son requeridos.' });
+      }
+
+      const query = `
+        INSERT INTO Pregunta (text_pregunta, difficulty_level, respuesta_correcta, type)
+        VALUES (?, ?, ?, ?)
+      `;
+      const values = [text_pregunta, difficulty_level, respuesta_correcta, type];
+
+      const [result] = await pool.execute(query, values);
+
+      res.status(201).json({
+        success: true,
+        message: 'Pregunta creada correctamente.',
+        preguntaId: result.insertId,
+      });
+    } catch (error) {
+      console.error('Error al crear la pregunta:', error);
+      res.status(500).json({ success: false, message: 'Error al crear la pregunta.' });
+    }
+  });
+
+  // Actualizar una pregunta existente
+  app.put('/api/preguntas/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { text_pregunta, difficulty_level, respuesta_correcta, type } = req.body;
+
+      if (!text_pregunta || !difficulty_level || !respuesta_correcta || !type) {
+        return res.status(400).json({ success: false, message: 'Todos los campos son requeridos.' });
+      }
+
+      const query = `
+        UPDATE Pregunta
+        SET text_pregunta = ?, difficulty_level = ?, respuesta_correcta = ?, type = ?
+        WHERE id = ?
+      `;
+      const values = [text_pregunta, difficulty_level, respuesta_correcta, type, id];
+
+      const [result] = await pool.execute(query, values);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: 'Pregunta no encontrada.' });
+      }
+
+      res.json({
+        success: true,
+        message: 'Pregunta actualizada correctamente.',
+      });
+    } catch (error) {
+      console.error('Error al actualizar la pregunta:', error);
+      res.status(500).json({ success: false, message: 'Error al actualizar la pregunta.' });
+    }
+  });
+
+  // Eliminar una pregunta
+  app.delete('/api/preguntas/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const query = 'DELETE FROM Pregunta WHERE id = ?';
+      const [result] = await pool.execute(query, [id]);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: 'Pregunta no encontrada.' });
+      }
+
+      res.json({
+        success: true,
+        message: 'Pregunta eliminada correctamente.',
+      });
+    } catch (error) {
+      console.error('Error al eliminar la pregunta:', error);
+      res.status(500).json({ success: false, message: 'Error al eliminar la pregunta.' });
+    }
+  });
+
+
+  /* ---------------------------- API AULAS ---------------------------- */
+  // Obtener todas las aulas
+  app.get('/api/aulas', async (req, res) => {
+    try {
+        const [aulas] = await pool.query('SELECT * FROM Aulas');
+        res.json({ success: true, aulas: aulas.map(aula => ({ 
+            nombre: aula.nombre, 
+            alumnos: JSON.parse(aula.alumnos) 
+        })) });
+    } catch (error) {
+        console.error('Error al obtener las aulas:', error);
+        res.status(500).json({ success: false, message: 'Error al obtener las aulas.' });
+    }
+  });
+
+  // Crear una nueva aula
+  app.post('/api/aulas', async (req, res) => {
+    try {
+        const { nombre, alumnos } = req.body;
+
+        if (!nombre || !alumnos || !Array.isArray(alumnos)) {
+            return res.status(400).json({ success: false, message: 'El nombre del aula y una lista de alumnos son obligatorios.' });
+        }
+
+        const query = 'INSERT INTO Aulas (nombre, alumnos) VALUES (?, ?)';
+        const values = [nombre, JSON.stringify(alumnos)];
+
+        await pool.execute(query, values);
+
+        res.status(201).json({ success: true, message: 'Aula creada correctamente.' });
+    } catch (error) {
+        console.error('Error al crear el aula:', error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            res.status(409).json({ success: false, message: 'El aula ya existe.' });
+        } else {
+            res.status(500).json({ success: false, message: 'Error al crear el aula.' });
+        }
+    }
+  });
+
+  // Actualizar un aula existente
+  app.put('/api/aulas/:nombre', async (req, res) => {
+    try {
+        const { nombre } = req.params;
+        const { alumnos } = req.body;
+
+        if (!alumnos || !Array.isArray(alumnos)) {
+            return res.status(400).json({ success: false, message: 'La lista de alumnos es obligatoria.' });
+        }
+
+        const query = 'UPDATE Aulas SET alumnos = ? WHERE nombre = ?';
+        const values = [JSON.stringify(alumnos), nombre];
+
+        const [result] = await pool.execute(query, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
+        }
+
+        res.json({ success: true, message: 'Aula actualizada correctamente.' });
+    } catch (error) {
+        console.error('Error al actualizar el aula:', error);
+        res.status(500).json({ success: false, message: 'Error al actualizar el aula.' });
+    }
+  });
+
+  // Eliminar un aula
+  app.delete('/api/aulas/:nombre', async (req, res) => {
+    try {
+        const { nombre } = req.params;
+
+        const query = 'DELETE FROM Aulas WHERE nombre = ?';
+        const [result] = await pool.execute(query, [nombre]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
+        }
+
+        res.json({ success: true, message: 'Aula eliminada correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar el aula:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar el aula.' });
+    }
+  });
+
+  // Obtener los alumnos de un aula específica
+  app.get('/api/aulas/:nombre/alumnos', async (req, res) => {
+    try {
+        const { nombre } = req.params;
+
+        const [rows] = await pool.query('SELECT alumnos FROM Aulas WHERE nombre = ?', [nombre]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Aula no encontrada.' });
+        }
+
+        const alumnos = JSON.parse(rows[0].alumnos);
+        res.json({ success: true, alumnos });
+    } catch (error) {
+        console.error('Error al obtener los alumnos del aula:', error);
+        res.status(500).json({ success: false, message: 'Error al obtener los alumnos del aula.' });
+    }
+  });
+
+
+
+
+/* ---------------------------- API USUARIOS ---------------------------- */
+
+// Obtener todos los usuarios
+app.get('/api/users', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM Usuarios');
+    res.json({ success: true, users: rows });
+  } catch (error) {
+    console.error('Error al obtener los usuarios:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener los usuarios.' });
+  }
+});
+
+// Obtener un usuario por su ID
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.query('SELECT * FROM Usuarios WHERE id = ?', [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+    }
+
+    res.json({ success: true, user: rows[0] });
+  } catch (error) {
+    console.error('Error al obtener el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener el usuario.', error: error.message });
+  }
+});
+
+// Crear un nuevo usuario
+app.post('/api/users', async (req, res) => {
+  try {
+    const { nom, cognom, email, password, profesor } = req.body;
+
+    if (!nom || !cognom || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
+    }
+
+    const query = `INSERT INTO Usuarios (nom, cognom, email, password, profesor) VALUES (?, ?, ?, ?, ?)`;
+    const values = [nom, cognom, email, password, profesor];
+
+    const [result] = await pool.execute(query, values);
+    res.status(201).json({ success: true, message: 'Usuario creado correctamente.', userId: result.insertId });
+  } catch (error) {
+    console.error('Error al crear el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al crear el usuario.', error: error.message });
+  }
+});
+
+// Actualizar un usuario
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, cognom, email, password } = req.body;
+
+    if (!nom || !cognom || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
+    }
+
+    const query = `UPDATE Usuarios SET nom = ?, cognom = ?, email = ?, password = ? WHERE id = ?`;
+    const values = [nom, cognom, email, password, id];
+
+    const [result] = await pool.execute(query, values);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+    }
+
+    res.json({ success: true, message: 'Usuario actualizado correctamente.' });
+  } catch (error) {
+    console.error('Error al actualizar el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar el usuario.', error: error.message });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Primero elimina las relaciones en las tablas Aulas y Partida
+    // Eliminar al usuario de los campos 'alumnos' en Aulas
+    await pool.execute('UPDATE Aulas SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+
+    // Eliminar al usuario de los campos 'alumnos' en Partida
+    await pool.execute('UPDATE Partida SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+
+    // Luego elimina los registros en la tabla Estadisticas si existen
+    await pool.execute('DELETE FROM Estadisticas WHERE usuario_id = ?', [id]);
+
+    // Finalmente, elimina el usuario de la tabla Usuarios
+    const [result] = await pool.execute('DELETE FROM Usuarios WHERE id = ?', [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+    }
+
+    res.json({ success: true, message: 'Usuario eliminado correctamente.' });
+  } catch (error) {
+    console.error('Error al eliminar el usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al eliminar el usuario.', error: error.message });
   }
 });
 
@@ -209,30 +844,7 @@ app.post('/update-partida', async (req, res) => {
 
 
 
-//User Pinia
 
-const login = async () => {
-  const response = await fetch('http://localhost:3000/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await response.json();
-  if (data.success) {
-    localStorage.setItem('user', JSON.stringify(data.user));
-    // Redirige a la pantalla principal
-    this.$router.push('/main-screen');
-  } else {
-    this.error = data.message;
-  }
-};
-
-
-
-// Rutas API de usuarios
-app.post('/addUser', addUser);
-app.post('/login', loginUser);
 
 // Configuración de Socket.IO
 const server = createServer(app);
@@ -240,30 +852,30 @@ const io = new Server(server, {
   cors: { origin: '*' },
 });
 
-io.on('connection', (socket) => {
-  console.log('Nuevo cliente conectado:', socket.id);
+  io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado:', socket.id);
 
-  socket.on('join-room', async ({ codigo }) => {
-    const partida = await getAlumnos(codigo);
-    if (!partida) {
-      return socket.emit('error', 'Código de partida no válido');
-    }
+    socket.on('join-room', async ({ codigo }) => {
+      const partida = await getAlumnos(codigo);
+      if (!partida) {
+        return socket.emit('error', 'Código de partida no válido');
+      }
 
     socket.join(codigo);
     console.log(`Cliente ${socket.id} se unió a la sala ${codigo}`);
-    socket.emit('update-alumnos', partida.alumnos); // Enviar estado inicial de alumnos
+    socket.emit('update-alumnos', partida.alumnos);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado:', socket.id);
+    socket.on('disconnect', () => {
+      console.log('Cliente desconectado:', socket.id);
+    });
+
+    socket.on('new-participant', ({ usuario, codigo }) => {
+      io.to(codigo).emit('new-participant', { usuario, codigo });
+    });
   });
 
-  socket.on('new-participant', ({ usuario, codigo }) => {
-    io.to(codigo).emit('new-participant', { usuario, codigo });
-  });
-});
-
-// Verificar la lista de participantes en la base de datos periódicamente
+/* ---------------------------- TAREAS PERIÓDICAS ---------------------------- */
 setInterval(async () => {
   try {
     const [partidas] = await pool.query('SELECT codigo, alumnos FROM Partida');
@@ -290,8 +902,7 @@ setInterval(async () => {
   }
 }, 1000);
 
-
-// Iniciar servidor
+/* ---------------------------- INICIAR SERVIDOR ---------------------------- */
 server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });

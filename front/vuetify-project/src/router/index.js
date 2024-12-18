@@ -9,6 +9,7 @@ import { createRouter, createWebHistory } from 'vue-router/auto';
 import { routes as autoRoutes } from 'vue-router/auto-routes'; // Renombramos 'routes' a 'autoRoutes' para evitar conflicto
 import UserPlayCode from '@/components/UserPlayCode.vue';
 import UserPlayWaiting from '@/components/UserPlayWaiting.vue';
+import CrearPartida from '@/components/LoadingPartida.vue';
 import LoginPage from '@/components/LoginForm.vue';  // Importa el componente de login
 
 // Combina las rutas automáticas con las manuales
@@ -29,6 +30,11 @@ const routes = [
     path: '/login',   // Ruta para login
     name: 'Login',
     component: LoginPage,  // Componente de login
+  },
+  {
+    path: '/crear-partida',
+    name: 'CrearPartida',
+    component: CrearPartida, // Componente para la pantalla de "Crear Partida"
   },
 
 ];

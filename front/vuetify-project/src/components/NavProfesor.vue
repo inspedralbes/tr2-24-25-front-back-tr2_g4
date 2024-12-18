@@ -12,26 +12,22 @@
     <main class="content">
       <component :is="currentComponent" />
     </main>
-
-    <button class="crear-partida-btn" @click="irACrearPartida">Crear Partida</button>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import AdminPreguntas from '@/components/AdminPreguntas.vue';
-import AdminUsuarios from '@/components/AdminUsuarios.vue';
-import AdminAulas from '@/components/AdminAulas.vue';
-import Estadisticas from '@/components/Estadisticas.vue';
+import AdminPreguntas from "@/components/AdminPreguntas.vue";
+import AdminUsuarios from "@/components/AdminUsuarios.vue";
+import AdminAulas from "@/components/AdminAulas.vue";
+import Estadisticas from "@/components/Estadisticas.vue";
 
+// Define el componente inicial que se va a cargar
+const currentComponent = ref(AdminPreguntas);  // Componente predeterminado
 
-
-const router = useRouter();
-const currentComponent = ref(AdminPreguntas);
-
+// Función que cambia el componente según el nombre que se pase
 const loadComponent = (componentName) => {
-  switch (componentName) {
+  switch(componentName) {
     case 'AdminPreguntas':
       currentComponent.value = AdminPreguntas;
       break;
@@ -48,10 +44,6 @@ const loadComponent = (componentName) => {
       currentComponent.value = AdminPreguntas;
   }
 };
-
-const irACrearPartida = () => {
-  router.push('/crear-partida'); // Redirige a la ruta de Crear Partida
-};
 </script>
 
 <style>
@@ -62,7 +54,6 @@ const irACrearPartida = () => {
 
 nav {
   width: 200px;
-  background-color: #333;
   color: white;
   padding: 1rem;
 }
@@ -85,25 +76,5 @@ nav li:hover {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-}
-
-.crear-partida-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 200px;
-  padding: 15px;
-  background-color: #4CAF50;
-  color: white;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.crear-partida-btn:hover {
-  background-color: #45a049;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 </style>
