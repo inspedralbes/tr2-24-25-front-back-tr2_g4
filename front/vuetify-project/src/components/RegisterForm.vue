@@ -1,5 +1,11 @@
 <template>
-    <v-container class="fill-height d-flex justify-center align-center">
+    <v-app>
+    <!-- Barra superior -->
+    <v-app-bar color="black" dark flat>
+      <v-toolbar-title class="title-center">GMaths</v-toolbar-title>
+    </v-app-bar>
+
+    <v-container style="background-color: #99a6e9;" class="fill-height d-flex justify-center align-center fondo">
       <v-card min-width="400" class="pa-4">
         <v-card-title class="text-h5 text-center">Registro</v-card-title>
         <v-card-text>
@@ -70,6 +76,7 @@
         </v-card-text>
       </v-card>
     </v-container>
+  </v-app>
   </template>
   
   <script>
@@ -187,3 +194,21 @@
   };
   </script>
   
+  <style scoped>
+
+.fondo {
+  background-color: #99a6e9;
+  height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
+  width: 100vw; /* Asegura que ocupe todo el ancho de la pantalla */
+}
+
+.title-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+
+
+</style>

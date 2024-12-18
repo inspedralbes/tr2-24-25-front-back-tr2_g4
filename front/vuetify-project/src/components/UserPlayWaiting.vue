@@ -88,6 +88,7 @@
   </v-app>
 </template>
 
+
 <script>
 import { io } from 'socket.io-client';
 import waitingAudio from '@/assets/PlayWaitingMusic.mp3'; // Asegúrate de que esta ruta sea correcta
@@ -220,37 +221,6 @@ export default {
   transform: scale(1.1);
 }
 
-/* Otros estilos preexistentes */
-.gradient-btn {
-  width: 200px;
-  height: 40px;
-  margin-top: 20px;
-}
-
-.title-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  text-align: center;
-  height: 200%;
-  width: 100%;
-}
-
-.text-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  text-align: center;
-  height: 10%;
-  width: 100%;
-}
-
-.code-center {
-  margin-bottom: 20px;
-}
-
 /* Botón flotante: Reglas */
 .rules-button {
   position: fixed;
@@ -269,6 +239,11 @@ export default {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+.rules-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
 .text-rules-color {
   background-color: #0288d1;
 }
@@ -278,36 +253,9 @@ export default {
   background-color: #0a4f74;
 }
 
-.rules-button:hover {
-  background-color: #4fc3f7;
-  transform: scale(1.1);
-}
-
-/* Botón flotante: Tutorial */
-.video-button {
-  position: fixed;
-  bottom: 20px;
-  right: 100px;
-  background-color: #0288d1;
-  color: white;
-  font-size: 20px;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.text-video {
-
-  background-color: #0288d1;
-}
-
-.video-button:hover {
-  background-color: #4fc3f7;
-  transform: scale(1.1);
+/* Estilo para chips */
+.color-chips {
+  background-color: #020c11;
+  color: black;
 }
 </style>

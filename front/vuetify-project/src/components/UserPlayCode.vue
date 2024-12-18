@@ -76,10 +76,52 @@
     </v-btn>
 
     <!-- Modal con las reglas de la partida -->
-    <RulesDialog :showRules="showRules" @update:showRules="showRules = $event" />
+    <v-dialog
+      v-model="showRules"
+      max-width="600px"
+    >
+      <v-card>
+        <v-card-title class="text-rules">📜 Reglas de la Partida</v-card-title>
+        <v-card-text class="text-rules-color">
+          <p>
+            🎯 El objetivo del juego es llegar al final del carril de 40 casillas antes que los demás jugadores. ¡Prepárate para una carrera matemática llena de sorpresas!
+          </p>
+          <ul>
+            <li>🎲 Lanza el dado y avanza el número de casillas que indique.</li>
+            <li>❓ Responde preguntas matemáticas para poder avanzar. Si fallas, no podrás avanzar.</li>
+            <li>💣 Cuidado con las bombas (💣): si caes en una, retrocedes 2 casillas.</li>
+            <li>💰 Las casillas x2 (💰) duplican el avance en tu siguiente turno.</li>
+            <li>🏆 El primero en llegar a la última casilla gana la partida.</li>
+          </ul>
+          <p>🧠 Consejo: La rapidez y precisión en las respuestas son clave para ganar. ¡Buena suerte! 🚀</p>
+        </v-card-text>
+        <v-card-actions class="text-rules">
+          <v-btn color="white" text @click="showRules = false">Cerrar ❌</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Modal con el video tutorial -->
-    <VideoTutorialDialog :showVideo="showVideo" @update:showVideo="showVideo = $event" />
+    <v-dialog
+      v-model="showVideo"
+      max-width="800px"
+    >
+      <v-card>
+        <v-card-title class="text-video">🎥 Tutorial del Juego</v-card-title>
+        <v-card-text>
+          <iframe 
+            width="100%" 
+            height="400" 
+            src="https://www.youtube.com/embed/ZldSOzmye4Q" 
+            frameborder="0" 
+            allowfullscreen
+          ></iframe>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="white" text @click="showVideo = false">Cerrar ❌</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -176,3 +218,121 @@ export default {
   },
 };
 </script>
+
+
+<style scoped>
+/* Botón flotante: Mute */
+.mute-button {
+  position: fixed;
+  top: 100px;
+  bottom: 80px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.mute-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
+/* Otros estilos preexistentes */
+.gradient-btn {
+  width: 200px;
+  height: 40px;
+  margin-top: 20px;
+}
+
+.title-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  height: 200%;
+  width: 100%;
+}
+
+.text-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  height: 10%;
+  width: 100%;
+}
+
+.code-center {
+  margin-bottom: 20px;
+}
+
+/* Botón flotante: Reglas */
+.rules-button {
+  position: fixed;
+  bottom: 100px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.text-rules-color {
+  background-color: #0288d1;
+}
+
+.text-rules {
+
+  background-color: #0a4f74;
+}
+
+.rules-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
+/* Botón flotante: Tutorial */
+.video-button {
+  position: fixed;
+  bottom: 20px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.text-video {
+
+  background-color: #0288d1;
+}
+
+.video-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+</style>

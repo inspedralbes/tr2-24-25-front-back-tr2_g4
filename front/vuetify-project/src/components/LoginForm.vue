@@ -7,7 +7,7 @@
 
     <!-- Contenedor principal que llena toda la pantalla -->
     <v-container fluid class="fill-height d-flex justify-center align-center fondo">
-      <v-card max-width="400" class="pa-4">
+      <v-card max-width="400" class="pa-4 ini">
         <v-card-title class="text-h5 text-center">Iniciar Sesión</v-card-title>
         <v-card-text>
           <v-form ref="form" v-model="valid">
@@ -119,5 +119,12 @@ export default {
   justify-content: center;
   align-items: center;
   text-align: center;
+}
+
+
+.ini {
+
+width: 70%;
+
 }
 </style>
