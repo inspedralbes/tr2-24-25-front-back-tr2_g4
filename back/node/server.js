@@ -75,6 +75,45 @@ async function getAlumnos(codigo) {
   };
   
 
+
+// Crear el endpoint
+app.get('/api/partida/:codigo', async (req, res) => {
+  const { codigo } = req.params;
+
+  try {
+    // Realizar la consulta para obtener la partida por código
+    const [partida] = await pool.query('SELECT alumnos FROM partida WHERE codigo = ?', [codigo]);
+
+    // Verificar si la partida existe
+    if (!partida || partida.length === 0) {
+      return res.status(404).send('Partida no encontrada');
+    }
+
+    // Obtener el campo alumnos
+    let alumnos = partida[0].alumnos;
+
+    // Si alumnos es una cadena JSON, parsearla
+    if (typeof alumnos === 'string') {
+      try {
+        alumnos = JSON.parse(alumnos);  // Convertir de cadena JSON a objeto o arreglo
+      } catch (error) {
+        return res.status(400).send('El formato de alumnos es incorrecto');
+      }
+    }
+
+    // Verificar si es un arreglo
+    if (!Array.isArray(alumnos)) {
+      return res.status(400).send('El campo alumnos no es un arreglo');
+    }
+
+    // Devolver los datos de los alumnos
+    return res.status(200).json(alumnos);
+  } catch (error) {
+    console.error(error);  // Imprimir detalles del error para depuración
+    return res.status(500).send('Error en el servidor');
+  }
+});
+
 const createPartida = async () => {
   const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
   await pool.query('INSERT INTO partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);

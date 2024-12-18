@@ -67,7 +67,7 @@
         <input 
           v-model="editingQuestion.difficulty_level" 
           type="number" 
-          placeholder="Nivel de dificultad (1-4)" 
+          placeholder="Nivel de dificultad (1-5)" 
           min="1" max="5" 
           required 
         />
