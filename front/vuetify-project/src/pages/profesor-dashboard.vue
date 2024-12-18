@@ -114,8 +114,8 @@ const irACrearPartida = () => {
 .sidebar .crear-partida-btn {
   position: absolute;
   bottom: 20px; /* Lo coloca a la parte inferior del nav */
-  left: 50%; /* Lo coloca centrado horizontalmente */
-  transform: translateX(-50%); /* Corrige el desplazamiento para centrarlo */
+  left: 5%; /* Lo coloca centrado horizontalmente */
+  
   display: flex;
   align-items: center;
   justify-content: center; /* Centrado del contenido del botón */
