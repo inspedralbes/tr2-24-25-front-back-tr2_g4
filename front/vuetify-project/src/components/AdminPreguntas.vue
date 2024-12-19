@@ -4,7 +4,7 @@
     <v-row justify="center">
       <v-col cols="12" md="8">
         <v-card class="pa-4 rounded-card" style="background-color: #229de8;">
-          <v-card-title class="text-center" style="color: black; font-weight: bold;   font-size: 28px;">Administrar Preguntas</v-card-title>
+          <v-card-title class="text-center" style="color: white; font-weight: bold;   font-size: 28px;">Administrar Preguntas</v-card-title>
 
           <!-- Buscador de preguntas (Card blanco) -->
           <v-divider class="my-4"></v-divider>

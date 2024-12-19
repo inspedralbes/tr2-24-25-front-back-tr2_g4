@@ -2,7 +2,7 @@
   <div class="alumno-grafico-container">
     <!-- Cabecera -->
     <h1 class="title">Gráfico de Resultados</h1>
-    <p class="subtitle" style="color: black;">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
+    <p class="subtitle" style="color: whitesmoke;">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
 
     <!-- Tarjeta de selección -->
     <div class="card">
@@ -126,7 +126,7 @@ export default {
 .title {
   font-size: 28px;
   text-align: center;
-  color: black;
+  color: white;
   font-weight: bold;
   margin-bottom: 10px;
   
@@ -136,7 +136,7 @@ export default {
   text-align: center;
   margin-bottom: 20px;
   font-size: 16px;
-  color: #555;
+  color: whitesmoke;
 }
 
 .card {

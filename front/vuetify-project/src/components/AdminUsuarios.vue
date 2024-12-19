@@ -1,34 +1,82 @@
 <template>
-  <div class="user-management">
-    <!-- Formulario de edición -->
-    <div class="form-container" v-if="isEditMode">
-      <h2>Editar Usuario</h2>
-      <form @submit.prevent="updateUser">
-        <div class="input-group">
-          <input v-model="newUser.nom" type="text" placeholder="Nombre" required />
-          <input v-model="newUser.cognom" type="text" placeholder="Apellido" required />
-          <input v-model="newUser.email" type="email" placeholder="Correo Electrónico" required />
-        </div>
-        <button class="submit-btn" type="submit">Actualizar</button>
-      </form>
-    </div>
+  <v-container>
+    <!-- Tarjeta principal con fondo #229de8 -->
+    <v-row justify="center">
+      <v-col cols="12" md="8">
+        <v-card class="pa-4 rounded-card" style="background-color: #229de8;">
+          <!-- Título principal de la tarjeta -->
+          <v-card-title class="text-center" style="color: white; font-weight: bold; margin-top: 20px; margin-bottom: 20px;font-weight: bold;   font-size: 28px;">
+            Usuarios
+          </v-card-title>
+          <!-- Formulario de edición dentro de la tarjeta principal -->
+          <v-card class="pa-4 rounded-card" style="background-color: white; box-shadow: none;">
+            <v-card-subtitle style="color: black; margin-bottom: 16px; font-weight: bold">EDITAR USUARIO</v-card-subtitle>           
+            <v-form @submit.prevent="updateUser">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="newUser.nom"
+                    label="Nombre"
+                    outlined
+                    dense
+                    required
+                    style="color: #1E1E1E;"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="newUser.cognom"
+                    label="Apellido"
+                    outlined
+                    dense
+                    required
+                    style="color: #1E1E1E;"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="newUser.email"
+                    label="Correo Electrónico"
+                    type="email"
+                    outlined
+                    dense
+                    required
+                    style="color: #1E1E1E;"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" class="text-right">
+                  <v-btn type="submit" color="#4CAF50" class="rounded-btn" style="color: white;">Actualizar</v-btn>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card>
 
-    <!-- Listado de usuarios -->
-    <div class="user-list-container">
-      <h2>Usuarios Registrados</h2>
-      <ul class="user-list">
-        <li v-for="user in users" :key="user.id" class="user-item">
-          <div class="user-info">
-            <p>{{ user.nom }} {{ user.cognom }} - {{ user.email }}</p>
-            <div class="actions">
-              <button class="edit-btn" @click="editUser(user)">Editar</button>
-              <button class="delete-btn" @click="deleteUser(user.id)">Eliminar</button>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
-  </div>
+          <!-- Listado de usuarios dentro de la tarjeta principal -->
+          <v-card class="pa-4 rounded-card mt-4" style="background-color: white; box-shadow: none;">
+            <v-card-subtitle style="color: black; margin-bottom: 16px; font-weight: bold">USUARIOS REGISTRADOS</v-card-subtitle>            
+            <v-divider class="my-4" style="background-color: #D1D1D1;"></v-divider>
+            
+            <v-row v-if="users.length">
+            <v-col cols="12" md="4" v-for="user in users" :key="user.id"> <!-- Modificar el tamaño de la columna de 6 a 4 para mayor espacio -->
+              <v-card class="mb-4 rounded-card" style="background-color: #229de8; padding: 20px;"> <!-- Aumenta el relleno dentro de la tarjeta -->
+                <v-card-subtitle style="color: #1E1E1E; font-size: 18px;">
+                  <div><strong>Nombre:</strong> {{ user.nom }} {{ user.cognom }}</div>
+                  <div><strong>Email:</strong> {{ user.email }}</div>
+                </v-card-subtitle>
+                <v-card-actions>
+                  <v-btn color="#2196F3" class="rounded-btn" style="color: black; background-color: yellow;" @click="editUser(user)">Editar</v-btn>
+                  <v-btn color="#F44336" class="rounded-btn" style="color: white; background-color: red;" @click="deleteUser(user.id)">Eliminar</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
+
+            <v-alert v-else type="info" class="mt-4" style="color: #1E1E1E;">No se encontraron usuarios.</v-alert>
+          </v-card>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -105,102 +153,34 @@ export default {
 </script>
 
 <style scoped>
-.user-management {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.rounded-card {
+  border-radius: 16px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
-  text-align: center;
-  font-size: 1.6rem;
-  margin-bottom: 20px;
-  color: #333;
+.rounded-btn {
+  border-radius: 16px;
 }
 
-.form-container,
-.user-list-container {
-  margin-bottom: 40px;
-  color: black;
+.text-primary {
+  color: #2196F3;
 }
 
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+.v-card {
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-input {
-  padding: 12px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  color: black; /* Establecer color negro en el texto de los inputs */
+/* Estilos para los botones */
+.v-btn {
+  border-radius: 16px;
 }
 
-button {
-  padding: 12px;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.v-btn:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.submit-btn {
-  background-color: #4caf50;
-  color: white; /* Mantener texto blanco para los botones */
-}
-
-.submit-btn:hover {
-  background-color: #45a049;
-}
-
-.user-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.user-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: white;
-  color: black; /* Color negro para el texto de los items de usuario */
-  padding: 15px;
-  margin: 5px 0;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.user-info {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.actions button {
-  margin-left: 10px;
-}
-
-.edit-btn {
-  background-color: #2196f3;
-  color: white;
-}
-
-.edit-btn:hover {
-  background-color: #1976d2;
-}
-
-.delete-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-.delete-btn:hover {
-  background-color: #e53935;
+/* Colores consistentes */
+.v-divider {
+  background-color: black;
 }
 </style>

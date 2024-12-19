@@ -6,7 +6,7 @@
       <ul>
         <div style="display: flex; align-items: center; gap: 8px;">
           <img src="/favicon.ico" width="40" height="40" alt="Logo">
-          <h1 style="margin: 0;">-MATHS</h1>
+          <h1 style="margin: 0;" >-MATHS</h1>
         </div>
       </ul>
       <ul>
