@@ -10,7 +10,9 @@ import { routes as autoRoutes } from 'vue-router/auto-routes'; // Renombramos 'r
 import UserPlayCode from '@/components/UserPlayCode.vue';
 import UserPlayWaiting from '@/components/UserPlayWaiting.vue';
 import CrearPartida from '@/components/LoadingPartida.vue';
-import LoginPage from '@/components/LoginForm.vue';  // Importa el componente de login
+import LoginPage from '@/components/LoginForm.vue';
+import CarrilJugador from '@/components/CarrilJugador.vue';  // Importa el componente de login
+import CarrilesCarrera from '@/components/CarrilesCarrera.vue';
 
 // Combina las rutas automáticas con las manuales
 const routes = [
@@ -36,6 +38,16 @@ const routes = [
     name: 'CrearPartida',
     component: CrearPartida, // Componente para la pantalla de "Crear Partida"
   },
+  {
+    path: '/carrilescarrera',
+    name: 'CarrilesCarrera',
+    component: CarrilesCarrera, // Componente para la pantalla del carril del jugador
+  },
+  {
+    path: '/carriljugador',
+    name: 'CarrilJugador',
+    component: CarrilJugador, // Componente para la pantalla del carril del jugador
+  }
 
 ];
 

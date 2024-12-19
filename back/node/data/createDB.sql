@@ -23,7 +23,8 @@ CREATE TABLE aulas (
 
 CREATE TABLE partida (
     codigo VARCHAR(100) PRIMARY KEY,
-    alumnos JSON NOT NULL
+    alumnos JSON NOT NULL,
+    
 );
 
 

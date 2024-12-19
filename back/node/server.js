@@ -106,6 +106,85 @@ const createPartida = async () => {
   await pool.query('INSERT INTO partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
   return codigo;
 };
+app.post('/start-game', async (req, res) => {
+  const { codigo } = req.body; // Código de la partida
+
+  if (!codigo) {
+    return res.status(400).json({ error: 'El código de partida es obligatorio.' });
+  }
+
+  try {
+    // Ejecutar la actualización en la base de datos
+    const [result] = await pool.query(
+      'UPDATE partida SET en_juego = ? WHERE codigo = ?',
+      [true, codigo]
+    );
+
+    // Verificar si se encontró y actualizó alguna fila
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Código de partida no encontrado o ya en juego.' });
+    }
+
+    return res.status(200).json({ message: 'El juego ha comenzado.', codigo });
+  } catch (err) {
+    console.error('Error al actualizar la base de datos:', err);
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+app.delete('/eliminar-name', (req, res) => {
+  const { codigo_partida, nameToDelete } = req.body; // Se espera un JSON con codigo_partida y nameToDelete
+
+  // Verificamos si los datos fueron enviados
+  if (!codigo_partida || !nameToDelete) {
+    return res.status(400).json({ error: 'Faltan parámetros codigo_partida o nameToDelete' });
+  }
+
+  // Consultar el JSON para asegurarse de que existe la partida con ese código
+  const queryGetJson = 'SELECT alumnos FROM partida WHERE codigo = ?';
+  
+  pool.query(queryGetJson, [codigo_partida], (err, results) => {
+    if (err) {
+      console.error('Error al obtener los datos:', err);
+      return res.status(500).json({ error: 'Error al obtener los datos' });
+    }
+
+    // Verificamos si se obtuvo un resultado
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Partida no encontrada con ese código' });
+    }
+
+    // Obtenemos el JSON de la columna
+    const columnaJson = results[0].columna_json;
+
+    // Si el JSON no contiene el nombre a eliminar, devolver un error
+    const nameIndex = columnaJson.findIndex(item => item.name === nameToDelete);
+    
+    if (nameIndex === -1) {
+      return res.status(404).json({ message: 'Nombre no encontrado en el JSON' });
+    }
+
+    // Si se encuentra el nombre, eliminamos el objeto con ese nombre
+    columnaJson.splice(nameIndex, 1); // Elimina el objeto con el 'name' específico
+
+    // Actualizamos la columna_json en la base de datos
+    const queryUpdateJson = 'UPDATE partida SET alumnos = ? WHERE codigo = ?';
+    
+    pool.query(queryUpdateJson, [JSON.stringify(columnaJson), codigo_partida], (err, result) => {
+      if (err) {
+        console.error('Error al actualizar el JSON:', err);
+        return res.status(500).json({ error: 'Error al actualizar el JSON' });
+      }
+
+      // Verificamos si se afectaron filas
+      if (result.affectedRows > 0) {
+        return res.json({ message: 'Nombre eliminado exitosamente' });
+      } else {
+        return res.status(404).json({ message: 'No se pudo eliminar el nombre' });
+      }
+    });
+  });
+});
+
 /* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
 app.get('/alumno/:id', async (req, res) => {
     try {
@@ -1045,6 +1124,10 @@ const io = new Server(server, {
 
     socket.on('new-participant', ({ usuario, codigo }) => {
       io.to(codigo).emit('new-participant', { usuario, codigo });
+    });
+    socket.on('game-started', ({codigo}) => {
+      io.to(codigo).emit('game-started');
+      console.log("codigo: " + codigo)
     });
   });
 

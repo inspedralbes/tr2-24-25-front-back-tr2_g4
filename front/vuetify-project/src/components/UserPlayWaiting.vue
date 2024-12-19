@@ -88,11 +88,11 @@
   </v-app>
 </template>
 
-
 <script>
 import { io } from 'socket.io-client';
 import waitingAudio from '@/assets/PlayWaitingMusic.mp3'; // Asegúrate de que esta ruta sea correcta
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 export default {
   name: "GameWaitingRoom",
   data() {
@@ -103,6 +103,7 @@ export default {
       isMuted: false,   // Controla si el audio está silenciado o no
       audio: null,      // Referencia al objeto de audio
       usuario: null,    // Nombre completo del usuario logueado
+      showRules: false  // Controla si se muestra el modal con las reglas
     };
   },
   mounted() {
@@ -113,6 +114,17 @@ export default {
     this.audio.play().catch((err) => {
       console.warn("El audio no pudo ser reproducido automáticamente:", err);
     });
+    this.socket = io('http://localhost:3000');
+    this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
+    this.socket.on('game-started', (data) => {
+      console.log('Game started event received:', data); // Verifica si llega correctamente
+      if (data.codigo === this.codigo) {
+        // Redirigir al alumno a la página 'CarrilJugador'
+        router.push({ name: 'CarrilJugador' });
+        console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+      }
+    });
+
 
     // Animación de puntos
     let count = 0;
@@ -136,7 +148,7 @@ export default {
     this.socket = io('http://localhost:3000'); // Conectar con el servidor de Socket.io
 
     // Unirse a la sala de la partida
-    this.socket.emit('join-room', { codigo: this.codigo });
+    this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
 
     // Actualización de la lista de participantes
     this.socket.on('update-alumnos', (alumnos) => {
@@ -193,7 +205,6 @@ export default {
     }
   }
 };
-
 </script>
 
 <style scoped>
