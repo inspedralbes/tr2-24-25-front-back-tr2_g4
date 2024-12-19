@@ -25,9 +25,10 @@
                     <v-list-item-title class="text-h6">{{ user.name }}</v-list-item-title>
                   </v-list-item-content>
                   <v-list-item-action>
-                    <v-chip color="red lighten-1" class="white--text font-weight-bold" small @click="removeUser(user.id)">
+                    <v-chip color="red lighten-1" class="white--text font-weight-bold" small @click="removeUser(user.name)">
                       <v-icon left small>mdi-delete</v-icon> Eliminar
                     </v-chip>
+
                   </v-list-item-action>
                 </v-list-item>
                 <v-divider v-if="index < users.length - 1"></v-divider>
@@ -82,9 +83,25 @@
   });
   
   
-  const removeUser = (userId) => {
-    socket.emit('remove_alumno', { codigo: gameCode.value, alumnoId: userId });
+  const removeUser = async (userName) => {
+    try {
+      // Enviar la solicitud al backend para eliminar al alumno por su nombre
+      const response = await axios.post('http://localhost:3000/remove-alumno', {
+        codigo: gameCode.value,
+        alumnoName: userName,
+      });
+
+      if (response.data.success) {
+        // Si la eliminación fue exitosa, la lista de usuarios se actualiza automáticamente
+        alert('El alumno ha sido eliminado de la partida');
+      }
+    } catch (error) {
+      console.error('Error al eliminar el alumno:', error);
+      alert('Hubo un error al eliminar al alumno');
+    }
   };
+
+
   
   const startGame = () => {
     alert('¡La partida ha comenzado!');

@@ -98,200 +98,15 @@ async function getAlumnos(codigo) {
 }
 
 
- 
-
-
 const createPartida = async () => {
   const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
   await pool.query('INSERT INTO partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
   return codigo;
 };
-/* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
-app.get('/alumno/:id', async (req, res) => {
-    try {
-      // Obtener el ID del alumno desde la URL
-      const idAlumno = req.params.id;
- 
-      // Crear conexión a la base de datos de manera asíncrona
-     
- 
-      // Realizar la consulta a la base de datos para obtener el alumno por ID
-      const [results] = await pool.execute('SELECT id, nom FROM usuarios WHERE id = ?', [idAlumno]);
- 
-     
- 
-      // Verificar si se encontró el alumno
-      if (results.length > 0) {
-        // Si se encuentra al alumno, devolver el id y el nombre
-        res.json({
-          id: results[0].id,
-          nom: results[0].nom
-        });
-      } else {
-        // Si no se encuentra el alumno, devolver un error 404
-        res.status(404).json({ error: 'Alumno no encontrado' });
-      }
-    } catch (error) {
-      console.error('Error al obtener el alumno:', error);
-      res.status(500).send('Error al obtener el alumno');
-    }
-  });
-  app.get('/api/alumnos', async (req, res) => {
-    try {
- 
-      // Realizar la consulta para obtener los correos electrónicos y nombres
-      const [results] = await pool.execute('SELECT  nom FROM usuarios');
- 
-      // Enviar la lista de alumnos como respuesta en formato JSON
-      res.json(results);
-    } catch (error) {
-      console.error('Error al obtener la lista de alumnos:', error);
- 
-      // Responder con un mensaje de error si algo falla
-      res.status(500).json({
-        mensaje: 'Error al obtener la lista de alumnos',
-        error: error.message,
-      });
-    }
-  });
-/* ---------------------------- RUTAS DE USUARIOS ---------------------------- */
 
-
-// Crear un usuario
-app.post('/addUser', async (req, res) => {
-  try {
-    const { nom, cognom, email, password } = req.body;
-
-
-      if (!nom || !cognom || !email || !password) {
-        return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
-      }
-
-
-    const alumnoRegex = /^a\d{2}/i;
-    const profesorRegex = /^[a-zA-Z]+$/;
-
-
-    let profesor = false;
-    if (alumnoRegex.test(email.split('@')[0])) {
-      profesor = false;
-    } else if (profesorRegex.test(email.split('@')[0])) {
-      profesor = true;
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: 'El formato del correo no corresponde ni a un alumno ni a un profesor.',
-      });
-    }
-
-
-    const query = `
-      INSERT INTO usuarios (nom, cognom, email, password, fecha, profesor)
-      VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
-    `;
-    const values = [nom, cognom, email, password, profesor];
-
-
-      const [result] = await pool.execute(query, values);
-
-
-    res.json({
-      success: true,
-      message: `Usuario ${email} añadido correctamente como ${profesor ? 'profesor' : 'alumno'}.`,
-      userId: result.insertId,
-    });
-  } catch (error) {
-    console.error('Error al añadir usuario:', error);
-    res.status(500).json({ success: false, message: 'Error al añadir usuario.', error: error.message });
-  }
-});
-
-
-// Login de usuario
-app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-
-      if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
-      }
-
-
-      const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
-
-
-      if (rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Correo no registrado.' });
-      }
-
-
-    const user = rows[0];
-    // Aquí ya no se compara la contraseña encriptada, se verifica si coinciden directamente
-    if (password !== user.password) {
-      return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
-    }
-
-
-    res.json({
-      success: true,
-      message: 'Usuario autenticado correctamente.',
-      userId: user.id,
-      nom: user.nom,
-      cognom: user.cognom,
-      email: user.email,
-      profesor: user.profesor,
-    });
-  } catch (error) {
-    console.error('Error al iniciar sesión:', error);
-    res.status(500).json({ success: false, message: 'Error al iniciar sesión.', error: error.message });
-  }
-});
-
-
-/* ---------------------------- RUTAS DE PARTIDAS ---------------------------- */
-
-
-// Obtener o crear código de partida
-app.get('/game-code', async (req, res) => {
-  const { codigo } = req.query;
-  try {
-    const alumnos = await getAlumnos(codigo);
-    if (alumnos === null) {
-      // La partida no existe, crear una nueva
-      const newCodigo = await createPartida();
-      res.json({ message: 'Nueva partida creada.', gameCode: newCodigo });
-    } else {
-      // La partida existe
-      res.json({ message: 'Partida encontrada.', gameCode: codigo });
-    }
-  } catch (error) {
-    console.error('Error en /game-code:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-
-// Obtener alumnos de una partida
-app.get('/alumnos', async (req, res) => {
-  const { codigo } = req.query;
-  try {
-    const alumnos = await getAlumnos(codigo);
-    if (alumnos === null) {
-      return res.status(404).json({ error: 'Partida no encontrada' });
-    }
-    res.json(alumnos);
-  } catch (error) {
-    console.error('Error en /alumnos:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-
-// Actualizar partida con un nuevo alumno
-app.post('/update-partida', async (req, res) => {
-  const { codigo, usuario } = req.body;
-
+// Ruta para eliminar un alumno de la partida
+app.post('/remove-alumno', async (req, res) => {
+  const { codigo, alumnoName } = req.body;
 
   try {
     let alumnos = await getAlumnos(codigo);
@@ -299,28 +114,25 @@ app.post('/update-partida', async (req, res) => {
       return res.status(404).json({ error: 'Partida no encontrada' });
     }
 
+    // Filtrar el alumno que se desea eliminar por su nombre
+    alumnos = alumnos.filter(alumno => alumno.name !== alumnoName);
 
-    if (!alumnos.some(alumno => alumno.name === usuario)) {
-      alumnos.push({ name: usuario });
+    // Actualizar la partida en la base de datos
+    await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
 
+    // Emitir evento a todos los participantes de la partida
+    io.to(codigo).emit('update-alumnos', alumnos);
 
-      // Actualizar la partida en la base de datos
-      await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
-
-
-      // Emitir evento para notificar a los demás participantes
-      io.to(codigo).emit('new-participant', { usuario, codigo });
-
-
-      res.json({ success: true, message: 'Partida actualizada' });
-    } else {
-      res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
-    }
+    res.json({ success: true, message: 'Alumno eliminado de la partida' });
   } catch (error) {
-    console.error('Error al actualizar la partida:', error);
-    res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
+    console.error('Error al eliminar alumno de la partida:', error);
+    res.status(500).json({ error: 'Hubo un error al eliminar al alumno' });
   }
 });
+
+
+
+
 /* ---------------------------- RUTAS DE ESTADISTICAS ---------------------------- */
 app.post('/guardar-resultado', async (req, res) => {
   const { preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta } = req.body;
@@ -1004,8 +816,221 @@ app.delete('/api/users/:id', async (req, res) => {
 
 
 
+/* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
+app.get('/alumno/:id', async (req, res) => {
+    try {
+      // Obtener el ID del alumno desde la URL
+      const idAlumno = req.params.id;
+ 
+      // Crear conexión a la base de datos de manera asíncrona
+     
+ 
+      // Realizar la consulta a la base de datos para obtener el alumno por ID
+      const [results] = await pool.execute('SELECT id, nom FROM usuarios WHERE id = ?', [idAlumno]);
+ 
+     
+ 
+      // Verificar si se encontró el alumno
+      if (results.length > 0) {
+        // Si se encuentra al alumno, devolver el id y el nombre
+        res.json({
+          id: results[0].id,
+          nom: results[0].nom
+        });
+      } else {
+        // Si no se encuentra el alumno, devolver un error 404
+        res.status(404).json({ error: 'Alumno no encontrado' });
+      }
+    } catch (error) {
+      console.error('Error al obtener el alumno:', error);
+      res.status(500).send('Error al obtener el alumno');
+    }
+  });
+  app.get('/api/alumnos', async (req, res) => {
+    try {
+ 
+      // Realizar la consulta para obtener los correos electrónicos y nombres
+      const [results] = await pool.execute('SELECT  nom FROM usuarios');
+ 
+      // Enviar la lista de alumnos como respuesta en formato JSON
+      res.json(results);
+    } catch (error) {
+      console.error('Error al obtener la lista de alumnos:', error);
+ 
+      // Responder con un mensaje de error si algo falla
+      res.status(500).json({
+        mensaje: 'Error al obtener la lista de alumnos',
+        error: error.message,
+      });
+    }
+  });
+/* ---------------------------- RUTAS DE USUARIOS ---------------------------- */
 
 
+// Crear un usuario
+app.post('/addUser', async (req, res) => {
+  try {
+    const { nom, cognom, email, password } = req.body;
+
+
+      if (!nom || !cognom || !email || !password) {
+        return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
+      }
+
+
+    const alumnoRegex = /^a\d{2}/i;
+    const profesorRegex = /^[a-zA-Z]+$/;
+
+
+    let profesor = false;
+    if (alumnoRegex.test(email.split('@')[0])) {
+      profesor = false;
+    } else if (profesorRegex.test(email.split('@')[0])) {
+      profesor = true;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'El formato del correo no corresponde ni a un alumno ni a un profesor.',
+      });
+    }
+
+
+    const query = `
+      INSERT INTO usuarios (nom, cognom, email, password, fecha, profesor)
+      VALUES (?, ?, ?, ?, CURRENT_DATE, ?)
+    `;
+    const values = [nom, cognom, email, password, profesor];
+
+
+      const [result] = await pool.execute(query, values);
+
+
+    res.json({
+      success: true,
+      message: `Usuario ${email} añadido correctamente como ${profesor ? 'profesor' : 'alumno'}.`,
+      userId: result.insertId,
+    });
+  } catch (error) {
+    console.error('Error al añadir usuario:', error);
+    res.status(500).json({ success: false, message: 'Error al añadir usuario.', error: error.message });
+  }
+});
+
+
+// Login de usuario
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+
+      if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos.' });
+      }
+
+
+      const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
+
+
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Correo no registrado.' });
+      }
+
+
+    const user = rows[0];
+    // Aquí ya no se compara la contraseña encriptada, se verifica si coinciden directamente
+    if (password !== user.password) {
+      return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
+    }
+
+
+    res.json({
+      success: true,
+      message: 'Usuario autenticado correctamente.',
+      userId: user.id,
+      nom: user.nom,
+      cognom: user.cognom,
+      email: user.email,
+      profesor: user.profesor,
+    });
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error);
+    res.status(500).json({ success: false, message: 'Error al iniciar sesión.', error: error.message });
+  }
+});
+
+
+/* ---------------------------- RUTAS DE PARTIDAS ---------------------------- */
+
+
+// Obtener o crear código de partida
+app.get('/game-code', async (req, res) => {
+  const { codigo } = req.query;
+  try {
+    const alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      // La partida no existe, crear una nueva
+      const newCodigo = await createPartida();
+      res.json({ message: 'Nueva partida creada.', gameCode: newCodigo });
+    } else {
+      // La partida existe
+      res.json({ message: 'Partida encontrada.', gameCode: codigo });
+    }
+  } catch (error) {
+    console.error('Error en /game-code:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+
+// Obtener alumnos de una partida
+app.get('/alumnos', async (req, res) => {
+  const { codigo } = req.query;
+  try {
+    const alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      return res.status(404).json({ error: 'Partida no encontrada' });
+    }
+    res.json(alumnos);
+  } catch (error) {
+    console.error('Error en /alumnos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+
+// Actualizar partida con un nuevo alumno
+app.post('/update-partida', async (req, res) => {
+  const { codigo, usuario } = req.body;
+
+
+  try {
+    let alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      return res.status(404).json({ error: 'Partida no encontrada' });
+    }
+
+
+    if (!alumnos.some(alumno => alumno.name === usuario)) {
+      alumnos.push({ name: usuario });
+
+
+      // Actualizar la partida en la base de datos
+      await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+
+
+      // Emitir evento para notificar a los demás participantes
+      io.to(codigo).emit('new-participant', { usuario, codigo });
+
+
+      res.json({ success: true, message: 'Partida actualizada' });
+    } else {
+      res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+    }
+  } catch (error) {
+    console.error('Error al actualizar la partida:', error);
+    res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
+  }
+});
 
 
 
