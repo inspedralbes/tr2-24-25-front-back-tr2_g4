@@ -1,4 +1,5 @@
 import errorAudio from '@/assets/error.mp3';
+import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
 export default {
   data() {
     return {
@@ -48,8 +49,11 @@ export default {
   methods: {
     // Método para obtener el nombre del alumno
     async obtenerAlumno() {
+    
       try {
-        const response = await fetch('http://localhost:3000/alumno/1'); // Suponiendo que el id del alumno es 1
+        const userStore = useUserStore();
+        const email = userStore.user.email;
+        const response = await fetch('http://localhost:3000/alumno/'+ (email)); // Suponiendo que el id del alumno es 1
         const data = await response.json();
         if (data.nom) {
           this.nom = data.nom; // Asignamos el nombre del alumno

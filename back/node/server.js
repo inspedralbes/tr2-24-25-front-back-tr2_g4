@@ -186,35 +186,31 @@ app.delete('/eliminar-name', (req, res) => {
 });
 
 /* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
-app.get('/alumno/:id', async (req, res) => {
-    try {
-      // Obtener el ID del alumno desde la URL
-      const idAlumno = req.params.id;
- 
-      // Crear conexión a la base de datos de manera asíncrona
-     
- 
-      // Realizar la consulta a la base de datos para obtener el alumno por ID
-      const [results] = await pool.execute('SELECT id, nom FROM usuarios WHERE id = ?', [idAlumno]);
- 
-     
- 
-      // Verificar si se encontró el alumno
-      if (results.length > 0) {
-        // Si se encuentra al alumno, devolver el id y el nombre
-        res.json({
-          id: results[0].id,
-          nom: results[0].nom
-        });
-      } else {
-        // Si no se encuentra el alumno, devolver un error 404
-        res.status(404).json({ error: 'Alumno no encontrado' });
-      }
-    } catch (error) {
-      console.error('Error al obtener el alumno:', error);
-      res.status(500).send('Error al obtener el alumno');
+app.get('/alumno/:email', async (req, res) => {
+  try {
+    // Obtener el email del alumno desde la URL
+    const email = req.params.email;  // Usamos `email` en lugar de `idAlumno`
+  
+    // Realizar la consulta a la base de datos para obtener el alumno por email
+    const [results] = await pool.execute('SELECT email, nom FROM usuarios WHERE email = ?', [email]);
+  
+    // Verificar si se encontró el alumno
+    if (results.length > 0) {
+      // Si se encuentra al alumno, devolver el email y el nombre
+      res.json({
+        email: results[0].email,
+        nom: results[0].nom
+      });
+    } else {
+      // Si no se encuentra el alumno, devolver un error 404
+      res.status(404).json({ error: 'Alumno no encontrado' });
     }
-  });
+  } catch (error) {
+    console.error('Error al obtener el alumno:', error);
+    res.status(500).send('Error al obtener el alumno');
+  }
+});
+
   app.get('/api/alumnos', async (req, res) => {
     try {
  
