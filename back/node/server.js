@@ -46,33 +46,47 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
 
 /* ---------------------------- FUNCIONES AUXILIARES ---------------------------- */
 async function getAlumnos(codigo) {
-    try {
-      // Realizar la consulta para obtener la partida por código
-      const [partida] = await pool.query('SELECT alumnos FROM partida WHERE codigo = ?', [codigo]);
-      
-      // Verificar si la partida existe
-      if (!partida || partida.length === 0) {
-        throw new Error('Partida no encontrada');
-      }
-  
-      // Obtener el campo alumnos (en formato JSON si está guardado correctamente)
-      const alumnos = partida[0].alumnos;
-  
-      // Verificar si el campo alumnos está presente
-      if (!alumnos) {
-        throw new Error('La partida no tiene alumnos');
-      }
-  
-      // Verificar si los datos de alumnos son un arreglo
-      if (!Array.isArray(alumnos)) {
-        throw new Error('Los datos de los alumnos están malformados');
-      }
-  
-      return alumnos;
-    } catch (error) {
-      throw new Error(error.message || 'Hubo un error al obtener los alumnos');
+  try {
+    // Realizar la consulta para obtener la partida por código
+    const [rows] = await pool.query('SELECT alumnos FROM partida WHERE codigo = ?', [codigo]);
+    
+    // Verificar si la partida existe
+    if (rows.length === 0) {
+      return null; // Retorna null si no se encuentra la partida
     }
-  };
+
+    // Obtener el campo alumnos
+    let alumnos = rows[0].alumnos;
+
+    // Verificar si el campo alumnos está presente
+    if (!alumnos) {
+      return []; // Retorna un array vacío si no hay alumnos
+    }
+
+    // Si alumnos es una cadena JSON, parsearlo
+    if (typeof alumnos === 'string') {
+      try {
+        alumnos = JSON.parse(alumnos);
+      } catch (error) {
+        console.error('Error al parsear alumnos:', error);
+        return []; // Retorna un array vacío si hay un error de parseo
+      }
+    }
+
+    // Verificar si los datos de alumnos son un arreglo
+    if (!Array.isArray(alumnos)) {
+      console.error('Los datos de alumnos no son un array');
+      return []; // Retorna un array vacío si los datos no son un array
+    }
+
+    return alumnos;
+
+  } catch (error) {
+    console.error('Error al obtener alumnos:', error);
+    throw new Error('Hubo un error al obtener los alumnos');
+  }
+}
+
   
 
 const createPartida = async () => {
@@ -214,52 +228,65 @@ app.post('/login', async (req, res) => {
 // Obtener o crear código de partida
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
-  const partida = await getAlumnos(codigo);
-  const gameCode = partida ? codigo : await createPartida();
-  res.json({ message: partida ? 'Partida encontrada.' : 'Nueva partida creada.', gameCode });
+  try {
+    const alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      // La partida no existe, crear una nueva
+      const newCodigo = await createPartida();
+      res.json({ message: 'Nueva partida creada.', gameCode: newCodigo });
+    } else {
+      // La partida existe
+      res.json({ message: 'Partida encontrada.', gameCode: codigo });
+    }
+  } catch (error) {
+    console.error('Error en /game-code:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 // Obtener alumnos de una partida
 app.get('/alumnos', async (req, res) => {
   const { codigo } = req.query;
-  const partida = await getAlumnos(codigo);
-  if (!partida) {
-    return res.status(404).json({ error: 'Partida no encontrada' });
+  try {
+    const alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      return res.status(404).json({ error: 'Partida no encontrada' });
+    }
+    res.json(alumnos);
+  } catch (error) {
+    console.error('Error en /alumnos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-  res.json(partida.alumnos);
 });
 
 // Actualizar partida con un nuevo alumno
 app.post('/update-partida', async (req, res) => {
-    const { codigo, usuario } = req.body;
-  
-    try {
-      // Obtener los alumnos de la partida con el código proporcionado
-      const alumnos = await getAlumnos(codigo);
-  
-      // Verificar si el usuario ya está en la partida
-      if (!alumnos.some(alumno => alumno.name === usuario)) {
-        // Agregar el nuevo alumno al arreglo de alumnos
-        alumnos.push({ name: usuario });
-  
-        // Actualizar la partida en la base de datos con el nuevo arreglo de alumnos
-        console.log("Los alumnos nuevos son: " + JSON.stringify(alumnos));
-  
-        await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
-  
-        // Emitir un evento para notificar a los demás participantes sobre el nuevo participante
-        io.to(codigo).emit('new-participant', { usuario, codigo });
-  
-        return res.json({ success: true, message: 'Partida actualizada' });
-      } else {
-        return res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
-      }
-    } catch (error) {
-      // Manejo de errores
-      console.error(error);
-      return res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
+  const { codigo, usuario } = req.body;
+
+  try {
+    let alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      return res.status(404).json({ error: 'Partida no encontrada' });
     }
-  });
+
+    if (!alumnos.some(alumno => alumno.name === usuario)) {
+      alumnos.push({ name: usuario });
+
+      // Actualizar la partida en la base de datos
+      await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+
+      // Emitir evento para notificar a los demás participantes
+      io.to(codigo).emit('new-participant', { usuario, codigo });
+
+      res.json({ success: true, message: 'Partida actualizada' });
+    } else {
+      res.status(400).json({ success: false, message: 'El usuario ya está en la partida' });
+    }
+  } catch (error) {
+    console.error('Error al actualizar la partida:', error);
+    res.status(500).json({ error: 'Hubo un error al actualizar la partida' });
+  }
+});
 /* ---------------------------- RUTAS DE ESTADISTICAS ---------------------------- */
 app.post('/guardar-resultado', async (req, res) => {
   const { preguntaId, dificultad, esCorrecto, nombreAlumno, tipoPregunta } = req.body;

@@ -61,8 +61,10 @@
   
   onMounted(async () => {
     // Obtener el código de la partida
+    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     const response = await axios.get('http://localhost:3000/game-code');
     gameCode.value = response.data.gameCode;
+    console.log(gameCode);
   
     // Obtener los alumnos de la partida
     const alumnosResponse = await axios.get('http://localhost:3000/alumnos', { params: { codigo: gameCode.value } });
