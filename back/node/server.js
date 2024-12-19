@@ -1125,9 +1125,8 @@ const io = new Server(server, {
     socket.on('new-participant', ({ usuario, codigo }) => {
       io.to(codigo).emit('new-participant', { usuario, codigo });
     });
-    socket.on('game-started', ({codigo}) => {
-      io.to(codigo).emit('game-started');
-      console.log("codigo: " + codigo)
+    socket.on('game-started', (data) => {
+      io.emit('game-started', data);  // Emitir el evento a todos los sockets
     });
   });
 

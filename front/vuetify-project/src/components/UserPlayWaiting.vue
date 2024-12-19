@@ -92,7 +92,6 @@
 import { io } from 'socket.io-client';
 import waitingAudio from '@/assets/PlayWaitingMusic.mp3'; // Asegúrate de que esta ruta sea correcta
 import { useRouter } from 'vue-router';
-const router = useRouter();
 export default {
   name: "GameWaitingRoom",
   data() {
@@ -114,15 +113,16 @@ export default {
     this.audio.play().catch((err) => {
       console.warn("El audio no pudo ser reproducido automáticamente:", err);
     });
+    const router = useRouter(); 
     this.socket = io('http://localhost:3000');
     this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
     this.socket.on('game-started', (data) => {
-      console.log('Game started event received:', data); // Verifica si llega correctamente
-      if (data.codigo === this.codigo) {
-        // Redirigir al alumno a la página 'CarrilJugador'
-        router.push({ name: 'CarrilJugador' });
-        console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-      }
+        console.log('Game started event received:', data);
+        if (data.codigo === this.codigo) {
+            // Redirigir al alumno a la página 'CarrilJugador'
+            router.push({ name: 'CarrilJugador' });
+            console.log('Redirigiendo a CarrilJugador');
+        }
     });
 
 
