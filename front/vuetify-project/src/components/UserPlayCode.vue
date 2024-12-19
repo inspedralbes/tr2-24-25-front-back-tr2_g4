@@ -274,7 +274,7 @@ export default {
 /* Botón flotante: Reglas */
 .rules-button {
   position: fixed;
-  bottom: 100px;
+  bottom: 80px;
   right: 100px;
   background-color: #0288d1;
   color: white;

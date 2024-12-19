@@ -1,97 +1,132 @@
+
 <template>
-  <div class="container">
-    <h1>Administrar Preguntas</h1>
-    <div class="form-container">
-      <h2>Agregar Nueva Pregunta</h2>
-      <form @submit.prevent="addQuestion">
-        <input 
-          v-model="newQuestion.text_pregunta" 
-          type="text" 
-          placeholder="Pregunta" 
-          required 
-        />
-        <input 
-          v-model="newQuestion.difficulty_level" 
-          type="number" 
-          placeholder="Nivel de dificultad (1-4)" 
-          min="1" max="5" 
-          required 
-        />
-        <input 
-          v-model="newQuestion.respuesta_correcta" 
-          type="text" 
-          placeholder="Respuesta correcta" 
-          required 
-        />
-        <!-- Cambiado a un desplegable -->
-        <select v-model="newQuestion.type" class="input-field" required>
-          <option disabled value="">Selecciona un tipo</option>
-          <option value="suma">Suma</option>
-          <option value="resta">Resta</option>
-          <option value="multiplicacion">Multiplicación</option>
-          <option value="division">División</option>
-        </select>
-        <button type="submit" class="btn-submit">Agregar Pregunta</button>
-      </form>
-    </div>
+  <v-container>
+    <v-row justify="center">
+      <v-col cols="12" md="8">
+        <v-card class="pa-4 rounded-card" style="background-color: #229de8;">
+          <v-card-title class="text-center" style="color: black; font-weight: bold;   font-size: 28px;">Administrar Preguntas</v-card-title>
 
-    <!-- Lista de preguntas -->
-    <div v-if="questions.length" class="questions-list">
-      <h2>Lista de Preguntas</h2>
-      <ul>
-        <li v-for="question in questions" :key="question.id" class="question-item">
-          <div class="question-details">
-            <span><strong>Pregunta:</strong> {{ question.text_pregunta }}</span>
-            <span><strong>Dificultad:</strong> {{ question.difficulty_level }}</span>
-            <span><strong>Respuesta Correcta:</strong> {{ question.respuesta_correcta }}</span>
-            <span><strong>Tipo:</strong> {{ question.type }}</span>
-          </div>
-          <div class="actions">
-            <button @click="editQuestion(question)" class="btn-edit">Editar</button>
-            <button @click="deleteQuestion(question.id)" class="btn-delete">Eliminar</button>
-          </div>
-        </li>
-      </ul>
-    </div>
+          <!-- Buscador de preguntas (Card blanco) -->
+          <v-divider class="my-4"></v-divider>
+          <v-card class="pa-4 rounded-card" style="background-color: white;">
+            <v-card-subtitle style="color: black; margin-bottom: 16px; font-weight: bold">BUSCAR PREGUNTAS</v-card-subtitle>
+            <v-spacer></v-spacer>
+            <v-form @submit.prevent="searchQuestions">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-select  
+                    v-model="searchCriteria.type"
+                    :items="['suma', 'resta', 'multiplicacion', 'division']"
+                    label="Selecciona un tipo"
+                    outlined
+                    dense
+                    class="rounded-select"
+                    style="color: black; "
+                  ></v-select>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="searchCriteria.difficulty_level"
+                    :items="['1', '2', '3', '4', '5']"
+                    label="Selecciona un nivel de dificultad"
+                    outlined
+                    dense
+                    class="rounded-select"
+                    style="color: black;"
+                  ></v-select>
+                </v-col>
+                <v-col cols="12" class="text-right">
+                  <v-btn type="submit" color="blue" class="rounded-btn" style="color: black;">BUSCAR</v-btn>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card>
 
-    <!-- Modal de edición -->
-    <div v-if="editingQuestion" class="modal">
-      <h2>Editar Pregunta</h2>
-      <form @submit.prevent="updateQuestion">
-        <input 
-          v-model="editingQuestion.text_pregunta" 
-          type="text" 
-          placeholder="Pregunta" 
-          required 
-        />
-        <input 
-          v-model="editingQuestion.difficulty_level" 
-          type="number" 
-          placeholder="Nivel de dificultad (1-5)" 
-          min="1" max="5" 
-          required 
-        />
-        <input 
-          v-model="editingQuestion.respuesta_correcta" 
-          type="text" 
-          placeholder="Respuesta correcta" 
-          required 
-        />
-        <!-- Cambiado a un desplegable -->
-        <select v-model="newQuestion.type" class="input-field" required>
-          <option disabled value="">Selecciona un tipo</option>
-          <option value="suma">Suma</option>
-          <option value="resta">Resta</option>
-          <option value="multiplicacion">Multiplicación</option>
-          <option value="division">División</option>
-        </select>
-        <div class="modal-actions">
-          <button type="submit" class="btn-submit">Actualizar</button>
-          <button @click="cancelEdit" class="btn-cancel">Cancelar</button>
-        </div>
-      </form>
-    </div>
-  </div>
+          <!-- Agregar nueva pregunta (Card blanco) -->
+          <v-divider class="my-4"></v-divider>
+          <v-card class="pa-4 rounded-card" style="background-color: white;">
+            <v-card-subtitle style="color: black;margin-bottom: 16px; font-weight: bold">AGREGAR NUEVA PREGUNTA</v-card-subtitle>
+            <v-form @submit.prevent="addQuestion">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="newQuestion.text_pregunta"
+                    label="Pregunta"
+                    outlined
+                    dense
+                    class="rounded-input"
+                    required
+                    style="color: black;"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="newQuestion.difficulty_level"
+                    label="Nivel de dificultad (1-5)"
+                    outlined
+                    dense
+                    type="number"
+                    min="1"
+                    max="5"
+                    class="rounded-input"
+                    required
+                    style="color: black;"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="newQuestion.respuesta_correcta"
+                    label="Respuesta correcta"
+                    outlined
+                    dense
+                    class="rounded-input"
+                    required
+                    style="color: black;"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="newQuestion.type"
+                    :items="['suma', 'resta', 'multiplicacion', 'division']"
+                    label="Selecciona un tipo"
+                    outlined
+                    dense
+                    class="rounded-select"
+                    required
+                    style="color: black;"
+                  ></v-select>
+                </v-col>
+                <v-col cols="12" class="text-right">
+                  <v-btn type="submit" color="green" class="rounded-btn" style="color: black;">Agregar Pregunta</v-btn>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card>
+
+        <!-- Lista de preguntas -->
+        <v-divider class="my-4"></v-divider>
+        <v-card-subtitle style="color: black; margin-bottom: 16px; font-weight: bold">LISTA DE PREGUNTAS</v-card-subtitle>
+        <v-row v-if="filteredQuestions.length">
+          <v-col cols="12" md="6" v-for="question in filteredQuestions" :key="question.id">
+            <!-- Cambiar el color de fondo a blanco -->
+            <v-card class="mb-4 rounded-card" style="background-color: white;">
+              <v-card-title style="color: black;">{{ question.text_pregunta }}</v-card-title>
+              <v-card-subtitle>
+                <div style="color: black;"><strong>Tipo:</strong> {{ question.type }}</div>
+                <div style="color: black;"><strong>Dificultad:</strong> {{ question.difficulty_level }}</div>
+                <div style="color: black;"><strong>Respuesta:</strong> {{ question.respuesta_correcta }}</div>
+              </v-card-subtitle>
+              <v-card-actions>
+                <v-btn color="black" class="rounded-btn" style="color: black; background-color: yellow;" @click="editQuestion(question)">Editar</v-btn>
+                <v-btn color="white" class="rounded-btn" style="color: black; background-color: red;" @click="deleteQuestion(question.id)">Eliminar</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-alert v-else type="info" class="mt-4" style="color: black;">No se encontraron preguntas.</v-alert>    </v-card>
+    </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 
@@ -101,76 +136,109 @@ import axios from "axios";
 export default {
   data() {
     return {
-      questions: [], // Lista de preguntas
+      questions: [],
+      filteredQuestions: [],
       newQuestion: {
         text_pregunta: "",
         difficulty_level: "",
         respuesta_correcta: "",
         type: ""
       },
-      editingQuestion: null, // Información de la pregunta que estamos editando
+      editingQuestion: null,
+      searchCriteria: {
+        type: "",
+        difficulty_level: ""
+      }
     };
   },
   methods: {
-    // Obtener todas las preguntas desde el backend
     async fetchQuestions() {
       try {
         const response = await axios.get('http://localhost:3000/api/preguntas');
         this.questions = response.data;
+        this.filteredQuestions = response.data;
       } catch (error) {
         console.error("Error al obtener las preguntas", error);
       }
     },
 
-    // Agregar una nueva pregunta
     async addQuestion() {
       try {
         const response = await axios.post('http://localhost:3000/api/preguntas', this.newQuestion);
-        this.questions.push(response.data); // Agregar la pregunta a la lista
-        this.newQuestion = { text_pregunta: "", difficulty_level: "", respuesta_correcta: "", type: "" }; // Limpiar formulario
+        this.questions.push(response.data);
+        this.filteredQuestions.push(response.data);
+        this.newQuestion = { text_pregunta: "", difficulty_level: "", respuesta_correcta: "", type: "" };
       } catch (error) {
         console.error("Error al agregar la pregunta", error);
       }
     },
 
-    // Editar una pregunta
     editQuestion(question) {
-      this.editingQuestion = { ...question }; // Copiar los datos de la pregunta seleccionada
+      this.editingQuestion = { ...question };
     },
 
-    // Actualizar una pregunta
     async updateQuestion() {
       try {
         await axios.put(`http://localhost:3000/api/preguntas/${this.editingQuestion.id}`, this.editingQuestion);
-        this.fetchQuestions(); // Refrescar la lista de preguntas
-        this.cancelEdit(); // Cerrar el modal
+        this.fetchQuestions();
+        this.cancelEdit();
       } catch (error) {
         console.error("Error al actualizar la pregunta", error);
       }
     },
 
-    // Eliminar una pregunta
     async deleteQuestion(id) {
       try {
         await axios.delete(`http://localhost:3000/api/preguntas/${id}`);
-        this.fetchQuestions(); // Refrescar la lista de preguntas
+        this.fetchQuestions();
       } catch (error) {
         console.error("Error al eliminar la pregunta", error);
       }
     },
 
-    // Cancelar la edición de una pregunta
     cancelEdit() {
       this.editingQuestion = null;
+    },
+
+    searchQuestions() {
+      this.filteredQuestions = this.questions.filter(question => {
+        return (
+          (!this.searchCriteria.type || question.type === this.searchCriteria.type) &&
+          (!this.searchCriteria.difficulty_level || question.difficulty_level === parseInt(this.searchCriteria.difficulty_level))
+        );
+      });
     }
   },
   created() {
-    this.fetchQuestions(); // Obtener las preguntas al cargar el componente
+    this.fetchQuestions();
   }
 };
 </script>
 
+
+
 <style scoped>
+.rounded-card {
+  border-radius: 16px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.rounded-input, .rounded-select {
+  border-radius: 16px;
+}
+
+.rounded-btn {
+  border-radius: 16px;
+}
+
+.text-primary {
+  color: #1976d2;
+}
+
+.v-card {
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 /* Aplicar estilos al select */
 select.input-field {
   width: 100%;
@@ -178,29 +246,29 @@ select.input-field {
   margin: 10px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
-  color: black; /* Texto negro */
-  background-color: white; /* Fondo blanco */
+  color: black;
+  background-color: white;
   cursor: pointer;
-  font-size: 16px; /* Tamaño del texto */
+  font-size: 16px;
 }
 
 select.input-field:focus {
-  border-color: #007bff; /* Color azul al enfocar */
+  border-color: #007bff;
   outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Sombra azul al enfocar */
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 .container {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  background-color: white; /* Fondo blanco */
-  color: black; /* Texto negro */
+  background-color: white;
+  color: black;
 }
 
 h1 {
   text-align: center;
-  color: black; /* Título en negro */
+  color: black;
 }
 
 .form-container, .questions-list {
@@ -213,14 +281,14 @@ form input {
   margin: 10px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
-  color: black; /* Texto negro en los campos del formulario */
-  background-color: white; /* Fondo blanco en los campos */
+  color: black;
+  background-color: white;
 }
 
 button {
   padding: 10px 20px;
-  background-color: #007bff; /* Fondo azul */
-  color: white; /* Texto blanco */
+  background-color: #007bff;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -238,7 +306,7 @@ button:hover {
 .question-item {
   display: flex;
   justify-content: space-between;
-  background-color: #f9f9f9; /* Fondo blanco */
+  background-color: #f9f9f9;
   padding: 10px;
   border-radius: 4px;
   margin-bottom: 10px;
@@ -248,7 +316,7 @@ button:hover {
   display: flex;
   flex-direction: column;
   max-width: 70%;
-  color: black; /* Texto negro */
+  color: black;
 }
 
 .actions {
@@ -257,13 +325,13 @@ button:hover {
 }
 
 .btn-edit {
-  background-color: #28a745; /* Fondo verde */
-  color: black; /* Texto negro */
+  background-color: #28a745;
+  color: black;
 }
 
 .btn-delete {
-  background-color: #dc3545; /* Fondo rojo */
-  color: black; /* Texto negro */
+  background-color: #dc3545;
+  color: black;
 }
 
 .modal {
@@ -272,8 +340,8 @@ button:hover {
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 20px;
-  background-color: black; /* Fondo negro en el modal */
-  color: white; /* Texto blanco */
+  background-color: black;
+  color: white;
   border: 1px solid #ccc;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   z-index: 10;
@@ -287,17 +355,16 @@ button:hover {
 }
 
 .btn-submit {
-  background-color: #007bff; /* Fondo azul */
-  color: white; /* Texto blanco */
+  background-color: #007bff;
+  color: white;
 }
 
 .btn-cancel {
-  background-color: #ccc; /* Fondo gris */
-  color: black; /* Texto negro */
+  background-color: #ccc;
+  color: black;
 }
 
 .btn-submit, .btn-cancel {
   width: 48%;
 }
-
 </style>

@@ -221,6 +221,7 @@ export default {
   transform: scale(1.1);
 }
 
+
 /* Botón flotante: Reglas */
 .rules-button {
   position: fixed;

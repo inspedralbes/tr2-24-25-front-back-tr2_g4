@@ -2,7 +2,7 @@
   <div class="alumno-grafico-container">
     <!-- Cabecera -->
     <h1 class="title">Gráfico de Resultados</h1>
-    <p class="subtitle">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
+    <p class="subtitle" style="color: black;">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
 
     <!-- Tarjeta de selección -->
     <div class="card">
@@ -118,7 +118,7 @@ export default {
   margin: 0 auto;
   padding: 20px;
   color: #333;
-  background-color: #97a5e4; /* Aquí cambiamos el color de fondo */
+  background-color: #229de8; /* Aquí cambiamos el color de fondo */
   border-radius: 20px; /* Bordes redondeados para el contenedor */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave para resaltar el contenedor */
 }
@@ -126,8 +126,10 @@ export default {
 .title {
   font-size: 28px;
   text-align: center;
-  color: #3f51b5;
+  color: black;
+  font-weight: bold;
   margin-bottom: 10px;
+  
 }
 
 .subtitle {

@@ -656,7 +656,7 @@ app.get('/preguntas', async (req, res) => {
 
 
       const query = `
-        INSERT INTO Pregunta (text_pregunta, difficulty_level, respuesta_correcta, type)
+        INSERT INTO pregunta (text_pregunta, difficulty_level, respuesta_correcta, type)
         VALUES (?, ?, ?, ?)
       `;
       const values = [text_pregunta, difficulty_level, respuesta_correcta, type];
