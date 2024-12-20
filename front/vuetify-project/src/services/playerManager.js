@@ -1,11 +1,12 @@
 import errorAudio from '@/assets/error.mp3';
 import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
+import { io } from 'socket.io-client';
 export default {
   data() {
     return {
       // Datos del carril del jugador
       carril: {
-        name: "Rayo Veloz",
+        name: "",
         avatar: "https://cdn-icons-png.freepik.com/512/32/32689.png",
         position: 0, // Empezamos en la casilla 0
       },
@@ -42,9 +43,11 @@ export default {
   },
   created() { 
     // Cargar el archivo de audio
+    this.socket = io('http://localhost:3000');
     this.audioIncorrecto = new Audio(errorAudio);
     this.generateUniquePositions();
     this.obtenerAlumno(); // Cargar el alumno
+    
   },
   methods: {
     // Método para obtener el nombre del alumno
@@ -57,6 +60,7 @@ export default {
         const data = await response.json();
         if (data.nom) {
           this.nom = data.nom; // Asignamos el nombre del alumno
+          this.carril.name = this.nom; // Asignamos el nombre del alumno al carril
         } else {
           console.error("Alumno no encontrado");
         }
@@ -195,6 +199,7 @@ export default {
       this.preguntaActiva = false;
       this.preguntaActual = null;
       this.opcionesRespuesta = [];
+      this.socket.emit('updateCarril', this.carril, this.nom);
     },
 
     // Método para guardar el resultado

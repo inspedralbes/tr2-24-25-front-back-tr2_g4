@@ -1073,22 +1073,6 @@ app.delete('/api/users/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error al eliminar el usuario.', error: error.message });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Configuración de Socket.IO
 const server = createServer(app);
 const io = new Server(server, {
@@ -1099,6 +1083,13 @@ const io = new Server(server, {
   io.on('connection', (socket) => {
     console.log('Nuevo cliente conectado:', socket.id);
 
+      // Escucha el evento `updateCarril` desde los jugadores
+      socket.on('updateCarril', (data) => {
+        console.log(`Actualización de carril recibida: `, data);
+        // Reenvía la información a todos los clientes (incluyendo la pantalla del profesor)
+        io.emit('updateCarril', data);
+    });
+    
 
     socket.on('join-room', async ({ codigo }) => {
       const partida = await getAlumnos(codigo);
