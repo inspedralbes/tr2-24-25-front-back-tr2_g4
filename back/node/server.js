@@ -776,41 +776,53 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Obtener el nombre completo del usuario
+    const [userResult] = await pool.query('SELECT CONCAT(nom, " ", cognom) AS nombre_completo FROM usuarios WHERE id = ?', [id]);
+    if (userResult.length === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+    }
+    const userFullName = userResult[0].nombre_completo;
 
-    // Primero elimina las relaciones en las tablas Aulas y Partida
-    // Eliminar al usuario de los campos 'alumnos' en Aulas
-    await pool.execute('UPDATE aulas SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+    // Eliminar el usuario de las referencias en Aulas
+    const [aulas] = await pool.query('SELECT nombre, alumnos FROM aulas');
+    for (const aula of aulas) {
+      const alumnos = JSON.parse(aula.alumnos); // Parsear el JSON de alumnos
+      const filteredAlumnos = alumnos.filter(alumno => alumno !== userFullName); // Filtrar por el nombre completo
+      if (JSON.stringify(alumnos) !== JSON.stringify(filteredAlumnos)) {
+        await pool.query('UPDATE aulas SET alumnos = ? WHERE nombre = ?', [JSON.stringify(filteredAlumnos), aula.nombre]);
+      }
+    }
 
+    // Eliminar el usuario de las referencias en Partida
+    const [partidas] = await pool.query('SELECT codigo, alumnos FROM partida');
+    for (const partida of partidas) {
+      const alumnos = JSON.parse(partida.alumnos); // Parsear el JSON de alumnos
+      const filteredAlumnos = alumnos.filter(alumno => alumno.name !== userFullName); // Filtrar por el nombre completo
+      if (JSON.stringify(alumnos) !== JSON.stringify(filteredAlumnos)) {
+        await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(filteredAlumnos), partida.codigo]);
+      }
+    }
 
-    // Eliminar al usuario de los campos 'alumnos' en Partida
-    await pool.execute('UPDATE partida SET alumnos = JSON_REMOVE(alumnos, JSON_UNQUOTE(JSON_SEARCH(alumnos, "one", ?))) WHERE JSON_CONTAINS(alumnos, ?)', [id, JSON.stringify([id])]);
+    // Eliminar registros relacionados en Estadisticas
+    await pool.query('DELETE FROM estadisticas WHERE usuario_id = ?', [id]);
 
-
-    // Luego elimina los registros en la tabla Estadisticas si existen
-    await pool.execute('DELETE FROM estadisticas WHERE usuario_id = ?', [id]);
-
-
-    // Finalmente, elimina el usuario de la tabla Usuarios
-    const [result] = await pool.execute('DELETE FROM usuarios WHERE id = ?', [id]);
-
+    // Finalmente, eliminar al usuario de la tabla Usuarios
+    const [result] = await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
     }
 
-
-    res.json({ success: true, message: 'Usuario eliminado correctamente.' });
+    res.json({ success: true, message: 'Usuario eliminado correctamente de todas las tablas.' });
   } catch (error) {
     console.error('Error al eliminar el usuario:', error);
     res.status(500).json({ success: false, message: 'Error al eliminar el usuario.', error: error.message });
   }
 });
-
 
 
 
