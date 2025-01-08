@@ -43,8 +43,20 @@
 
 <script>
 import { useUserStore } from '@/stores/userStore';
+import { onMounted } from 'vue';
 
 export default {
+
+  setup() {
+    const userStore = useUserStore();
+
+    onMounted(() => {
+      userStore.clearAll(); // Borra los datos del localStorage al montar la vista
+    });
+
+    return {}; 
+  },
+
   name: "LoginForm",
   data() {
     return {

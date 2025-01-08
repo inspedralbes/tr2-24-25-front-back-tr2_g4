@@ -24,6 +24,12 @@ export const useUserStore = defineStore('user', {
         this.updateLocalStorage(); // Actualizar localStorage
       }
     },
+    clearAll() {
+      // Limpiar el estado por completo
+      this.$reset(); // Esto restablece el estado inicial definido en la tienda
+      // Limpiar completamente el localStorage
+      localStorage.clear(); // Elimina todo lo almacenado en localStorage
+    },
     removeParticipant() {
       this.participants = this.participants.filter(user => user.email !== this.user.email);
       this.updateLocalStorage(); // Actualizar localStorage
