@@ -6,59 +6,78 @@
     </v-app-bar>
 
     <!-- Contenedor principal -->
-    <v-container class="text-center" style="height: 100vh; background-color: #99a6e9; padding-top: 20px;">
+    <v-container class="text-center" style="height: 100vh; background-color: #99A6E9; padding-top: 80px;">
       <!-- Mostrar cada carril de los jugadores -->
-      <v-row dense justify="center" align="center" style="gap: 20px;">
-        <v-col v-for="carrilData in carriles" :key="carrilData.nombre" cols="auto" class="carril-container">
-          <!-- Mostrar nombre y avatar del jugador -->
-          <h2 style="margin-bottom: 20px; color: white;">{{ carrilData.nombre }}</h2>
+      <v-row dense justify="center" align="center" style="gap: 30px;">
+        <v-col
+          v-for="carrilData in carriles"
+          :key="carrilData.nombre"
+          cols="auto"
+          class="carril-container"
+          style="width: 100%;"
+        >
+          <!-- Estructura del carril -->
+          <v-card elevation="8" style="background: #0353A4; border-radius: 20px; padding: 20px;">
+            <v-row align="center" no-gutters>
+              <!-- Nombre del jugador -->
+              <v-col cols="auto" class="text-left">
+                <v-card
+                  elevation="4"
+                  outlined
+                  style="background-color: #FFF07C; color: black; padding: 10px; border-radius: 10px;"
+                >
+                  <h2 style="margin: 0;">{{ carrilData.nombre }}</h2>
+                </v-card>
+              </v-col>
 
-          <!-- Carriles con casillas -->
-          <v-row dense justify="center">
-            <v-col
-              v-for="(casilla, index) in 40"
-              :key="index"
-              class="pa-1"
-              cols="auto"
-              style="min-width: 60px; height: 60px;"
-            >
-              <v-card
-                outlined
-                class="d-flex justify-center align-center"
-                :color="getColor(index, carrilData.carril.position)"
-                style="height: 100%;"
-              >
-                <!-- Mostrar el avatar si es la casilla activa -->
-                <template v-if="index === carrilData.carril.position">
-                  <v-avatar size="40">
-                    <span class="caballo" :style="{ transform: 'rotateY(180deg)', fontSize: '20px' }">🏇</span>
-                  </v-avatar>
-                </template>
+              <!-- Carriles con casillas -->
+              <v-col>
+                <v-row dense justify="center" align="center">
+                  <v-col
+                    v-for="(casilla, index) in 40"
+                    :key="index"
+                    class="pa-1"
+                    cols="auto"
+                    style="min-width: 60px; height: 60px;"
+                  >
+                    <v-card
+                      elevation="2"
+                      outlined
+                      class="d-flex justify-center align-center"
+                      :color="getColor(index, carrilData.carril.position)"
+                      style="height: 100%; border-radius: 12px;"
+                    >
+                      <!-- Mostrar el avatar si es la casilla activa -->
+                      <template v-if="index === carrilData.carril.position">
+                        <v-avatar size="40" color="white">
+                          <span class="caballo" :style="{ transform: 'rotateY(180deg)', fontSize: '20px' }">🏇</span>
+                        </v-avatar>
+                      </template>
 
-                <!-- Mostrar bomba, multiplicador, o ambos si corresponde -->
-                <template v-else>
-                  <!-- Mostrar bombas y multiplicadores -->
-                  
-                  <template v-if="carrilData.bombas.includes(index) || carrilData.multiplicadores.includes(index) ">
-                    
-                    <span v-if="carrilData.bombas.includes(index)" class="bomb-text">💣</span>
-                    <span v-if="carrilData.multiplicadores.includes(index)" class="golden-text">💰</span>
-                   
-                  </template>
+                      <!-- Mostrar bombas y multiplicadores -->
+                      <template v-else>
+                        <template v-if="carrilData.bombas.includes(index) || carrilData.multiplicadores.includes(index)">
+                          <span v-if="carrilData.bombas.includes(index)" class="bomb-text">💣</span>
+                          <span v-if="carrilData.multiplicadores.includes(index)" class="golden-text">💰</span>
+                        </template>
 
-                  <!-- Mostrar el número de casilla si no es bomba ni multiplicador -->
-                  <template v-else>
-                    <span style="color: white;">{{ index + 1 }}</span>
-                  </template>
-                </template>
-              </v-card>
-            </v-col>
-          </v-row>
+                        <!-- Mostrar el número de casilla si no es bomba ni multiplicador -->
+                        <template v-else>
+                          <span style="color: white;">{{ index + 1 }}</span>
+                        </template>
+                      </template>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </v-col>
+            </v-row>
+          </v-card>
         </v-col>
       </v-row>
     </v-container>
   </v-app>
 </template>
+
 
 <script>
 import { io } from "socket.io-client";
