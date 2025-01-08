@@ -1084,11 +1084,10 @@ const io = new Server(server, {
     console.log('Nuevo cliente conectado:', socket.id);
 
       // Escucha el evento `updateCarril` desde los jugadores
-      socket.on('updateCarril', (data) => {
-        console.log(`Actualización de carril recibida: `, data);
-        // Reenvía la información a todos los clientes (incluyendo la pantalla del profesor)
-        io.emit('updateCarril', data);
-    });
+      socket.on('updateCarril', (carril, nombre, avatar, bombas, multiplicadores) => {
+        console.log('Datos recibidos del cliente:', { carril, nombre, avatar, bombas, multiplicadores });
+        io.emit('updateCarril', carril, nombre, avatar, bombas, multiplicadores);  // Emitir el evento a todos los sockets
+      });
     
 
     socket.on('join-room', async ({ codigo }) => {

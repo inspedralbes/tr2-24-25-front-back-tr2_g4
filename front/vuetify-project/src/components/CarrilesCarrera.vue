@@ -9,9 +9,9 @@
     <v-container class="text-center" style="height: 100vh; background-color: #99a6e9; padding-top: 20px;">
       <!-- Mostrar cada carril de los jugadores -->
       <v-row dense justify="center" align="center" style="gap: 20px;">
-        <v-col v-for="carrilData in carriles" :key="carrilData.name" cols="auto" class="carril-container">
-          <!-- Nombre del jugador -->
-          <h2 style="margin-bottom: 20px; color: white;">{{ carrilData.name }}</h2>
+        <v-col v-for="carrilData in carriles" :key="carrilData.nombre" cols="auto" class="carril-container">
+          <!-- Mostrar nombre y avatar del jugador -->
+          <h2 style="margin-bottom: 20px; color: white;">{{ carrilData.nombre }}</h2>
 
           <!-- Carriles con casillas -->
           <v-row dense justify="center">
@@ -25,18 +25,31 @@
               <v-card
                 outlined
                 class="d-flex justify-center align-center"
-                :color="getColor(index, carrilData.position)"
+                :color="getColor(index, carrilData.carril.position)"
                 style="height: 100%;"
               >
                 <!-- Mostrar el avatar si es la casilla activa -->
-                <template v-if="index === carrilData.position">
+                <template v-if="index === carrilData.carril.position">
                   <v-avatar size="40">
                     <span class="caballo" :style="{ transform: 'rotateY(180deg)', fontSize: '20px' }">🏇</span>
                   </v-avatar>
                 </template>
-                <!-- Mostrar el número de casilla si no es activa -->
+
+                <!-- Mostrar bomba, multiplicador, o ambos si corresponde -->
                 <template v-else>
-                  <span style="color: white;">{{ index + 1 }}</span>
+                  <!-- Mostrar bombas y multiplicadores -->
+                  
+                  <template v-if="carrilData.bombas.includes(index) || carrilData.multiplicadores.includes(index) ">
+                    
+                    <span v-if="carrilData.bombas.includes(index)" class="bomb-text">💣</span>
+                    <span v-if="carrilData.multiplicadores.includes(index)" class="golden-text">💰</span>
+                   
+                  </template>
+
+                  <!-- Mostrar el número de casilla si no es bomba ni multiplicador -->
+                  <template v-else>
+                    <span style="color: white;">{{ index + 1 }}</span>
+                  </template>
                 </template>
               </v-card>
             </v-col>
@@ -48,7 +61,7 @@
 </template>
 
 <script>
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 export default {
   data() {
@@ -58,35 +71,50 @@ export default {
   },
   created() {
     // Inicializar la conexión del socket
-    this.socket = io('http://localhost:3000');
+    this.socket = io("http://localhost:3000");
 
     // Escuchar el evento de actualización del carril
-    this.socket.on('updateCarril', (data) => {
-      this.actualizarCarril(data);
+    this.socket.on("updateCarril", (carril, nombre, avatar, bombas, multiplicadores) => {
+      this.actualizarCarril(carril, nombre, avatar, bombas, multiplicadores);
     });
   },
   methods: {
     // Actualizar los carriles basados en el nombre del jugador
-    actualizarCarril(data) {
+    actualizarCarril(carril, nombre, avatar, bombas, multiplicadores) {
       // Buscar si ya existe un carril con el nombre del jugador
-      const index = this.carriles.findIndex(c => c.name === data.name);
+      console.log("Actualización del carril para el jugador:", nombre);
+      console.log("Bombas:", bombas);  // Imprime las bombas
+      console.log("Multiplicadores:", multiplicadores);  
+      const index = this.carriles.findIndex((c) => c.nombre === nombre);
 
       if (index !== -1) {
-        // Si el jugador ya tiene un carril, actualiza su posición
-        this.carriles.splice(index, 1, data);
+        // Si el jugador ya tiene un carril, actualiza su carril, bombas y multiplicadores
+        this.carriles[index].carril = carril || {}; // Asegúrate de que carril tenga una posición válida
+        this.carriles[index].bombas = bombas || [];
+        this.carriles[index].multiplicadores = multiplicadores || [];
+        this.carriles[index].avatar = avatar || ""; // Actualizar avatar si es necesario
       } else {
         // Si no existe, crea un nuevo carril para el jugador
         this.carriles.push({
-          name: data.name,
-          position: data.position || 0, // Posición inicial en caso de que no venga definida
+          nombre,
+          avatar,
+          carril, // Asegúrate de pasar el objeto carril completo
+          bombas: bombas || [],
+          multiplicadores: multiplicadores || []
         });
       }
     },
+
     // Determinar el color de una casilla
     getColor(index, position) {
       if (index === position) return "white"; // Color de la casilla actual
       return index % 2 === 0 ? "red" : "black"; // Color alternado para las demás casillas
     },
+  },
+  beforeDestroy() {
+    if (this.socket) {
+      this.socket.disconnect(); // Desconectar el socket al destruir el componente
+    }
   },
 };
 </script>
@@ -94,6 +122,7 @@ export default {
 <style scoped>
 .carril-container {
   margin-bottom: 40px;
+  margin-top: 70px;
 }
 
 .carril {
@@ -114,5 +143,16 @@ export default {
 
 .v-row {
   justify-content: center;
+}
+
+/* Estilos para los emoticonos de bomba y multiplicador */
+.bomb-text {
+  font-size: 30px;
+  color: red;
+}
+
+.golden-text {
+  font-size: 30px;
+  color: gold;
 }
 </style>

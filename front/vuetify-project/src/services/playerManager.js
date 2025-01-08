@@ -36,20 +36,53 @@ export default {
       respuestaCorrecta: null, // Respuesta correcta a la pregunta
       preguntaActiva: false, // Controla si la pregunta está activa
       bombas: [], // Posiciones de las bombas en el tablero
-      multipliers: [], // Posiciones de los multiplicadores en el tablero
+      multiplicadores: [], // Posiciones de los multiplicadores en el tablero
       audioIncorrecto: null,
       nom: '', // Aquí se guarda el nombre del alumno
     };
   },
   created() { 
-    // Cargar el archivo de audio
+    try {
+      const estadoGuardado = localStorage.getItem('estadoCarril');
+      if (estadoGuardado) {
+        const { carril, bombas, multiplicadores } = JSON.parse(estadoGuardado);
+        if (carril && Array.isArray(bombas) && Array.isArray(multiplicadores)) {
+          // Restaurar estado guardado si es válido
+          this.carril = carril;
+          this.bombas = bombas;
+          this.multiplicadores = multiplicadores;
+        } else {
+          // Generar nuevas posiciones si el estado guardado es inválido
+          this.generateUniquePositions();
+        }
+      } else {
+        // Generar nuevas posiciones si no hay estado guardado
+        this.generateUniquePositions();
+      }
+    } catch (error) {
+      console.error('Error al cargar el estado del carril:', error);
+      this.generateUniquePositions();
+    }
     this.socket = io('http://localhost:3000');
     this.audioIncorrecto = new Audio(errorAudio);
-    this.generateUniquePositions();
-    this.obtenerAlumno(); // Cargar el alumno
-    
-  },
+    this.obtenerAlumno();
+    console.log('Datos enviados:', {
+      carril: this.carril,
+      nombre: this.nom,
+      bombas: this.bombas,
+      multiplicadores: this.multiplicadores
+    });
+    this.socket.emit('updateCarril', this.carril, this.nom,this.avatar, this.bombas, this.multiplicadores);
+},
+
   methods: {
+    guardarEstadoCarril() {
+      localStorage.setItem('estadoCarril', JSON.stringify({
+        carril: this.carril,
+        bombas: this.bombas,
+        multiplicadores: this.multiplicadores,
+      }));
+    },
     // Método para obtener el nombre del alumno
     async obtenerAlumno() {
     
@@ -199,7 +232,14 @@ export default {
       this.preguntaActiva = false;
       this.preguntaActual = null;
       this.opcionesRespuesta = [];
-      this.socket.emit('updateCarril', this.carril, this.nom);
+      console.log('Datos enviados:', {
+        carril: this.carril,
+        nombre: this.nom,
+        bombas: this.bombas,
+        multiplicadores: this.multiplicadores
+      });
+      this.socket.emit('updateCarril', this.carril, this.nom ,this.avatar, this.bombas, this.multiplicadores);
+      this.guardarEstadoCarril();
     },
 
     // Método para guardar el resultado
@@ -252,7 +292,8 @@ export default {
       let availablePositions = Array.from({ length: 39 }, (_, i) => i + 1); // Casillas disponibles
       this.bombas = this.getRandomPositions(availablePositions, 2); // Seleccionamos 2 bombas
       availablePositions = availablePositions.filter((pos) => !this.bombas.includes(pos)); // Excluimos las bombas de las opciones
-      this.multipliers = this.getRandomPositions(availablePositions, 2); // Seleccionamos 2 multiplicadores
+      this.multiplicadores = this.getRandomPositions(availablePositions, 2);
+      this.guardarEstadoCarril(); // Seleccionamos 2 multiplicadores
     },
 
     // Método para obtener posiciones aleatorias de un conjunto de posiciones disponibles
@@ -273,7 +314,7 @@ export default {
 
     // Método para verificar si una posición corresponde a un multiplicador
     isMultiplier(index) {
-      return this.multipliers.includes(index); // Retorna true si es un multiplicador
+      return this.multiplicadores.includes(index); // Retorna true si es un multiplicador
     },
 
     // Método para obtener el color de la casilla en el carril
