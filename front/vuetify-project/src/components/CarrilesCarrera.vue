@@ -11,7 +11,7 @@
       <v-row dense justify="center" align="center" style="gap: 30px;">
         <v-col
           v-for="carrilData in carriles"
-          :key="carrilData.nombre"
+          :key="carrilData.carril.name"
           cols="auto"
           class="carril-container"
           style="width: 100%;"
@@ -26,7 +26,7 @@
                   outlined
                   style="background-color: #FFF07C; color: black; padding: 10px; border-radius: 10px;"
                 >
-                  <h2 style="margin: 0;">{{ carrilData.nombre }}</h2>
+                  <h2 style="margin: 0;">{{ carrilData.carril.name }}</h2>
                 </v-card>
               </v-col>
 
