@@ -39,12 +39,12 @@ const routes = [
     component: CrearPartida, // Componente para la pantalla de "Crear Partida"
   },
   {
-    path: '/carrilescarrera',
+    path: '/carrilescarrera/:codigo',
     name: 'CarrilesCarrera',
     component: CarrilesCarrera, // Componente para la pantalla del carril del jugador
   },
   {
-    path: '/carriljugador',
+    path: '/carriljugador/:codigo',
     name: 'CarrilJugador',
     component: CarrilJugador, // Componente para la pantalla del carril del jugador
   }

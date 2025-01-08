@@ -81,8 +81,6 @@ onMounted(async () => {
   socket.on('error', (error) => {
     alert(error);
   });
-  
-
 });
 
 // Función para eliminar un usuario
@@ -116,16 +114,14 @@ const removeUser = async (userId) => {
   }
 };
 
+// Función para comenzar el juego
 const startGame = () => {
-
   // Emitir evento a todos los jugadores conectados para que se redirijan a 'CarrilJugador'
   socket.emit('game-started', { codigo: gameCode.value });
-  
-  // Redirigir al profesor a la página de 'CarrilesCarrera'
-  router.push({ name: 'CarrilesCarrera' });
+
+  // Redirigir al profesor a la página de 'CarrilesCarrera' con el código de la partida
+  router.push({ path: `/carrilescarrera/${gameCode.value}` });
 };
-
-
 </script>
 
 <style scoped>

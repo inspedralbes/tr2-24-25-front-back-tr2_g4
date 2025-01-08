@@ -25,7 +25,6 @@
         <!-- Lista de participantes como Chips -->
         <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
           <h3 class="text-white font-weight-bold mb-4" style="width: 100%;">PARTICIPANTES:</h3>
-          <!-- Mostrar los participantes como chips -->
           <v-chip class="color-chips"
             v-for="(user, index) in participants"
             :key="index"
@@ -90,8 +89,9 @@
 
 <script>
 import { io } from 'socket.io-client';
-import waitingAudio from '@/assets/PlayWaitingMusic.mp3'; // Asegúrate de que esta ruta sea correcta
+import waitingAudio from '@/assets/PlayWaitingMusic.mp3';
 import { useRouter } from 'vue-router';
+
 export default {
   name: "GameWaitingRoom",
   data() {
@@ -106,85 +106,59 @@ export default {
     };
   },
   mounted() {
-    // Crear y configurar el objeto de audio
     this.audio = new Audio(waitingAudio);
     this.audio.loop = true;
-    this.audio.volume = this.isMuted ? 0 : 1; // El volumen depende del estado de mute
+    this.audio.volume = this.isMuted ? 0 : 1; 
     this.audio.play().catch((err) => {
       console.warn("El audio no pudo ser reproducido automáticamente:", err);
     });
+
     const router = useRouter(); 
     this.socket = io('http://localhost:3000');
     this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
+    
     this.socket.on('game-started', (data) => {
-        console.log('Game started event received:', data);
-        if (data.codigo === this.codigo) {
-            // Redirigir al alumno a la página 'CarrilJugador'
-            router.push({ name: 'CarrilJugador' });
-            console.log('Redirigiendo a CarrilJugador');
-        }
+      if (data.codigo === this.codigo) {
+        router.push(`/carriljugador/${this.codigo}`); // Redirigir con el código en la URL
+        console.log(`Redirigiendo a /carriljugador/${this.codigo}`);
+      }
     });
 
-
-    // Animación de puntos
     let count = 0;
     setInterval(() => {
       count = (count + 1) % 4;
       this.dots = '.'.repeat(count);
     }, 500);
 
-    // Recuperar el nombre del usuario logueado
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
       this.usuario = `${user.nom} ${user.cognom}`;
     } else {
       console.error("Usuario no encontrado en localStorage. Redirigiendo a login...");
-      this.$router.push('/login'); // Redirigir si el usuario no está logueado
+      this.$router.push('/login'); 
       return;
     }
 
-    // Conexión al socket y manejo de participantes
-    this.codigo = this.$route.params.codigo; // Obtener el código de la URL
-    this.socket = io('http://localhost:3000'); // Conectar con el servidor de Socket.io
+    this.codigo = this.$route.params.codigo; 
+    this.socket = io('http://localhost:3000'); 
 
-    // Unirse a la sala de la partida
     this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
 
-    // Actualización de la lista de participantes
     this.socket.on('update-alumnos', (alumnos) => {
       this.participants = alumnos;
-
-      // Actualizar participantes en `localStorage`
-      let participants = JSON.parse(localStorage.getItem('participants')) || [];
-      alumnos.forEach(alumno => {
-        if (!participants.some(p => p === alumno.name)) {
-          participants.push(alumno.name);
-        }
-      });
-      localStorage.setItem('participants', JSON.stringify(participants));
     });
 
-    // Manejar nuevos participantes
     this.socket.on('new-participant', (data) => {
       if (data.codigo === this.codigo) {
         this.participants.push({ name: data.usuario });
-
-        // Actualizar en `localStorage`
-        let participants = JSON.parse(localStorage.getItem('participants')) || [];
-        if (!participants.includes(data.usuario)) {
-          participants.push(data.usuario);
-          localStorage.setItem('participants', JSON.stringify(participants));
-        }
       }
     });
   },
 
   destroyed() {
-    // Desconectar al destruir el componente
     if (this.socket) {
       this.socket.disconnect();
     }
-    // Asegurarse de que el audio se detenga al destruir el componente
     if (this.audio) {
       this.audio.pause();
     }
@@ -192,12 +166,12 @@ export default {
 
   methods: {
     toggleMute() {
-      this.isMuted = !this.isMuted; // Cambiar estado de mute
+      this.isMuted = !this.isMuted;
       if (this.isMuted) {
-        this.audio.volume = 0; // Silenciar audio
-        this.audio.pause(); // Pausar audio
+        this.audio.volume = 0;
+        this.audio.pause();
       } else {
-        this.audio.volume = 1; // Reanudar volumen
+        this.audio.volume = 1;
         this.audio.play().catch((err) => {
           console.warn("Error al reanudar el audio:", err);
         });
@@ -260,7 +234,6 @@ export default {
 }
 
 .text-rules {
-
   background-color: #0a4f74;
 }
 
