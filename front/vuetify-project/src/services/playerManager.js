@@ -72,7 +72,7 @@ export default {
       bombas: this.bombas,
       multiplicadores: this.multiplicadores
     });
-    this.socket.emit('updateCarril', this.carril, this.nom,this.avatar, this.bombas, this.multiplicadores);
+    
 },
 
   methods: {
