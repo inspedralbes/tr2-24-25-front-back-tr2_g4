@@ -39,7 +39,7 @@
 
     <!-- Mostrar Gráfico -->
     <div v-if="grafico" class="grafico-container card">
-      <h2>
+      <h2 class="custom-title2">
         Resultados de {{ selectedAlumno }}
         <span v-if="selectedTipoPregunta"> - {{ selectedTipoPregunta }}</span>
       </h2>
