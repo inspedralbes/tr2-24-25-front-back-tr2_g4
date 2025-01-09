@@ -1,35 +1,212 @@
 <template>
-  <div class="user-management">
-    <!-- Formulario de edición -->
-    <div class="form-container" v-if="isEditMode">
-      <h2>Editar Usuario</h2>
-      <form @submit.prevent="updateUser">
-        <div class="input-group">
+  <div class="main-container">
+
+
+    <!-- Administrar Usuarios -->
+    <div class="admin-section">
+      <div class="form-container">
+        <h1 class="custom-title">Administrar Usuarios</h1>
+
+
+        <h2 class="custom-title2">Editar Usuario</h2>
+        <form @submit.prevent="updateUser">
           <input v-model="newUser.nom" type="text" placeholder="Nombre" required />
           <input v-model="newUser.cognom" type="text" placeholder="Apellido" required />
           <input v-model="newUser.email" type="email" placeholder="Correo Electrónico" required />
-        </div>
-        <button class="submit-btn" type="submit">Actualizar</button>
-      </form>
+          <button type="submit" class="custom-title3">Actualizar Usuario</button>
+        </form>
+      </div>
     </div>
 
-    <!-- Listado de usuarios -->
-    <div class="user-list-container">
-      <h2>Usuarios Registrados</h2>
-      <ul class="user-list">
-        <li v-for="user in users" :key="user.id" class="user-item">
-          <div class="user-info">
-            <p>{{ user.nom }} {{ user.cognom }} - {{ user.email }}</p>
-            <div class="actions">
-              <button class="edit-btn" @click="editUser(user)">Editar</button>
-              <button class="delete-btn" @click="deleteUser(user.id)">Eliminar</button>
+
+    <!-- Listado de Usuarios -->
+    <div class="user-list-section full-width">
+      <div class="form-container">
+
+
+        <div v-if="users.length" class="user-list">
+          <h2 style=" padding: 2%;" class="custom-title">Lista de Usuarios</h2>
+          <ul>
+            <li v-for="user in users" :key="user.id" class="user-item">
+              <div class="user-details">
+                <span><strong>Nombre:</strong> {{ user.nom }}</span>
+                <span><strong>Apellido:</strong> {{ user.cognom }}</span>
+                <span><strong>Correo Electrónico:</strong> {{ user.email }}</span>
+              </div>
+              <div class="actions">
+                <button @click="editUser(user)" class="btn-edit">Editar</button>
+                <button @click="deleteUser(user.id)" class="btn-delete">Eliminar</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+
+        <div v-if="editingUser" class="modal">
+          <h2>Editar Usuario</h2>
+          <form @submit.prevent="updateUser">
+            <input v-model="editingUser.nom" type="text" placeholder="Nombre" required />
+            <input v-model="editingUser.cognom" type="text" placeholder="Apellido" required />
+            <input v-model="editingUser.email" type="email" placeholder="Correo Electrónico" required />
+            <div class="modal-actions">
+              <button type="submit" class="btn-submit">Actualizar</button>
+              <button @click="cancelEdit" class="btn-cancel">Cancelar</button>
             </div>
-          </div>
-        </li>
-      </ul>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
+
+
+<style scoped>
+.admin-section, .user-list-section {
+  margin-bottom: 40px; /* Agregar espacio abajo para separarlos */
+}
+
+
+
+
+.custom-title {
+  font-family: 'Arial Black', sans-serif;
+  font-weight: bold;
+  font-size: 24px;
+  color: #000000;
+  text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+
+.custom-title2 {
+  font-family: 'Arial Black', sans-serif;
+  font-weight: bold;
+  font-size: 20px;
+  color: #1c4b7c;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+
+.custom-title3 {
+  font-family: 'Arial Black', sans-serif;
+  font-weight: bold;
+  font-size: 15px;
+  color: #000000;
+  background-color: yellow;
+}
+
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: black;
+  background-color: white;
+}
+
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+button:hover {
+  background-color: #0056b3;
+}
+
+
+.user-list-section {
+  background-color: #73b0e6;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+
+.user-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  background-color: #ffffff;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  color: black;
+}
+
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+.admin-section {
+  background-color: #73b0e6; /* Fondo azul claro */
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: black;
+  color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  width: 300px;
+  text-align: center;
+}
+
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+
+.btn-submit, .btn-cancel {
+  width: 48%;
+}
+
+
+.btn-edit {
+  background-color: #28a745;
+  color: black;
+}
+
+
+.btn-delete {
+  background-color: #dc3545;
+  color: black;
+}
+</style>
+
+
+
 
 <script>
 import axios from 'axios';
@@ -104,103 +281,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.user-management {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-h2 {
-  text-align: center;
-  font-size: 1.6rem;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.form-container,
-.user-list-container {
-  margin-bottom: 40px;
-  color: black;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-input {
-  padding: 12px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  color: black; /* Establecer color negro en el texto de los inputs */
-}
-
-button {
-  padding: 12px;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.submit-btn {
-  background-color: #4caf50;
-  color: white; /* Mantener texto blanco para los botones */
-}
-
-.submit-btn:hover {
-  background-color: #45a049;
-}
-
-.user-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.user-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: white;
-  color: black; /* Color negro para el texto de los items de usuario */
-  padding: 15px;
-  margin: 5px 0;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.user-info {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.actions button {
-  margin-left: 10px;
-}
-
-.edit-btn {
-  background-color: #2196f3;
-  color: white;
-}
-
-.edit-btn:hover {
-  background-color: #1976d2;
-}
-
-.delete-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-.delete-btn:hover {
-  background-color: #e53935;
-}
-</style>
