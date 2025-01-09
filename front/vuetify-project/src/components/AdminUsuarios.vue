@@ -1,12 +1,10 @@
 <template>
   <div class="main-container">
 
-
     <!-- Administrar Usuarios -->
     <div class="admin-section">
       <div class="form-container">
         <h1 class="custom-title">Administrar Usuarios</h1>
-
 
         <h2 class="custom-title2">Editar Usuario</h2>
         <form @submit.prevent="updateUser">
@@ -18,12 +16,21 @@
       </div>
     </div>
 
+    <!-- Mensaje de Acción -->
+    <div v-if="showMessage" class="action-message">
+      <p>{{ message }}</p>
+    </div>
+
+    <!-- Confirmación de Eliminación -->
+    <div v-if="showConfirmation" class="confirmation-modal">
+      <p>¿Estás seguro de que quieres eliminar este usuario?</p>
+      <button @click="confirmDelete" class="btn-confirm">Sí</button>
+      <button @click="cancelDelete" class="btn-cancel">No</button>
+    </div>
 
     <!-- Listado de Usuarios -->
     <div class="user-list-section full-width">
       <div class="form-container">
-
-
         <div v-if="users.length" class="user-list">
           <h2 style=" padding: 2%;" class="custom-title">Lista de Usuarios</h2>
           <ul>
@@ -35,12 +42,11 @@
               </div>
               <div class="actions">
                 <button @click="editUser(user)" class="btn-edit">Editar</button>
-                <button @click="deleteUser(user.id)" class="btn-delete">Eliminar</button>
+                <button @click="askDelete(user.id)" class="btn-delete">Eliminar</button>
               </div>
             </li>
           </ul>
         </div>
-
 
         <div v-if="editingUser" class="modal">
           <h2>Editar Usuario</h2>
@@ -59,14 +65,102 @@
   </div>
 </template>
 
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      newUser: {
+        id: null,
+        nom: '',
+        cognom: '',
+        email: '',
+      },
+      isEditMode: false,
+      users: [],
+      errorMessage: '',
+      showMessage: false,
+      message: '',
+      showConfirmation: false,
+      userToDelete: null,
+    };
+  },
+  methods: {
+    async fetchUsers() {
+      try {
+        const response = await axios.get('http://localhost:3000/api/users');
+        this.users = response.data.users;
+      } catch (error) {
+        this.errorMessage = 'Error al cargar los usuarios.';
+        alert(this.errorMessage);
+      }
+    },
+
+    editUser(user) {
+      this.isEditMode = true;
+      this.newUser = { ...user };
+    },
+
+    async updateUser() {
+      try {
+        const response = await axios.put(`http://localhost:3000/api/users/${this.newUser.id}`, this.newUser);
+        this.showMessageWithText(response.data.message);
+        this.resetForm();
+        this.fetchUsers();
+      } catch (error) {
+        this.errorMessage = error.response.data.message;
+        alert(this.errorMessage);
+      }
+    },
+
+    askDelete(id) {
+      this.userToDelete = id;
+      this.showConfirmation = true;
+    },
+
+    async confirmDelete() {
+      if (this.userToDelete) {
+        try {
+          const response = await axios.delete(`http://localhost:3000/api/users/${this.userToDelete}`);
+          this.showMessageWithText(response.data.message);
+          this.fetchUsers();
+        } catch (error) {
+          this.errorMessage = error.response.data.message;
+          alert(this.errorMessage);
+        }
+      }
+      this.cancelDelete();
+    },
+
+    cancelDelete() {
+      this.showConfirmation = false;
+      this.userToDelete = null;
+    },
+
+    showMessageWithText(text) {
+      this.message = text;
+      this.showMessage = true;
+      setTimeout(() => {
+        this.showMessage = false;
+      }, 3000);
+    },
+
+    resetForm() {
+      this.newUser = { id: null, nom: '', cognom: '', email: '' };
+      this.isEditMode = false;
+    },
+  },
+  mounted() {
+    this.fetchUsers();
+  },
+};
+</script>
 
 <style scoped>
 .admin-section, .user-list-section {
-  margin-bottom: 40px; /* Agregar espacio abajo para separarlos */
+  margin-bottom: 40px;
 }
-
-
-
 
 .custom-title {
   font-family: 'Arial Black', sans-serif;
@@ -79,7 +173,6 @@
   letter-spacing: 1px;
 }
 
-
 .custom-title2 {
   font-family: 'Arial Black', sans-serif;
   font-weight: bold;
@@ -89,7 +182,6 @@
   letter-spacing: 1px;
 }
 
-
 .custom-title3 {
   font-family: 'Arial Black', sans-serif;
   font-weight: bold;
@@ -97,7 +189,6 @@
   color: #000000;
   background-color: yellow;
 }
-
 
 input {
   width: 100%;
@@ -109,7 +200,6 @@ input {
   background-color: white;
 }
 
-
 button {
   padding: 10px 20px;
   background-color: #007bff;
@@ -119,11 +209,9 @@ button {
   cursor: pointer;
 }
 
-
 button:hover {
   background-color: #0056b3;
 }
-
 
 .user-list-section {
   background-color: #73b0e6;
@@ -131,12 +219,10 @@ button:hover {
   border-radius: 8px;
 }
 
-
 .user-list ul {
   list-style-type: none;
   padding: 0;
 }
-
 
 .user-item {
   display: flex;
@@ -147,7 +233,6 @@ button:hover {
   margin-bottom: 10px;
 }
 
-
 .user-details {
   display: flex;
   flex-direction: column;
@@ -155,17 +240,18 @@ button:hover {
   color: black;
 }
 
-
 .actions {
   display: flex;
   gap: 10px;
 }
+
 .admin-section {
-  background-color: #73b0e6; /* Fondo azul claro */
+  background-color: #73b0e6;
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
 }
+
 .modal {
   position: fixed;
   top: 50%;
@@ -181,103 +267,106 @@ button:hover {
   text-align: center;
 }
 
-
 .modal-actions {
   display: flex;
   justify-content: space-between;
 }
 
-
 .btn-submit, .btn-cancel {
   width: 48%;
 }
-
 
 .btn-edit {
   background-color: #28a745;
   color: black;
 }
 
-
 .btn-delete {
   background-color: #dc3545;
   color: black;
 }
+
+/* Estilo para el mensaje de acción */
+/* Estilo para el mensaje de acción */
+.action-message {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  padding: 20px;
+  background-color: #28a745;
+  color: white;
+  font-size: 18px; /* Aumentar tamaño de fuente */
+  font-weight: bold; /* Hacer el texto más visible */
+  border-radius: 5px;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 250px; /* Ajustar el ancho del mensaje */
+  margin-left: 100px; /* Desplazar el mensaje un poco hacia la derecha */
+
+}
+
+/* Estilo para el modal de confirmación */
+.confirmation-modal {
+  position: fixed;
+  top: 50%;
+  left: 53%;
+  transform: translate(-50%, -50%);
+  background-color: #51a0e6;
+  color: rgb(5, 5, 5);
+  padding: 30px;
+  border-radius: 8px;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.btn-confirm, .btn-cancel {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.modal-content {
+  background-color: rgb(255, 255, 255);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+/* Estilo para el modal de confirmación */
+.confirmation-modal {
+  position: fixed;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  background-color: #73b0e6;
+  color: black;
+  padding: 20px;
+  border-radius: 8px;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.btn-confirm, .btn-cancel {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100px; /* Tamaño fijo para ambos botones */
+  margin: 10px; /* Espaciado entre los botones */
+}
+
+.btn-confirm {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-cancel {
+  background-color: #dc3545;
+  color: white;
+}
+
 </style>
-
-
-
-
-<script>
-import axios from 'axios';
-
-export default {
-  data() {
-    return {
-      newUser: {
-        id: null,
-        nom: '',
-        cognom: '',
-        email: '',
-      },
-      isEditMode: false, // Indicador de si estamos editando un usuario
-      users: [],
-      errorMessage: ''
-    };
-  },
-  methods: {
-    // Función para obtener todos los usuarios registrados
-    async fetchUsers() {
-      try {
-        const response = await axios.get('http://localhost:3000/api/users');
-        this.users = response.data.users;
-      } catch (error) {
-        this.errorMessage = 'Error al cargar los usuarios.';
-        alert(this.errorMessage);
-      }
-    },
-
-    // Función para editar un usuario
-    editUser(user) {
-      this.isEditMode = true;
-      this.newUser = { ...user }; // Cargar los datos del usuario a editar
-    },
-
-    // Función para actualizar un usuario
-    async updateUser() {
-      try {
-        const response = await axios.put(`http://localhost:3000/api/users/${this.newUser.id}`, this.newUser);
-        alert(response.data.message);
-        this.resetForm();
-        this.fetchUsers(); // Recargar la lista de usuarios
-      } catch (error) {
-        this.errorMessage = error.response.data.message;
-        alert(this.errorMessage);
-      }
-    },
-
-    // Función para eliminar un usuario
-    async deleteUser(id) {
-      try {
-        const response = await axios.delete(`http://localhost:3000/api/users/${id}`);
-        alert(response.data.message);
-        this.fetchUsers(); // Recargar la lista de usuarios
-      } catch (error) {
-        this.errorMessage = error.response.data.message;
-        alert(this.errorMessage);
-      }
-    },
-
-    // Resetear el formulario
-    resetForm() {
-      this.newUser = { id: null, nom: '', cognom: '', email: '' };
-      this.isEditMode = false;
-    }
-  },
-  mounted() {
-    // Cargar la lista de usuarios cuando el componente se monta
-    this.fetchUsers();
-  }
-};
-</script>
-
