@@ -97,15 +97,12 @@ async function getAlumnos(codigo) {
   }
 }
 
-
- 
-
-
 const createPartida = async () => {
   const codigo = Math.random().toString(36).substr(2, 6).toUpperCase();
   await pool.query('INSERT INTO partida (codigo, alumnos) VALUES (?, ?)', [codigo, JSON.stringify([])]);
   return codigo;
 };
+
 app.post('/start-game', async (req, res) => {
   const { codigo } = req.body; // Código de la partida
 
@@ -184,6 +181,31 @@ app.delete('/eliminar-name', (req, res) => {
     });
   });
 });
+// Ruta para eliminar un alumno de la partida
+app.post('/remove-alumno', async (req, res) => {
+  const { codigo, alumnoName } = req.body;
+
+  try {
+    let alumnos = await getAlumnos(codigo);
+    if (alumnos === null) {
+      return res.status(404).json({ error: 'Partida no encontrada' });
+    }
+
+    // Filtrar el alumno que se desea eliminar por su nombre
+    alumnos = alumnos.filter(alumno => alumno.name !== alumnoName);
+
+    // Actualizar la partida en la base de datos
+    await pool.query('UPDATE partida SET alumnos = ? WHERE codigo = ?', [JSON.stringify(alumnos), codigo]);
+
+    // Emitir evento a todos los participantes de la partida
+    io.to(codigo).emit('update-alumnos', alumnos);
+
+    res.json({ success: true, message: 'Alumno eliminado de la partida' });
+  } catch (error) {
+    console.error('Error al eliminar alumno de la partida:', error);
+    res.status(500).json({ error: 'Hubo un error al eliminar al alumno' });
+  }
+});
 
 /* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
 app.get('/alumno/:email', async (req, res) => {
@@ -199,6 +221,35 @@ app.get('/alumno/:email', async (req, res) => {
       // Si se encuentra al alumno, devolver el email y el nombre
       res.json({
         email: results[0].email,
+        nom: results[0].nom
+      });
+    } else {
+      // Si no se encuentra el alumno, devolver un error 404
+      res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+  } catch (error) {
+    console.error('Error al obtener el alumno:', error);
+    res.status(500).send('Error al obtener el alumno');
+  }
+});
+app.get('/alumno/:id', async (req, res) => {
+  try {
+    // Obtener el ID del alumno desde la URL
+    const idAlumno = req.params.id;
+
+    // Crear conexión a la base de datos de manera asíncrona
+   
+
+    // Realizar la consulta a la base de datos para obtener el alumno por ID
+    const [results] = await pool.execute('SELECT id, nom FROM usuarios WHERE id = ?', [idAlumno]);
+
+   
+
+    // Verificar si se encontró el alumno
+    if (results.length > 0) {
+      // Si se encuentra al alumno, devolver el id y el nombre
+      res.json({
+        id: results[0].id,
         nom: results[0].nom
       });
     } else {
@@ -1151,4 +1202,3 @@ setInterval(async () => {
 server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
-
