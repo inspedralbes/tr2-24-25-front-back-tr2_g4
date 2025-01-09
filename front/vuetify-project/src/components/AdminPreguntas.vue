@@ -1,12 +1,10 @@
 <template>
   <div class="main-container">
 
-
     <!-- Administrar Preguntas -->
     <div class="admin-section">
       <div class="form-container">
         <h1 class="custom-title">Administrar Preguntas</h1>
-
 
         <h2 class="custom-title2">Agregar Nueva Pregunta</h2>
         <form @submit.prevent="addQuestion">
@@ -42,14 +40,12 @@
       </div>
     </div>
 
-
     <!-- Lista de Preguntas -->
     <div class="questions-section full-width">
       <div class="form-container">
 
-
         <div v-if="questions.length" class="questions-list">
-          <h2 style=" padding: 2%;" class="custom-title">Lista de Preguntas</h2>
+          <h2 style="padding: 2%;" class="custom-title">Lista de Preguntas</h2>
           <ul>
             <li v-for="question in questions" :key="question.id" class="question-item">
               <div class="question-details">
@@ -65,7 +61,6 @@
             </li>
           </ul>
         </div>
-
 
         <div v-if="editingQuestion" class="modal">
           <h2>Editar Pregunta</h2>
@@ -105,6 +100,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Snackbar de Vuetify para mostrar el mensaje -->
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" top right>
+      {{ snackbar.message }}
+      <v-btn color="white" @click="snackbar.show = false">Cerrar</v-btn>
+    </v-snackbar>
   </div>
 </template>
 
@@ -141,6 +142,7 @@
   margin-bottom: 20px; /* Espacio debajo del título */
   letter-spacing: 1px; /* Espaciado entre letras */
 }
+
 
 
 .custom-title3 {
@@ -270,31 +272,52 @@ button:hover {
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 20px;
-  background-color: black; /* Fondo negro en el modal */
+  background-color: #539ae6; /* Fondo negro en el modal */
   color: white; /* Texto blanco */
   border: 1px solid #ccc;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   z-index: 10;
   width: 300px;
   text-align: center;
+  margin-left: 100px; /* Desplazar el diseño a la derecha */
+
 }
 
 
+/* Estilo para los botones de actualizar y cancelar en el modal */
 .modal-actions {
   display: flex;
   justify-content: space-between;
+  
 }
 
-
+/* Botón de actualización verde */
 .btn-submit {
-  background-color: #007bff; /* Fondo azul */
+  background-color: #28a745; /* Fondo verde */
   color: white; /* Texto blanco */
+  border: none; /* Sin borde */
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-
+/* Botón de cancelar rojo */
 .btn-cancel {
-  background-color: #ccc; /* Fondo gris */
-  color: black; /* Texto negro */
+  background-color: #dc3545; /* Fondo rojo */
+  color: white; /* Texto blanco */
+  border: none; /* Sin borde */
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Estilo para los botones al pasar el mouse */
+.btn-submit:hover {
+  background-color: #218838; /* Color verde más oscuro */
+}
+
+.btn-cancel:hover {
+  background-color: #c82333; /* Color rojo más oscuro */
 }
 .questions-section {
   background-color: #73b0e6; /* Fondo azul claro */
@@ -304,8 +327,21 @@ button:hover {
 .btn-submit, .btn-cancel {
   width: 48%;
 }
-</style>
+/* Estilos del dialog de Vuetify */
+.v-dialog__content {
+  padding: 20px;
+}
 
+.v-card {
+  background-color: #4caf50; /* Color verde para el fondo */
+  color: white;
+}
+
+.v-card-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+</style>
 
 
 
@@ -323,6 +359,11 @@ export default {
         type: ""
       },
       editingQuestion: null, // Información de la pregunta que estamos editando
+      snackbar: {
+        show: false,
+        message: '',
+        color: 'success' // Por defecto, el mensaje será verde (éxito)
+      }
     };
   },
   methods: {
@@ -357,8 +398,14 @@ export default {
       try {
         await axios.put(`http://localhost:3000/api/preguntas/${this.editingQuestion.id}`, this.editingQuestion);
         this.fetchQuestions(); // Refrescar la lista de preguntas
+        this.snackbar.message = 'Pregunta actualizada con éxito';
+        this.snackbar.color = 'success'; // Color verde
+        this.snackbar.show = true; // Mostrar el mensaje
         this.cancelEdit(); // Cerrar el modal
       } catch (error) {
+        this.snackbar.message = 'Error al actualizar la pregunta';
+        this.snackbar.color = 'error'; // Color rojo
+        this.snackbar.show = true; // Mostrar el mensaje
         console.error("Error al actualizar la pregunta", error);
       }
     },
