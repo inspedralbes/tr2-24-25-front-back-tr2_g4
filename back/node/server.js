@@ -378,7 +378,6 @@ app.post('/login', async (req, res) => {
 /* ---------------------------- RUTAS DE PARTIDAS ---------------------------- */
 
 
-// Obtener o crear código de partida
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
   try {
@@ -386,6 +385,22 @@ app.get('/game-code', async (req, res) => {
     if (alumnos === null) {
       // La partida no existe, crear una nueva
       const newCodigo = await createPartida();
+
+      // Crear carpeta con el nombre del código dentro de la carpeta 'Script'
+      const scriptDir = path.join(__dirname, 'Script');
+      const newGameDir = path.join(scriptDir, newCodigo);
+
+      if (!fs.existsSync(scriptDir)) {
+        fs.mkdirSync(scriptDir); // Crear la carpeta 'Script' si no existe
+      }
+
+      fs.mkdirSync(newGameDir); // Crear la carpeta para la nueva partida
+
+      // Crear el archivo script.js dentro de la carpeta de la nueva partida
+      const scriptFilePath = path.join(newGameDir, 'script.js');
+      fs.writeFileSync(scriptFilePath, '// Archivo script.js generado automáticamente\n');
+      console.log(`Archivo creado: ${scriptFilePath}`);
+
       res.json({ message: 'Nueva partida creada.', gameCode: newCodigo });
     } else {
       // La partida existe
