@@ -78,8 +78,8 @@
           </ul>
         </div>
 
-        <div v-else>
-          <v-alert type="error" dismissible color="red">
+        <div v-else class="no-results-message">
+          <v-alert type="error" dismissible color="red" style="al">
             No se encontraron preguntas que coincidan con la búsqueda.
           </v-alert>
         </div>
@@ -158,16 +158,20 @@ export default {
     };
   },
   computed: {
-    filteredQuestions() {
-      // Filtrar las preguntas en función del texto de búsqueda y el tipo seleccionado
-      return this.questions.filter((question) => {
-        const matchesSearch = question.text_pregunta
-          .toLowerCase()
-          .includes(this.searchQuery.toLowerCase());
-        const matchesType = !this.filterType || question.type === this.filterType;
-        return matchesSearch && matchesType;
-      });
-    }
+  filteredQuestions() {
+    return this.questions.filter((question) => {
+      // Verificamos si 'text_pregunta' existe y no es undefined
+      const matchesSearch = question.text_pregunta && question.text_pregunta.toLowerCase
+        ? question.text_pregunta.toLowerCase().includes(this.searchQuery.toLowerCase())
+        : false;
+
+      // Verificamos si el tipo de la pregunta coincide con el filtro
+      const matchesType = !this.filterType || question.type === this.filterType;
+      
+      return matchesSearch && matchesType;
+    });
+  }
+
   },
   methods: {
     // Obtener todas las preguntas desde el backend
@@ -241,7 +245,12 @@ export default {
 
 
 <style scoped>
-
+.no-results-message {
+  color: #dc3545;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 10px;
+}
 .p {
   font-size: 18px;
   color: #ff0000; /* Rojo para resaltar */

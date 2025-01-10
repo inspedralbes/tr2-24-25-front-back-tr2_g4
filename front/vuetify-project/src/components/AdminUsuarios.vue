@@ -32,9 +32,20 @@
     <div class="user-list-section full-width">
       <div class="form-container">
         <div v-if="users.length" class="user-list">
-          <h2 style=" padding: 2%;" class="custom-title">Lista de Usuarios</h2>
+          <h2 style="padding: 2%;" class="custom-title">Lista de Usuarios</h2>
+
+          <!-- Buscador -->
+          <v-text-field
+            v-model="searchQuery"
+            label="Buscar por Correo Electrónico"
+            append-icon="mdi-magnify"
+            class="search-field"
+            outlined
+            dense
+          ></v-text-field>
+
           <ul>
-            <li v-for="user in users" :key="user.id" class="user-item">
+            <li v-for="user in filteredUsers" :key="user.id" class="user-item">
               <div class="user-details">
                 <span><strong>Nombre:</strong> {{ user.nom }}</span>
                 <span><strong>Apellido:</strong> {{ user.cognom }}</span>
@@ -46,6 +57,12 @@
               </div>
             </li>
           </ul>
+
+          <!-- Alerta si no hay resultados -->
+          <div v-if="noResults" class="no-results-message">
+            <v-alert type="error" dismissible color="red">No se encontraron coincidencias con ese correo electrónico.</v-alert>
+          </div>
+
         </div>
 
         <div v-if="editingUser" class="modal">
@@ -84,7 +101,17 @@ export default {
       message: '',
       showConfirmation: false,
       userToDelete: null,
+      searchQuery: '', // Para el filtrado de usuarios por correo electrónico
     };
+  },
+  computed: {
+    filteredUsers() {
+      const filtered = this.users.filter(user => 
+        user.email.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+      this.noResults = filtered.length === 0; // Establecer el estado de 'noResults'
+      return filtered;
+    },
   },
   methods: {
     async fetchUsers() {
@@ -158,6 +185,29 @@ export default {
 </script>
 
 <style scoped>
+/* Estilo del buscador */
+.search-field {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* Estilo para la alerta de no resultados */
+.no-results-message {
+  color: #dc3545;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 10px;
+}
+.v-alert {
+  margin-top: 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  padding: 20px;
+  color: #fff;
+  background-color: #d32f2f; /* Color rojo de error */
+  border: 2px solid #b71c1c;
+}
+/* Resto de los estilos anteriores */
 .admin-section, .user-list-section {
   margin-bottom: 40px;
 }
@@ -287,7 +337,6 @@ button:hover {
 }
 
 /* Estilo para el mensaje de acción */
-/* Estilo para el mensaje de acción */
 .action-message {
   position: fixed;
   top: 40%;
@@ -304,7 +353,6 @@ button:hover {
   text-align: center;
   width: 250px; /* Ajustar el ancho del mensaje */
   margin-left: 100px; /* Desplazar el mensaje un poco hacia la derecha */
-
 }
 
 /* Estilo para el modal de confirmación */
@@ -335,38 +383,4 @@ button:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
-/* Estilo para el modal de confirmación */
-.confirmation-modal {
-  position: fixed;
-  top: 50%;
-  left: 55%;
-  transform: translate(-50%, -50%);
-  background-color: #73b0e6;
-  color: black;
-  padding: 20px;
-  border-radius: 8px;
-  z-index: 100;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  text-align: center;
-}
-
-.btn-confirm, .btn-cancel {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100px; /* Tamaño fijo para ambos botones */
-  margin: 10px; /* Espaciado entre los botones */
-}
-
-.btn-confirm {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-cancel {
-  background-color: #dc3545;
-  color: white;
-}
-
 </style>
