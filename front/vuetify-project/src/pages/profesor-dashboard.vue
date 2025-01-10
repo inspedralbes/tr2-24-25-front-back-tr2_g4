@@ -8,6 +8,7 @@
           <img src="/favicon.ico" width="40" height="40" alt="Logo">
           <h1 style="margin: 0;">-MATHS</h1>
         </div>
+        <v-spacer style="padding: 20px;"></v-spacer>
       </ul>
       <ul>
         <li @click="loadComponent('AdminPreguntas')">
@@ -27,7 +28,9 @@
       <!-- Botón para Crear Partida debajo del nav -->
       <li @click="irACrearPartida" class="crear-partida-btn">
         <v-icon class="red--text" large>mdi-plus</v-icon> Crear Partida
+        
       </li>
+
 
     </nav>
 

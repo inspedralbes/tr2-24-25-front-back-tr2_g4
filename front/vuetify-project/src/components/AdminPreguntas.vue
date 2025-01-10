@@ -44,10 +44,26 @@
     <div class="questions-section full-width">
       <div class="form-container">
 
-        <div v-if="questions.length" class="questions-list">
-          <h2 style="padding: 2%;" class="custom-title">Lista de Preguntas</h2>
+        <h2 style="padding: 2%;" class="custom-title">Lista de Preguntas</h2>
+        <v-text-field
+          v-model="searchQuery"
+          label="Buscar preguntas"
+          class="mb-4"
+          outlined
+          clearable
+        ></v-text-field>
+        <v-select
+          v-model="filterType"
+          :items="questionTypes"
+          label="Filtrar por tipo"
+          class="mb-4"
+          outlined
+          clearable
+        ></v-select>
+
+        <div v-if="filteredQuestions.length" class="questions-list">
           <ul>
-            <li v-for="question in questions" :key="question.id" class="question-item">
+            <li v-for="question in filteredQuestions" :key="question.id" class="question-item">
               <div class="question-details">
                 <span><strong>Pregunta:</strong> {{ question.text_pregunta }}</span>
                 <span><strong>Dificultad:</strong> {{ question.difficulty_level }}</span>
@@ -60,6 +76,12 @@
               </div>
             </li>
           </ul>
+        </div>
+
+        <div v-else>
+          <v-alert type="error" dismissible color="red">
+            No se encontraron preguntas que coincidan con la búsqueda.
+          </v-alert>
         </div>
 
         <div v-if="editingQuestion" class="modal">
@@ -111,8 +133,131 @@
 
 
 
+<script>
+import axios from "axios";
+
+export default {
+  data() {
+    return {
+      questions: [], // Lista de preguntas
+      searchQuery: "", // Texto del buscador
+      filterType: null, // Tipo seleccionado para filtrar
+      questionTypes: ["suma", "resta", "multiplicacion", "division"], // Tipos disponibles
+      newQuestion: {
+        text_pregunta: "",
+        difficulty_level: "",
+        respuesta_correcta: "",
+        type: ""
+      },
+      editingQuestion: null, // Información de la pregunta que estamos editando
+      snackbar: {
+        show: false,
+        message: '',
+        color: 'success' // Por defecto, el mensaje será verde (éxito)
+      }
+    };
+  },
+  computed: {
+    filteredQuestions() {
+      // Filtrar las preguntas en función del texto de búsqueda y el tipo seleccionado
+      return this.questions.filter((question) => {
+        const matchesSearch = question.text_pregunta
+          .toLowerCase()
+          .includes(this.searchQuery.toLowerCase());
+        const matchesType = !this.filterType || question.type === this.filterType;
+        return matchesSearch && matchesType;
+      });
+    }
+  },
+  methods: {
+    // Obtener todas las preguntas desde el backend
+    async fetchQuestions() {
+      try {
+        const response = await axios.get('http://localhost:3000/api/preguntas');
+        this.questions = response.data;
+      } catch (error) {
+        console.error("Error al obtener las preguntas", error);
+      }
+    },
+    methods: {
+    resetFilters() {
+      this.searchQuery = '';
+      this.filterType = null;
+    },
+  },
+    // Agregar una nueva pregunta
+    async addQuestion() {
+      try {
+        const response = await axios.post('http://localhost:3000/api/preguntas', this.newQuestion);
+        this.questions.push(response.data); // Agregar la pregunta a la lista
+        this.newQuestion = { text_pregunta: "", difficulty_level: "", respuesta_correcta: "", type: "" }; // Limpiar formulario
+      } catch (error) {
+        console.error("Error al agregar la pregunta", error);
+      }
+    },
+
+    // Editar una pregunta
+    editQuestion(question) {
+      this.editingQuestion = { ...question }; // Copiar los datos de la pregunta seleccionada
+    },
+
+    // Actualizar una pregunta
+    async updateQuestion() {
+      try {
+        await axios.put(`http://localhost:3000/api/preguntas/${this.editingQuestion.id}`, this.editingQuestion);
+        this.fetchQuestions(); // Refrescar la lista de preguntas
+        this.snackbar.message = 'Pregunta actualizada con éxito';
+        this.snackbar.color = 'success'; // Color verde
+        this.snackbar.show = true; // Mostrar el mensaje
+        this.cancelEdit(); // Cerrar el modal
+      } catch (error) {
+        this.snackbar.message = 'Error al actualizar la pregunta';
+        this.snackbar.color = 'error'; // Color rojo
+        this.snackbar.show = true; // Mostrar el mensaje
+        console.error("Error al actualizar la pregunta", error);
+      }
+    },
+
+    // Eliminar una pregunta
+    async deleteQuestion(id) {
+      try {
+        await axios.delete(`http://localhost:3000/api/preguntas/${id}`);
+        this.fetchQuestions(); // Refrescar la lista de preguntas
+      } catch (error) {
+        console.error("Error al eliminar la pregunta", error);
+      }
+    },
+
+    // Cancelar la edición de una pregunta
+    cancelEdit() {
+      this.editingQuestion = null;
+    }
+  },
+  created() {
+    this.fetchQuestions(); // Obtener las preguntas al cargar el componente
+  }
+};
+</script>
+
 
 <style scoped>
+
+.p {
+  font-size: 18px;
+  color: #ff0000; /* Rojo para resaltar */
+  text-align: center;
+  margin-top: 20px;
+}
+
+.v-alert {
+  margin-top: 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  padding: 20px;
+  color: #fff;
+  background-color: #d32f2f; /* Color rojo de error */
+  border: 2px solid #b71c1c;
+}
 /* Estilo del div de "Administrar Preguntas" */
 .admin-section {
   background-color: #73b0e6; /* Fondo azul claro */
@@ -342,92 +487,4 @@ button:hover {
   font-weight: bold;
 }
 </style>
-
-
-
-<script>
-import axios from "axios";
-
-export default {
-  data() {
-    return {
-      questions: [], // Lista de preguntas
-      newQuestion: {
-        text_pregunta: "",
-        difficulty_level: "",
-        respuesta_correcta: "",
-        type: ""
-      },
-      editingQuestion: null, // Información de la pregunta que estamos editando
-      snackbar: {
-        show: false,
-        message: '',
-        color: 'success' // Por defecto, el mensaje será verde (éxito)
-      }
-    };
-  },
-  methods: {
-    // Obtener todas las preguntas desde el backend
-    async fetchQuestions() {
-      try {
-        const response = await axios.get('http://localhost:3000/api/preguntas');
-        this.questions = response.data;
-      } catch (error) {
-        console.error("Error al obtener las preguntas", error);
-      }
-    },
-
-    // Agregar una nueva pregunta
-    async addQuestion() {
-      try {
-        const response = await axios.post('http://localhost:3000/api/preguntas', this.newQuestion);
-        this.questions.push(response.data); // Agregar la pregunta a la lista
-        this.newQuestion = { text_pregunta: "", difficulty_level: "", respuesta_correcta: "", type: "" }; // Limpiar formulario
-      } catch (error) {
-        console.error("Error al agregar la pregunta", error);
-      }
-    },
-
-    // Editar una pregunta
-    editQuestion(question) {
-      this.editingQuestion = { ...question }; // Copiar los datos de la pregunta seleccionada
-    },
-
-    // Actualizar una pregunta
-    async updateQuestion() {
-      try {
-        await axios.put(`http://localhost:3000/api/preguntas/${this.editingQuestion.id}`, this.editingQuestion);
-        this.fetchQuestions(); // Refrescar la lista de preguntas
-        this.snackbar.message = 'Pregunta actualizada con éxito';
-        this.snackbar.color = 'success'; // Color verde
-        this.snackbar.show = true; // Mostrar el mensaje
-        this.cancelEdit(); // Cerrar el modal
-      } catch (error) {
-        this.snackbar.message = 'Error al actualizar la pregunta';
-        this.snackbar.color = 'error'; // Color rojo
-        this.snackbar.show = true; // Mostrar el mensaje
-        console.error("Error al actualizar la pregunta", error);
-      }
-    },
-
-    // Eliminar una pregunta
-    async deleteQuestion(id) {
-      try {
-        await axios.delete(`http://localhost:3000/api/preguntas/${id}`);
-        this.fetchQuestions(); // Refrescar la lista de preguntas
-      } catch (error) {
-        console.error("Error al eliminar la pregunta", error);
-      }
-    },
-
-    // Cancelar la edición de una pregunta
-    cancelEdit() {
-      this.editingQuestion = null;
-    }
-  },
-  created() {
-    this.fetchQuestions(); // Obtener las preguntas al cargar el componente
-  }
-};
-</script>
 
