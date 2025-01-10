@@ -47,6 +47,21 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
     console.error('Error al conectar a MongoDB Atlas:', error);
   });
 
+
+  //Mostrar Scripts
+  app.get('/api/partida/estado/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+    const filePath = path.join(__dirname, 'Script', codigo, 'estado.txt');
+
+    if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        res.status(200).json({ estado: fileContent });
+    } else {
+        res.status(404).json({ error: `No se encontró el archivo para el código ${codigo}` });
+    }
+  });
+
+
   app.post('/api/partida/estado', async (req, res) => {
     const { codigo, estado } = req.body;
 
