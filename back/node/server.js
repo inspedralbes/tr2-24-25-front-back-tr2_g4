@@ -47,6 +47,50 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
     console.error('Error al conectar a MongoDB Atlas:', error);
   });
 
+  app.post('/api/partida/estado', async (req, res) => {
+    const { codigo, estado } = req.body;
+
+    // Validar datos de entrada
+    if (!codigo || !estado) {
+        return res.status(400).json({ error: 'Faltan datos: código y estado son obligatorios.' });
+    }
+
+    try {
+        // Ruta al directorio correspondiente
+        const basePath = path.join(__dirname, 'Script');
+        const directoryPath = path.join(basePath, codigo);
+
+        // Verificar si el directorio existe
+        if (!fs.existsSync(directoryPath)) {
+            return res.status(404).json({ error: `No se encontró la carpeta para el código '${codigo}'.` });
+        }
+
+        // Archivo donde se guardará el estado
+        const stateFilePath = path.join(directoryPath, 'estado.txt');
+
+        // Escribir el estado en el archivo
+        fs.writeFileSync(stateFilePath, estado, 'utf8');
+
+        // Actualizar el estado en la base de datos
+        const [result] = await pool.execute(
+            'UPDATE partida SET estado = ? WHERE codigo = ?',
+            [estado, codigo]
+        );
+
+        // Verificar si se actualizó correctamente en la base de datos
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: `Estado actualizado correctamente en la carpeta del código '${codigo}' y en la base de datos.` });
+        } else {
+            res.status(404).json({ error: `No se encontró ninguna partida con el código '${codigo}' en la base de datos.` });
+        }
+
+    } catch (error) {
+        console.error('Error al actualizar el estado:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+  
 
 /* ---------------------------- FUNCIONES AUXILIARES ---------------------------- */
 async function getAlumnos(codigo) {
@@ -376,8 +420,6 @@ app.post('/login', async (req, res) => {
 
 
 /* ---------------------------- RUTAS DE PARTIDAS ---------------------------- */
-
-
 app.get('/game-code', async (req, res) => {
   const { codigo } = req.query;
   try {
@@ -396,10 +438,10 @@ app.get('/game-code', async (req, res) => {
 
       fs.mkdirSync(newGameDir); // Crear la carpeta para la nueva partida
 
-      // Crear el archivo script.js dentro de la carpeta de la nueva partida
-      const scriptFilePath = path.join(newGameDir, 'script.js');
-      fs.writeFileSync(scriptFilePath, '// Archivo script.js generado automáticamente\n');
-      console.log(`Archivo creado: ${scriptFilePath}`);
+      // Crear el archivo estado.txt dentro de la carpeta de la nueva partida
+      const stateFilePath = path.join(newGameDir, 'estado.txt');
+      fs.writeFileSync(stateFilePath, 'inicial'); // Escribir contenido predeterminado
+      console.log(`Archivo creado: ${stateFilePath}`);
 
       res.json({ message: 'Nueva partida creada.', gameCode: newCodigo });
     } else {
@@ -411,6 +453,7 @@ app.get('/game-code', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
 
 
 // Obtener alumnos de una partida
