@@ -16,10 +16,12 @@
       </div>
     </div>
 
-    <!-- Mensaje de Acción -->
-    <div v-if="showMessage" class="action-message">
-      <p>{{ message }}</p>
-    </div>
+    <!-- Mensaje de Acción (Notificación verde) -->
+    <v-alert v-if="showMessage" type="success" dismissible class="alertaeliminar">
+    {{ message }}
+  </v-alert>
+
+
 
     <!-- Confirmación de Eliminación -->
     <div v-if="showConfirmation" class="confirmation-modal">
@@ -150,7 +152,7 @@ export default {
       if (this.userToDelete) {
         try {
           const response = await axios.delete(`http://localhost:3000/api/users/${this.userToDelete}`);
-          this.showMessageWithText(response.data.message);
+          this.showMessageWithText(response.data.message); // Muestra el mensaje
           this.fetchUsers();
         } catch (error) {
           this.errorMessage = error.response.data.message;
@@ -170,7 +172,7 @@ export default {
       this.showMessage = true;
       setTimeout(() => {
         this.showMessage = false;
-      }, 3000);
+      }, 3000); // El mensaje desaparece después de 3 segundos
     },
 
     resetForm() {
@@ -184,11 +186,21 @@ export default {
 };
 </script>
 
+
 <style scoped>
 /* Estilo del buscador */
 .search-field {
   margin-bottom: 20px;
   width: 100%;
+}
+
+.alertaeliminar {
+  position: fixed;
+  top: 50%; /* Centra el mensaje verticalmente */
+  left: 57%; /* Centra el mensaje horizontalmente */
+  transform: translate(-50%, -50%); /* Ajusta para un centrado perfecto */
+  z-index: 1000;
+  width: 25%;
 }
 
 /* Estilo para la alerta de no resultados */
@@ -231,7 +243,20 @@ export default {
   margin-bottom: 20px;
   letter-spacing: 1px;
 }
-
+.confirmation-modal {
+  position: fixed;
+  top: 50%;
+  left: 56%;
+  transform: translate(-50%, -50%);
+  background-color: #69a1e9;
+  color: #333;
+  padding: 30px;
+  border-radius: 8px;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 350px; /* Ajustar el ancho */
+}
 .custom-title3 {
   font-family: 'Arial Black', sans-serif;
   font-weight: bold;
@@ -295,12 +320,26 @@ button:hover {
   gap: 10px;
 }
 
+.delete-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000; /* Asegúrate de que se superponga al contenido */
+}
+
 .admin-section {
   background-color: #73b0e6;
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
 }
+
 
 .modal {
   position: fixed;
@@ -355,26 +394,18 @@ button:hover {
   margin-left: 100px; /* Desplazar el mensaje un poco hacia la derecha */
 }
 
-/* Estilo para el modal de confirmación */
-.confirmation-modal {
-  position: fixed;
-  top: 50%;
-  left: 53%;
-  transform: translate(-50%, -50%);
-  background-color: #51a0e6;
-  color: rgb(5, 5, 5);
-  padding: 30px;
-  border-radius: 8px;
-  z-index: 100;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  text-align: center;
-}
 
+/* Botones */
 .btn-confirm, .btn-cancel {
-  padding: 10px 20px;
+  padding: 12px 25px;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  width: 45%;
+  margin: 10px;
+  transition: background-color 0.3s ease;
 }
 .modal-content {
   background-color: rgb(255, 255, 255);
@@ -383,4 +414,32 @@ button:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
+
+/* Texto de la confirmación */
+.confirmation-modal p {
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #333;
+}
+/* Botón de Confirmación (Sí) */
+.btn-confirm {
+  background-color: #28a745; /* Verde */
+  color: white;
+}
+.btn-confirm:hover {
+  background-color: #218838; /* Verde oscuro */
+}
+
+/* Botón de Cancelación (No) */
+.btn-cancel {
+  background-color: #dc3545; /* Rojo */
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #c82333; /* Rojo oscuro */
+}
+
+
 </style>

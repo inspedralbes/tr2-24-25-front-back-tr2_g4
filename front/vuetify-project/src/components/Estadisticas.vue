@@ -33,7 +33,7 @@
     </div>
 
     <!-- Mensaje de Error con v-alert -->
-    <v-alert v-if="error" type="error" dismissible>
+    <v-alert v-if="error" type="error" dismissible color="red" style="text-align: center;">
       {{ error }}
     </v-alert>
 

@@ -58,6 +58,18 @@
       </div>
     </div>
 
+    <!-- V-Alert para mostrar mensaje -->
+    <v-alert
+      v-if="showAlert"
+      type="success"
+      color="green"
+      class="alert-center"
+      elevation="5"
+      :icon="'mdi-check-circle'"
+    >
+      {{ alertMessage }}
+    </v-alert>
+
     <!-- Modal de Confirmación de Eliminación -->
     <div v-if="showDeleteModal" class="delete-modal">
       <div class="modal-content" style="background-color:#73b0e6 ;">
@@ -67,15 +79,6 @@
       </div>
     </div>
 
-    <!-- Snackbar para mensajes -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :timeout="snackbar.timeout"
-      :color="snackbar.color"
-      class="centered-snackbar"
-    >
-      {{ snackbar.text }}
-    </v-snackbar>
   </div>
 </template>
 
@@ -88,6 +91,29 @@
   border-radius: 8px;
   margin-top: 20px;
 
+}
+/* Estilo para el v-alert centrado */
+.alert-center {
+  position: fixed;
+  top: 50%; /* Centrado vertical */
+  left: 50%; /* Centrado horizontal */
+  transform: translate(-50%, -50%); /* Ajusta para centrar exactamente */
+  width: 80%; /* Opcional: puedes ajustar el ancho */
+  max-width: 500px; /* Controla el ancho máximo */
+  z-index: 10000; /* Para asegurarse de que se superponga al contenido */
+  font-size: 18px; /* Tamaño de texto */
+  text-align: center; /* Alineación centrada */
+  padding: 20px; /* Espaciado */
+  border-radius: 12px; /* Bordes redondeados */
+}
+
+.custom-title3 {
+  font-family: 'Arial Black', sans-serif;
+  font-weight: bold;
+  font-size: 15px;
+  color: #000000;
+  margin-bottom: 20px;
+  background-color: yellow;
 }
 
 .input-nombre-aula {
@@ -294,26 +320,22 @@ button:hover {
 
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
 export default {
   data() {
     return {
-      aulas: [], // Lista de aulas obtenidas del servidor
-      users: [], // Lista de usuarios obtenidos del servidor
+      aulas: [],
+      users: [],
       aula: {
         nombre: "",
         alumnos: [],
       },
-      editMode: false, // Indica si estamos en modo edición
-      showDeleteModal: false, // Para mostrar el modal de confirmación
-      aulaToDelete: null, // Nombre del aula a eliminar
-      snackbar: {
-        show: false,
-        text: "",
-        color: "success",
-        timeout: 3000,
-      },
+      editMode: false,
+      showDeleteModal: false,
+      aulaToDelete: null,
+      showAlert: false, // Nuevo estado para mostrar el alert
+      alertMessage: "", // Mensaje para mostrar en el v-alert
     };
   },
   methods: {
@@ -339,39 +361,48 @@ export default {
           await axios.put(`http://localhost:3000/api/aulas/${this.aula.nombre}`, {
             alumnos: this.aula.alumnos,
           });
-          this.showSnackbar("Aula actualizada correctamente.");
+          this.showAlertMessage("Aula actualizada correctamente.");
         } else {
           await axios.post("http://localhost:3000/api/aulas", this.aula);
-          this.showSnackbar("Aula creada correctamente.");
+          this.showAlertMessage("Aula creada correctamente.");
         }
 
         this.resetForm();
         this.fetchAulas();
       } catch (error) {
-        this.showSnackbar("Hubo un error al guardar el aula.", "error");
+        this.showAlertMessage("Hubo un error al guardar el aula.", "error");
       }
+    },
+    showAlertMessage(message, type = "success") {
+      this.alertMessage = message;
+      this.showAlert = true;
+
+      // Ocultar el alert después de 3 segundos
+      setTimeout(() => {
+        this.showAlert = false;
+      }, 3000);
     },
     editAula(aula) {
       this.aula = { ...aula };
       this.editMode = true;
     },
     confirmDelete(aula) {
-      this.aulaToDelete = aula.nombre; // Guarda el nombre del aula a eliminar
-      this.showDeleteModal = true; // Muestra el modal
+      this.aulaToDelete = aula.nombre;
+      this.showDeleteModal = true;
     },
     cancelDelete() {
-      this.showDeleteModal = false; // Cierra el modal sin eliminar
+      this.showDeleteModal = false;
       this.aulaToDelete = null;
     },
     async deleteAula() {
       try {
         await axios.delete(`http://localhost:3000/api/aulas/${this.aulaToDelete}`);
-        this.showSnackbar("Aula eliminada correctamente.");
+        this.showAlertMessage("Aula eliminada correctamente.");
         this.fetchAulas();
       } catch (error) {
-        this.showSnackbar("Hubo un error al eliminar el aula.", "error");
+        this.showAlertMessage("Hubo un error al eliminar el aula.", "error");
       }
-      this.showDeleteModal = false; // Cierra el modal después de eliminar
+      this.showDeleteModal = false;
       this.aulaToDelete = null;
     },
     cancelEdit() {
@@ -381,16 +412,12 @@ export default {
       this.aula = { nombre: "", alumnos: [] };
       this.editMode = false;
     },
-    showSnackbar(message, color = "success") {
-      this.snackbar.text = message;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    },
   },
   mounted() {
     this.fetchAulas();
-    this.fetchUsers(); // Obtener usuarios al cargar la página
+    this.fetchUsers();
   },
 };
+
 
 </script>
