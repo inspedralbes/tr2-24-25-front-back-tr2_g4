@@ -9,34 +9,28 @@
       </v-col>
     </v-row>
 
+    <!-- Lista de Participantes como Chips -->
     <v-row justify="center" class="mt-10">
-      <v-col cols="12" md="6">
-        <v-card color="black" outlined>
-          <h2 class="text-center mt-4 text-h4 font-weight-bold">
-            Participantes:
-          </h2>
-          <v-list dense>
-            <template v-for="(user, index) in users" :key="index">
-              <v-list-item>
-                <v-list-item-avatar color="deep-purple lighten-3" class="text-white text-h6">
-                  <span>{{ index + 1 }}</span>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title class="text-h6">{{ user.name }}</v-list-item-title>
-                </v-list-item-content>
-                <v-list-item-action>
-                  <v-chip color="red lighten-1" class="white--text font-weight-bold" small @click="removeUser(user.id)">
-                    <v-icon left small>mdi-delete</v-icon> Eliminar
-                  </v-chip>
-                </v-list-item-action>
-              </v-list-item>
-              <v-divider v-if="index < users.length - 1"></v-divider>
-            </template>
-          </v-list>
-        </v-card>
+      <v-col cols="12">
+        <h2 class="text-center text-h4 font-weight-bold mb-4">
+          Participantes:
+        </h2>
+        <v-row class="d-flex flex-wrap" justify="center">
+          <template v-for="(user, index) in users" :key="user.id">
+            <v-chip closable
+              class="ma-2 font-weight-bold"
+              color="deep-purple lighten-3"
+              text-color="white"
+              @click:close="removeUser(user.id)"
+            >
+              {{ user.name }}
+            </v-chip>
+          </template>
+        </v-row>
       </v-col>
     </v-row>
 
+    <!-- Botón para Iniciar la Partida -->
     <v-row justify="center" class="mt-8">
       <v-chip
         color="green darken-2"
@@ -49,6 +43,29 @@
     </v-row>
   </v-container>
 </template>
+
+<style scoped>
+.game-theme {
+  background: #99a6e9;
+  color: white;
+  min-height: 100vh;
+  padding: 0 16px;
+}
+
+.v-chip {
+  font-size: 1.5rem;
+  border-radius: 50px;
+}
+
+.v-chip.close {
+  background-color: #e53935;
+  color: white;
+}
+
+.v-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+</style>
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -123,21 +140,3 @@ const startGame = () => {
   router.push({ path: `/carrilescarrera/${gameCode.value}` });
 };
 </script>
-
-<style scoped>
-.game-theme {
-  background: #99a6e9;
-  color: white;
-  min-height: 100vh;
-  padding: 0 16px;
-}
-
-.v-chip {
-  font-size: 1.5rem;
-  border-radius: 50px;
-}
-
-.v-card {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-</style>

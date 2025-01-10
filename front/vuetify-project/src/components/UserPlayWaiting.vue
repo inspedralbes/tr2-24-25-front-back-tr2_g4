@@ -87,6 +87,70 @@
   </v-app>
 </template>
 
+<style scoped>
+/* Botón flotante: Mute */
+.mute-button {
+  position: fixed;
+  top: 100px;
+  bottom: 80px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.mute-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
+/* Botón flotante: Reglas */
+.rules-button {
+  position: fixed;
+  bottom: 80px;
+  right: 100px;
+  background-color: #0288d1;
+  color: white;
+  font-size: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.rules-button:hover {
+  background-color: #4fc3f7;
+  transform: scale(1.1);
+}
+
+.text-rules-color {
+  background-color: #0288d1;
+}
+
+.text-rules {
+  background-color: #0a4f74;
+}
+
+/* Estilo para chips */
+.color-chips {
+  background-color: #020c11;
+  color: black;
+}
+</style>
+
+
 <script>
 import { io } from 'socket.io-client';
 import waitingAudio from '@/assets/PlayWaitingMusic.mp3';
@@ -180,66 +244,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Botón flotante: Mute */
-.mute-button {
-  position: fixed;
-  top: 100px;
-  bottom: 80px;
-  right: 100px;
-  background-color: #0288d1;
-  color: white;
-  font-size: 20px;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.mute-button:hover {
-  background-color: #4fc3f7;
-  transform: scale(1.1);
-}
-
-/* Botón flotante: Reglas */
-.rules-button {
-  position: fixed;
-  bottom: 80px;
-  right: 100px;
-  background-color: #0288d1;
-  color: white;
-  font-size: 20px;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.rules-button:hover {
-  background-color: #4fc3f7;
-  transform: scale(1.1);
-}
-
-.text-rules-color {
-  background-color: #0288d1;
-}
-
-.text-rules {
-  background-color: #0a4f74;
-}
-
-/* Estilo para chips */
-.color-chips {
-  background-color: #020c11;
-  color: black;
-}
-</style>
