@@ -38,7 +38,6 @@ const pool = mysql.createPool({
   connectTimeout: 10000, // Timeout de conexión
 });
 
-
 mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mongodb.net/valores')
   .then(() => {
     console.log('Conectado a MongoDB Atlas');
@@ -47,7 +46,24 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
     console.error('Error al conectar a MongoDB Atlas:', error);
   });
 
-
+  // Obtener solo los códigos de las partidas desde la base de datos
+  app.get('/api/partidas', async (req, res) => {
+    try {
+        // Realizar la consulta para obtener solo los códigos de las partidas
+        const [result] = await pool.execute('SELECT codigo FROM partida');
+        
+        // Verificar si hay partidas
+        if (result.length > 0) {
+            res.status(200).json(result); // Devolver solo los códigos de las partidas
+        } else {
+            res.status(404).json({ error: 'No se encontraron partidas.' });
+        }
+    } catch (error) {
+        console.error('Error al obtener las partidas:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  });
+  
   //Mostrar Scripts
   app.get('/api/partida/estado/:codigo', async (req, res) => {
     const { codigo } = req.params;
@@ -60,7 +76,6 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
         res.status(404).json({ error: `No se encontró el archivo para el código ${codigo}` });
     }
   });
-
 
   app.post('/api/partida/estado', async (req, res) => {
     const { codigo, estado } = req.body;
@@ -79,7 +94,6 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).json({ error: `No se encontró la carpeta para el código '${codigo}'.` });
         }
-
         // Archivo donde se guardará el estado
         const stateFilePath = path.join(directoryPath, 'estado.txt');
 
@@ -104,7 +118,6 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
-
   
 
 /* ---------------------------- FUNCIONES AUXILIARES ---------------------------- */
