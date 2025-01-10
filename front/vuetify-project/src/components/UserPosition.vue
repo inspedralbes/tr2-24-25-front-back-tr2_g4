@@ -17,7 +17,7 @@
           elevation="2"
           style="background-color: gold; color: black; padding: 12px; border-radius: 8px; display: inline-block; font-weight: bold;"
         >
-          🥇 1º Lugar: {{ ganadores[0] || "Pendiente" }}
+          🥇 1º Lugar: {{ ganadores[0]?.nombre || 'Vacante' }}
         </v-card>
       </v-card-text>
 
@@ -27,7 +27,7 @@
           elevation="2"
           style="background-color: silver; color: black; padding: 12px; border-radius: 8px; display: inline-block;"
         >
-          🥈 2º Lugar: {{ ganadores[1] || "Pendiente" }}
+          🥈 2º Lugar: {{ ganadores[1]?.nombre || 'Vacante' }}
         </v-card>
       </v-card-text>
 
@@ -37,7 +37,7 @@
           elevation="2"
           style="background-color: #cd7f32; color: black; padding: 12px; border-radius: 8px; display: inline-block;"
         >
-          🥉 3º Lugar: {{ ganadores[2] || "Pendiente" }}
+          🥉 3º Lugar: {{ ganadores[2]?.nombre || 'Vacante' }}
         </v-card>
       </v-card-text>
 
@@ -61,22 +61,45 @@
 </template>
 
 <script>
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router"; // Importamos useRouter
+
 export default {
   name: "PodioFinal",
-  props: {
-    ganadores: {
-      type: Array,
-      required: true,
-    },
-  },
-  methods: {
-    onBack() {
-      // Acción para el botón de retroceso
-      this.$router.push({ name: "Carrera" });
-    },
+  setup() {
+    const ganadores = ref([]);
+    const route = useRoute();
+    const router = useRouter(); // Obtenemos el router
+
+    onMounted(() => {
+      try {
+        const podioParam = route.query.podio;
+        if (podioParam) {
+          // Decodificamos el parámetro `podio` de la URL
+          const parsedPodio = JSON.parse(decodeURIComponent(podioParam));
+          ganadores.value = parsedPodio.concat(
+            Array(3 - parsedPodio.length).fill({ nombre: "Vacante" })
+          );
+        } else {
+          // Si no hay podio, rellenamos con "Vacante"
+          ganadores.value = Array(3).fill({ nombre: "Vacante" });
+        }
+      } catch (error) {
+        console.error("Error al procesar el podio:", error);
+        ganadores.value = Array(3).fill({ nombre: "Vacante" });
+      }
+    });
+
+    const onBack = () => {
+      // Redirigir al componente AdminPreguntas
+      router.push("/profesor-dashboard"); // Ruta para AdminPreguntas
+    };
+
+    return { ganadores, onBack };
   },
 };
 </script>
+
 
 <style scoped>
 .v-card {

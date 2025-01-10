@@ -3,28 +3,30 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { io } from 'socket.io-client';
 
-const router = useRouter(); // Inicializamos el router
-const route = useRoute(); // Accedemos a los parámetros de la URL
+const router = useRouter();
+const route = useRoute();
 
-// Definimos las variables para almacenar el código y el podio
-const gameCode = ref(route.params.codigo);  // Accedemos al 'codigo' de la URL
-const podio = ref([]); // Variable para almacenar el podio
+const gameCode = ref(route.params.codigo);
+const podio = ref([]);
+const carriles = ref([]);
+const socket = io('http://localhost:3000');
 
-const carriles = ref([]); // Array para almacenar los carriles de los jugadores
-const socket = io('http://localhost:3000');  // Inicializamos el socket
+// Inicializamos los ganadores como un array vacío
+const ganadores = ref(Array(3).fill({ nombre: 'Vacante' }));
 
 onMounted(() => {
-  // Si el parámetro 'podio' está presente en la URL, lo parseamos
   if (route.query.podio) {
     try {
-      podio.value = JSON.parse(route.query.podio);  // Parseamos el podio desde la query string
+      const parsedPodio = JSON.parse(route.query.podio);
+      ganadores.value = parsedPodio.concat(
+        Array(3 - parsedPodio.length).fill({ nombre: 'Vacante' })
+      );
     } catch (error) {
       console.error('Error al parsear el podio:', error);
-      podio.value = [];  // Si ocurre un error, lo dejamos vacío
     }
   }
 
-  // Escuchamos las actualizaciones de los carriles a través del socket
+  // Escuchar actualizaciones de los carriles
   socket.on('updateCarril', (carril, nombre, avatar, bombas, multiplicadores) => {
     actualizarCarril(carril, nombre, avatar, bombas, multiplicadores);
   });
@@ -35,13 +37,11 @@ const actualizarCarril = (carril, nombre, avatar, bombas, multiplicadores) => {
   const index = carriles.value.findIndex((c) => c.nombre === nombre);
 
   if (index !== -1) {
-    // Si el carril ya existe, lo actualizamos
     carriles.value[index].carril = carril;
     carriles.value[index].bombas = bombas || [];
     carriles.value[index].multiplicadores = multiplicadores || [];
     carriles.value[index].avatar = avatar || '';
   } else {
-    // Si el carril no existe, lo agregamos
     carriles.value.push({
       nombre,
       avatar,
@@ -51,53 +51,30 @@ const actualizarCarril = (carril, nombre, avatar, bombas, multiplicadores) => {
     });
   }
 
-  // Verificamos si ya hay ganadores
   verificarGanadores();
-  // Ordenamos los carriles por la posición (el más avanzado se pone arriba)
   ordenaCarrilesPorPosicion();
 };
 
-// Función para ordenar los carriles por la posición
+// Función para ordenar los carriles
 const ordenaCarrilesPorPosicion = () => {
-  carriles.value.sort((a, b) => b.carril.position - a.carril.position);  // Ordenamos de mayor a menor
+  carriles.value.sort((a, b) => b.carril.position - a.carril.position);
 };
 
-// Verificamos si algún jugador ha llegado a la meta
+// Verificar si hay ganadores y redirigir al podio
 const verificarGanadores = () => {
-  carriles.value.forEach((carrilData) => {
-    if (carrilData.carril.position >= 40 && !podio.value.includes(carrilData.nombre)) {
-      podio.value.push(carrilData.nombre);  // Añadimos al podio
-    }
-  });
+  const jugadoresEnMeta = carriles.value.filter((carrilData) => carrilData.carril.position >= 39);
 
-  // Si ya hay 3 jugadores en el podio, redirigimos a la pantalla del podio
-  if (podio.value.length >= 3) {
-    mostrarPodio();
+  if (jugadoresEnMeta.length === carriles.value.length || jugadoresEnMeta.length >= 3) {
+    const top3 = jugadoresEnMeta.slice(0, 3).map((jugador) => ({ nombre: jugador.nombre }));
+    const podioFinal = top3.concat(Array(3 - top3.length).fill({ nombre: 'Vacante' }));
+    router.push({
+      path: '/podio',
+      query: { podio: JSON.stringify(podioFinal) },
+    });
   }
-
-  // Comprobamos si algún jugador ha llegado a la meta
-  carriles.value.forEach((carrilData) => {
-    if (carrilData.carril.position >= 40 && !podio.value.includes(carrilData.nombre)) {
-      podio.value.push(carrilData.nombre);  // Añadimos al podio
-      // Redirigimos a la página del podio
-      router.push({ 
-        path: '/podio',  // Redirigimos al podio
-        query: { podio: JSON.stringify(podio.value) }  // Pasamos el podio como parámetro en la query string
-      });
-    }
-  });
 };
 
-// Mostramos el podio de los 3 primeros jugadores
-const mostrarPodio = () => {
-  const top3 = podio.value.slice(0, 3);  // Aseguramos que solo se muestran los 3 primeros
-  router.push({ 
-    path: '/podio',  // Redirigimos al podio
-    query: { podio: JSON.stringify(top3) }  // Pasamos el podio como parámetro en la query string
-  });
-};
-
-// Función para obtener el color de cada casilla
+// Obtener el color de las casillas
 const getColor = (index, position) => {
   if (index === position) return 'white';
   return index % 2 === 0 ? 'red' : 'black';
@@ -174,7 +151,6 @@ const getColor = (index, position) => {
 </template>
 
 <style scoped>
-/* Estilos adicionales */
 .carril-container {
   margin-bottom: 40px;
   margin-top: 70px;
