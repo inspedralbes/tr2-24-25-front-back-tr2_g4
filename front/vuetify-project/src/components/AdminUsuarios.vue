@@ -7,11 +7,13 @@
         <h1 class="custom-title">Administrar Usuarios</h1>
 
         <h2 class="custom-title2">Editar Usuario</h2>
+        <h1 class="custom-title4">Selecciona un Usuario para Editar su Información o Gestionar Detalles:</h1>
         <form @submit.prevent="updateUser">
           <input v-model="newUser.nom" type="text" placeholder="Nombre" required />
           <input v-model="newUser.cognom" type="text" placeholder="Apellido" required />
           <input v-model="newUser.email" type="email" placeholder="Correo Electrónico" required />
           <button type="submit" class="custom-title3">Actualizar Usuario</button>
+
         </form>
       </div>
     </div>
@@ -35,6 +37,7 @@
       <div class="form-container">
         <div v-if="users.length" class="user-list">
           <h2 style="padding: 2%;" class="custom-title">Lista de Usuarios</h2>
+          <h1 class="custom-title4">Explora la Lista de Usuarios para Editar o Eliminar:</h1>
 
           <!-- Buscador -->
           <v-text-field
@@ -192,6 +195,15 @@ export default {
 .search-field {
   margin-bottom: 20px;
   width: 100%;
+}
+
+.custom-title4 {
+  font-family: 'Arial Black', sans-serif; /* Cambia a una fuente más destacada */
+  font-weight: bold;
+  font-size: 15px; /* Tamaño de texto más grande */
+  color: #1c4b7c; /* Azul para darle un toque moderno */
+  margin-bottom: 20px; /* Espacio debajo del título */
+  letter-spacing: 1px; /* Espaciado entre letras */
 }
 
 .alertaeliminar {

@@ -5,8 +5,10 @@
     <div class="admin-section">
       <div class="form-container">
         <h1 class="custom-title">Administrar Preguntas</h1>
+   
 
         <h2 class="custom-title2">Agregar Nueva Pregunta</h2>
+        <p class="custom-title4">Crea y Explora Preguntas:</p>
         <form @submit.prevent="addQuestion">
           <input
             v-model="newQuestion.text_pregunta"
@@ -45,6 +47,8 @@
       <div class="form-container">
 
         <h2 style="padding: 2%;" class="custom-title">Lista de Preguntas</h2>
+        <h1 class="custom-title4">Explora la Lista de Preguntas para Editar o Eliminar:</h1>
+
         <v-text-field
           v-model="searchQuery"
           label="Buscar preguntas"
@@ -286,7 +290,16 @@ export default {
   margin-bottom: 20px; /* Espacio debajo del título */
   letter-spacing: 1px; /* Espaciado entre letras */
 }
+.custom-title4 {
+  font-family: 'Arial Black', sans-serif; /* Cambia a una fuente más destacada */
+  font-weight: bold;
+  font-size: 15px; /* Tamaño de texto más grande */
+  color: #1c4b7c; /* Azul para darle un toque moderno */
+  margin-bottom: 20px; /* Espacio debajo del título */
+  letter-spacing: 1px; /* Espaciado entre letras */
+  text-align: left; /* Alinea el texto a la izquierda */
 
+}
 
 .custom-title2 {
   font-family: 'Arial Black', sans-serif; /* Cambia a una fuente más destacada */

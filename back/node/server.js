@@ -875,15 +875,18 @@ app.get('/preguntas', async (req, res) => {
   app.get('/api/aulas', async (req, res) => {
     try {
         const [aulas] = await pool.query('SELECT * FROM aulas');
-        res.json({ success: true, aulas: aulas.map(aula => ({
-            nombre: aula.nombre,
-            alumnos: JSON.parse(aula.alumnos)
-        })) });
+        res.json({
+            success: true,
+            aulas: aulas.map(aula => ({
+                nombre: aula.nombre,
+                alumnos: aula.alumnos // Devolvemos los alumnos directamente sin procesar
+            }))
+        });
     } catch (error) {
         console.error('Error al obtener las aulas:', error);
         res.status(500).json({ success: false, message: 'Error al obtener las aulas.' });
     }
-  });
+});
 
 
   // Crear una nueva aula
