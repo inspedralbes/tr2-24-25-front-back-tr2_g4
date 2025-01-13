@@ -42,17 +42,19 @@ const routes = [
     path: '/carrilescarrera/:codigo',
     name: 'CarrilesCarrera',
     component: CarrilesCarrera, // Componente para la pantalla del carril del jugador
+    props: true, // Habilita el paso de props desde la URL
   },
   {
     path: '/carriljugador/:codigo',
     name: 'CarrilJugador',
     component: CarrilJugador, // Componente para la pantalla del carril del jugador
+    props: true, // Habilita el paso de props desde la URL
   }
 
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.VITE_BASE_URL),
   routes,
 });
 

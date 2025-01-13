@@ -199,7 +199,7 @@ export default {
           const updateData = await updateResponse.json();
           if (updateData.success) {
             this.error = '';
-            window.location.href = `/UserPlayWaiting/${this.codigo}`;
+            this.$router.push({ name: 'UserPlayWaiting', params: { codigo: this.codigo } });
           } else {
             this.error = updateData.message;
           }
