@@ -18,17 +18,17 @@
             style="color: black;"
             class="input-nombre-aula"
           />
-          <div class="checkbox-group">
-            <div v-for="user in users" :key="user.id" class="checkbox-item">
-              <input
-                type="checkbox"
-                :value="user.nom + ' ' + user.cognom"
-                v-model="aula.alumnos"
-                :id="'user-' + user.id"
-              />
-              <label :for="'user-' + user.id">{{ user.nom }} {{ user.cognom }}</label>
-            </div>
-          </div>
+
+          <!-- Utilización de v-select para seleccionar alumnos -->
+          <v-select
+            v-model="aula.alumnos"
+            :items="users.map(user => `${user.nom} ${user.cognom}`)"
+            label="Selecciona los alumnos"
+            multiple
+            chips
+            taggable
+            class="custom-select"
+          ></v-select>
 
           <v-spacer style="padding: 5px;"></v-spacer>
           <button type="submit" class="custom-title3">
@@ -69,6 +69,16 @@
     >
       {{ alertMessage }}
     </v-alert>
+    <v-alert
+      v-if="showAlert && alertType === 'error'"
+      type="error"
+      color="red"
+      class="alert-center"
+      elevation="5"
+      :icon="'mdi-alert-circle-outline'"
+    >
+      {{ alertMessage }}
+    </v-alert>
 
     <!-- Modal de Confirmación de Eliminación -->
     <div v-if="showDeleteModal" class="delete-modal">
@@ -81,7 +91,6 @@
 
   </div>
 </template>
-
 
 <style scoped>
 /* Reutilización de los estilos */
@@ -318,7 +327,6 @@ button:hover {
 
 </style>
 
-
 <script>
 import axios from 'axios';
 
@@ -334,8 +342,9 @@ export default {
       editMode: false,
       showDeleteModal: false,
       aulaToDelete: null,
-      showAlert: false, // Nuevo estado para mostrar el alert
-      alertMessage: "", // Mensaje para mostrar en el v-alert
+      showAlert: false, 
+      alertMessage: "",
+      alertType: "success", // Nuevo campo para el tipo de alerta
     };
   },
   methods: {
@@ -370,18 +379,19 @@ export default {
         this.resetForm();
         this.fetchAulas();
       } catch (error) {
-        this.showAlertMessage("Hubo un error al guardar el aula.", "error");
+        this.showAlertMessage("Hubo un error al guardar el aula.", "error"); // Muestra alerta roja con cruz
       }
     },
     showAlertMessage(message, type = "success") {
       this.alertMessage = message;
+      this.alertType = type;
       this.showAlert = true;
 
-      // Ocultar el alert después de 3 segundos
       setTimeout(() => {
         this.showAlert = false;
       }, 3000);
     },
+    
     editAula(aula) {
       this.aula = { ...aula };
       this.editMode = true;
@@ -418,6 +428,4 @@ export default {
     this.fetchUsers();
   },
 };
-
-
 </script>
