@@ -7,6 +7,22 @@
 
     <!-- Contenedor principal que llena toda la pantalla -->
     <v-container fluid class="fill-height d-flex justify-center align-center fondo">
+      <!-- Texto de bienvenida centrado en la parte superior -->
+      <v-row class="w-100 align-center">
+        <v-col class="d-flex justify-center align-center" cols="12">
+          <div class="welcome-text">
+            <v-spacer style="padding: 20px;"></v-spacer>
+            <h1 class="welcome-title">
+              ¡BIENVENIDO!
+            </h1>
+            <h2 class="welcome-subtitle">
+              ¡Prepárate para jugar y aprender!
+            </h2>
+          </div>
+        </v-col>
+      </v-row>
+
+      <!-- Card de inicio de sesión -->
       <v-card max-width="400" class="pa-4 ini">
         <v-card-title class="text-h5 text-center">Iniciar Sesión</v-card-title>
         <v-card-text>
@@ -29,6 +45,16 @@
             <v-btn block color="primary" @click="submit">Iniciar Sesión</v-btn>
           </v-form>
 
+          <!-- Mensajes de alerta -->
+          <v-alert 
+            v-if="alertMessage" 
+            :type="alertType" 
+            dismissible 
+            class="mt-4 text-center"
+          >
+            {{ alertMessage }}
+          </v-alert>
+
           <!-- Link para registrarse -->
           <div class="text-center mt-4">
             <a class="text-decoration-none" @click.prevent="$emit('switch-to-register')">
@@ -44,10 +70,8 @@
 <script>
 import { useUserStore } from '@/stores/userStore';
 import { onMounted } from 'vue';
-const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
-
   setup() {
     const userStore = useUserStore();
 
@@ -64,6 +88,8 @@ export default {
       email: "",
       password: "",
       valid: false,
+      alertMessage: "",
+      alertType: "",
       rules: {
         required: (value) => !!value || "Campo requerido.",
         email: (value) =>
@@ -108,11 +134,13 @@ export default {
               this.$router.push('/alumno-dashboard');
             }
           } else {
-            alert(data.message || 'Credenciales incorrectas');
+            this.alertType = "error";
+            this.alertMessage = data.message || 'Credenciales incorrectas';
           }
         } catch (error) {
           console.error('Error al autenticar:', error);
-          alert('Hubo un problema con la autenticación. Inténtalo nuevamente.');
+          this.alertType = "error";
+          this.alertMessage = 'Hubo un problema con la autenticación. Inténtalo nuevamente.';
         }
       }
     },
@@ -120,12 +148,38 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .fondo {
   background-color: #99a6e9;
   height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
   width: 100vw; /* Asegura que ocupe todo el ancho de la pantalla */
+}
+
+.logo {
+  max-width: 30%; /* Tamaño ajustado del logo */
+  height: auto;
+}
+
+.welcome-text {
+  text-align: center;
+}
+
+.welcome-title {
+  font-size: 50px; /* Tamaño del título principal */
+  color: #ffffff; /* Azul oscuro */
+}
+
+.welcome-subtitle {
+  font-size: 1.5rem; /* Tamaño del subtítulo */
+  color: #071f44; /* Azul más oscuro */
+}
+
+.text-primary {
+  color: #fff0f0; /* Verde atractivo */
+}
+
+.text-secondary {
+  color: #0a0101; /* Blanco para contraste */
 }
 
 .title-center {
@@ -135,10 +189,7 @@ export default {
   text-align: center;
 }
 
-
 .ini {
-
-width: 70%;
-
+  width: 70%;
 }
 </style>
