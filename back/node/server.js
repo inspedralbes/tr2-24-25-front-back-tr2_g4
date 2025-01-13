@@ -46,6 +46,9 @@ mongoose.connect('mongodb+srv://a23ikedelgra:a23ikedelgra@estadistiques.nj1ar.mo
     console.error('Error al conectar a MongoDB Atlas:', error);
   });
 
+
+
+  //----------------------------- ANDROID -----------------------------
   // Obtener solo los códigos de las partidas desde la base de datos
   app.get('/api/partidas', async (req, res) => {
     try {
