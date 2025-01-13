@@ -11,6 +11,7 @@
         <label class="custom-title4">Seleccionar Alumnos</label>
 
         <form @submit.prevent="saveAula">
+          <!-- Campo para el nombre del aula con deshabilitación en modo edición -->
           <input
             type="text"
             v-model="aula.nombre"
@@ -18,6 +19,7 @@
             required
             style="color: black;"
             class="input-nombre-aula"
+            :disabled="editMode"
           />
 
           <!-- Utilización de v-select para seleccionar alumnos -->
@@ -116,6 +118,8 @@
   text-align: center; /* Alineación centrada */
   padding: 20px; /* Espaciado */
   border-radius: 12px; /* Bordes redondeados */
+  left: 55%;
+
 }
 
 .custom-title3 {
