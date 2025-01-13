@@ -21,7 +21,7 @@
               class="ma-2 font-weight-bold"
               color="deep-purple lighten-3"
               text-color="white"
-              @click:close="removeUser(user.id)"
+              @click:close="removeUser(user.userName)"
             >
               {{ user.name }}
             </v-chip>
@@ -101,9 +101,8 @@ onMounted(async () => {
 });
 
 // Función para eliminar un usuario
-const removeUser = async (userId) => {
+const removeUser = async (userName) => {
   try {
-    // Hacer la solicitud DELETE para eliminar al usuario
     const response = await fetch('http://localhost:3000/eliminar-name', {
       method: 'DELETE',
       headers: {
@@ -111,18 +110,20 @@ const removeUser = async (userId) => {
       },
       body: JSON.stringify({
         codigo_partida: gameCode.value,
-        nameToDelete: userId, // Usamos el ID del usuario a eliminar
+        nameToDelete: userName, // ID del usuario a eliminar
       }),
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
-      // Si la eliminación fue exitosa, actualizamos la lista de usuarios
+      // Emitir evento al servidor para actualizar lista de usuarios
+      socket.emit('user-removed', { codigo: gameCode.value, userId });
+
+      // Actualizar la lista de usuarios en el cliente
       users.value = users.value.filter(user => user.id !== userId);
       alert(data.message || 'Usuario eliminado con éxito');
     } else {
-      // Si hubo un error, mostramos el mensaje
       alert(data.error || 'No se pudo eliminar el usuario');
     }
   } catch (error) {
@@ -130,6 +131,13 @@ const removeUser = async (userId) => {
     alert('Hubo un error al intentar eliminar al usuario');
   }
 };
+
+socket.on('user-removed', ({ codigo, userId }) => {
+  // Filtrar el usuario eliminado de la lista de usuarios en el cliente
+  users.value = users.value.filter(user => user.id !== userId);
+  alert('Usuario eliminado con éxito');
+});
+
 
 // Función para comenzar el juego
 const startGame = () => {

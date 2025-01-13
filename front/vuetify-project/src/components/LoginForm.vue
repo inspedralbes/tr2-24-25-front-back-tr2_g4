@@ -44,6 +44,7 @@
 <script>
 import { useUserStore } from '@/stores/userStore';
 import { onMounted } from 'vue';
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
 
@@ -77,7 +78,7 @@ export default {
     async submit() {
       if (this.$refs.form.validate()) {
         try {
-          const response = await fetch('http://localhost:3000/login', {
+          const response = await fetch(`http://localhost:3000/./login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -92,9 +93,10 @@ export default {
 
           if (data.success) {
             const userStore = useUserStore();
+        
             const userData = {
               email: this.email,
-              name: data.userName,
+              userName: this.email.split('@')[0],
               role: data.profesor ? 'profesor' : 'alumno',
             };
             userStore.setUser(userData); // Guardar el usuario en Pinia

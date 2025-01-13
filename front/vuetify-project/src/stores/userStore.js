@@ -19,7 +19,7 @@ export const useUserStore = defineStore('user', {
       this.removeParticipant(); // Eliminar el usuario de la lista de participantes
     },
     addParticipant(userData) {
-      if (!this.participants.find(user => user.email === userData.email)) {
+      if (!this.participants.find(user => user.userName === userData.userName)) {
         this.participants.push(userData); // Añadir el nuevo usuario
         this.updateLocalStorage(); // Actualizar localStorage
       }
@@ -31,7 +31,7 @@ export const useUserStore = defineStore('user', {
       localStorage.clear(); // Elimina todo lo almacenado en localStorage
     },
     removeParticipant() {
-      this.participants = this.participants.filter(user => user.email !== this.user.email);
+      this.participants = this.participants.filter(user => user.userName !== this.user.userName);
       this.updateLocalStorage(); // Actualizar localStorage
     },
     updateLocalStorage() {
