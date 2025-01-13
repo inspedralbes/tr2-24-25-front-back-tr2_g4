@@ -72,7 +72,7 @@ export default {
       bombas: this.bombas,
       multiplicadores: this.multiplicadores
     });
-    this.socket.emit('updateCarril', this.carril, this.nom,this.avatar, this.bombas, this.multiplicadores);
+    
 },
 
   methods: {
@@ -199,20 +199,32 @@ export default {
     verificarRespuesta(respuesta) {
       if (respuesta === this.respuestaCorrecta) {
         let nuevaPosicion = this.carril.position + this.dado;
-
-        if (this.isMultiplier(this.carril.position)) {
-          nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39);
-          this.mensajeRespuesta = 'Multiplicador, avanzando el doble';
+    
+        // Verificar si el jugador ha llegado a la última casilla (casilla 39)
+        if (nuevaPosicion >= 39) {
+          this.carril.position = 39; // Asegurarnos de que no pase de la última casilla
+          this.mensajeRespuesta = '¡Has ganado! Has llegado a la última casilla.';
+          
+          // Impedir que el jugador siga jugando
+          this.girando = true;  // Deshabilitar la acción de girar el dado
+          alert('¡Felicidades, has ganado el juego!');
+          return; // Salir de la función para evitar más movimientos
         } else {
-          this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.';
+          // Si no ha llegado a la última casilla, el jugador sigue jugando
+          if (this.isMultiplier(this.carril.position)) {
+            nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39);
+            this.mensajeRespuesta = 'Multiplicador, avanzando el doble';
+          } else {
+            this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.';
+          }
+    
+          if (this.isBomb(this.carril.position)) {
+            console.log("¡Bomba! No retrocede por respuesta correcta.");
+          }
+    
+          this.carril.position = nuevaPosicion;
+          this.scrollCarril();
         }
-
-        if (this.isBomb(this.carril.position)) {
-          console.log("¡Bomba! No retrocede por respuesta correcta.");
-        }
-
-        this.carril.position = nuevaPosicion;
-        this.scrollCarril();
       } else {
         // Si la respuesta es incorrecta, reproducir el audio
         if (this.audioIncorrecto) {
@@ -220,7 +232,7 @@ export default {
             console.error('Error al reproducir el audio:', error);
           });
         }
-
+    
         if (this.isBomb(this.carril.position)) {
           this.carril.position = Math.max(this.carril.position - 2, 0);
           this.mensajeRespuesta = "¡Bomba! Retrocediendo 2 posiciones por respuesta incorrecta.";
@@ -228,6 +240,7 @@ export default {
           this.mensajeRespuesta = 'Respuesta incorrecta';
         }
       }
+    
       this.guardarResultado(respuesta);
       this.preguntaActiva = false;
       this.preguntaActual = null;
@@ -241,7 +254,7 @@ export default {
       this.socket.emit('updateCarril', this.carril, this.nom ,this.avatar, this.bombas, this.multiplicadores);
       this.guardarEstadoCarril();
     },
-
+    
     // Método para guardar el resultado
     async guardarResultado(respuesta) {
       const esCorrecto = respuesta === this.respuestaCorrecta;

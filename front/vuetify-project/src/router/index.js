@@ -13,6 +13,7 @@ import CrearPartida from '@/components/LoadingPartida.vue';
 import LoginPage from '@/components/LoginForm.vue';
 import CarrilJugador from '@/components/CarrilJugador.vue';  // Importa el componente de login
 import CarrilesCarrera from '@/components/CarrilesCarrera.vue';
+import UserPosition from '@/components/UserPosition.vue';
 
 // Combina las rutas automáticas con las manuales
 const routes = [
@@ -49,7 +50,12 @@ const routes = [
     name: 'CarrilJugador',
     component: CarrilJugador, // Componente para la pantalla del carril del jugador
     props: true, // Habilita el paso de props desde la URL
-  }
+  },
+  {
+    path: '/podio',
+    name: 'UserPosition',
+    component: UserPosition, // Componente para la pantalla del carril del jugador
+  },
 
 ];
 
