@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
   data() {
@@ -52,10 +52,14 @@ export default {
     // Función para obtener todos los usuarios registrados
     async fetchUsers() {
       try {
-        const response = await axios.get('http://localhost:3000/api/users');
-        this.users = response.data.users;
+        const response = await fetch(`${API_URL}./api/users`);
+        if (!response.ok) {
+          throw new Error('Error al cargar los usuarios.');
+        }
+        const data = await response.json();
+        this.users = data.users;
       } catch (error) {
-        this.errorMessage = 'Error al cargar los usuarios.';
+        this.errorMessage = error.message;
         alert(this.errorMessage);
       }
     },
@@ -69,12 +73,25 @@ export default {
     // Función para actualizar un usuario
     async updateUser() {
       try {
-        const response = await axios.put(`http://localhost:3000/api/users/${this.newUser.id}`, this.newUser);
-        alert(response.data.message);
+        const response = await fetch(`${API_URL}./api/users/${this.newUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.newUser),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message);
+        }
+
+        const data = await response.json();
+        alert(data.message);
         this.resetForm();
         this.fetchUsers(); // Recargar la lista de usuarios
       } catch (error) {
-        this.errorMessage = error.response.data.message;
+        this.errorMessage = error.message;
         alert(this.errorMessage);
       }
     },
@@ -82,11 +99,20 @@ export default {
     // Función para eliminar un usuario
     async deleteUser(id) {
       try {
-        const response = await axios.delete(`http://localhost:3000/api/users/${id}`);
-        alert(response.data.message);
+        const response = await fetch(`${API_URL}./api/users/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message);
+        }
+
+        const data = await response.json();
+        alert(data.message);
         this.fetchUsers(); // Recargar la lista de usuarios
       } catch (error) {
-        this.errorMessage = error.response.data.message;
+        this.errorMessage = error.message;
         alert(this.errorMessage);
       }
     },
@@ -103,6 +129,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .user-management {

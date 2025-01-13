@@ -37,7 +37,7 @@
 
 <script>
 import axios from 'axios';
-
+const API_URL = import.meta.env.VITE_API_BACK;
 export default {
   data() {
     return {
@@ -57,7 +57,7 @@ export default {
     // Obtener todos los usuarios
     async fetchUsers() {
       try {
-        const response = await axios.get('/api/users');
+        const response = await axios.get(`${API_URL}./api/users`);
         if (response.data.success) {
           this.users = response.data.users;
         } else {
@@ -70,7 +70,7 @@ export default {
     // Crear un nuevo usuario
     async createUser() {
       try {
-        const response = await axios.post('/api/users', this.form);
+        const response = await axios.post(`${API_URL}./api/users`, this.form);
         if (response.data.success) {
           alert(response.data.message);
           this.fetchUsers();
@@ -90,7 +90,7 @@ export default {
     // Actualizar un usuario existente
     async updateUser() {
       try {
-        const response = await axios.put(`/api/users/${this.form.id}`, this.form);
+        const response = await axios.put(`${API_URL}./api/users/${this.form.id}`, this.form);
         if (response.data.success) {
           alert(response.data.message);
           this.fetchUsers();
@@ -106,7 +106,7 @@ export default {
     async deleteUser(id) {
       if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
       try {
-        const response = await axios.delete(`/api/users/${id}`);
+        const response = await axios.delete(`${API_URL}./api/users/${id}`);
         if (response.data.success) {
           alert(response.data.message);
           this.fetchUsers();

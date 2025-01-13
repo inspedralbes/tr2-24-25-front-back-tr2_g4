@@ -44,6 +44,7 @@
 <script>
 import { useUserStore } from '@/stores/userStore';
 import { onMounted } from 'vue';
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
 
@@ -77,7 +78,7 @@ export default {
     async submit() {
       if (this.$refs.form.validate()) {
         try {
-          const response = await fetch('http://localhost:3000/login', {
+          const response = await fetch(`${API_URL}./login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

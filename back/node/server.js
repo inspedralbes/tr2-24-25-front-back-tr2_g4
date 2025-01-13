@@ -8,7 +8,6 @@ const { Server } = require('socket.io');
 const { createServer } = require('http');
 const path = require('path');
 const multer = require('multer');
-const bcrypt = require('bcrypt');
 const createDB = require(path.join(__dirname, 'configDB.js'));
 const mongoose = require('mongoose');
 const Resultado = require('./models/valors');
@@ -26,6 +25,10 @@ app.use(bodyParser.json());
 
 
 /* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
+(async () => {
+  await createDB();
+})();
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -35,7 +38,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000, // Timeout de conexión
+  connectTimeout: 28800, // Timeout de conexión
+  wait_timeout: 28800,
+  ConnectionLifeTime: 28800
+                              
 });
 
 
@@ -782,7 +788,7 @@ app.get('/preguntas', async (req, res) => {
 
 
       const query = `
-        INSERT INTO Pregunta (text_pregunta, difficulty_level, respuesta_correcta, type)
+        INSERT INTO pregunta (text_pregunta, difficulty_level, respuesta_correcta, type)
         VALUES (?, ?, ?, ?)
       `;
       const values = [text_pregunta, difficulty_level, respuesta_correcta, type];
@@ -816,7 +822,7 @@ app.get('/preguntas', async (req, res) => {
 
 
       const query = `
-        UPDATE Pregunta
+        UPDATE pregunta
         SET text_pregunta = ?, difficulty_level = ?, respuesta_correcta = ?, type = ?
         WHERE id = ?
       `;
@@ -872,18 +878,22 @@ app.get('/preguntas', async (req, res) => {
 
   /* ---------------------------- API AULAS ---------------------------- */
   // Obtener todas las aulas
-  app.get('/api/aulas', async (req, res) => {
+app.get('/api/aulas', async (req, res) => {
     try {
         const [aulas] = await pool.query('SELECT * FROM aulas');
-        res.json({ success: true, aulas: aulas.map(aula => ({
-            nombre: aula.nombre,
-            alumnos: JSON.parse(aula.alumnos)
-        })) });
+        res.json({
+            success: true,
+            aulas: aulas.map(aula => ({
+                nombre: aula.nombre,
+                alumnos: aula.alumnos // Devolvemos los alumnos directamente sin procesar
+            }))
+        });
     } catch (error) {
         console.error('Error al obtener las aulas:', error);
         res.status(500).json({ success: false, message: 'Error al obtener las aulas.' });
     }
-  });
+});
+
 
 
   // Crear una nueva aula

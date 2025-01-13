@@ -91,6 +91,7 @@
 import { io } from 'socket.io-client';
 import waitingAudio from '@/assets/PlayWaitingMusic.mp3';
 import { useRouter } from 'vue-router';
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
   name: "GameWaitingRoom",
@@ -114,7 +115,7 @@ export default {
     });
 
     const router = useRouter(); 
-    this.socket = io('http://localhost:3000');
+    this.socket = io(`${API_URL}`);
     this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
     
     this.socket.on('game-started', (data) => {
@@ -140,7 +141,7 @@ export default {
     }
 
     this.codigo = this.$route.params.codigo; 
-    this.socket = io('http://localhost:3000'); 
+    this.socket = io(`${API_URL}`); 
 
     this.socket.emit('join-room', { codigo: this.codigo, usuario: this.usuario });
 

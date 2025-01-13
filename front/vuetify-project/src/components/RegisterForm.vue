@@ -81,6 +81,7 @@
   
   <script>
   import emailjs from "emailjs-com";
+  const API_URL = import.meta.env.VITE_API_BACK;
   
   export default {
     name: "RegisterForm",
@@ -166,7 +167,7 @@
   
           try {
             // Hacer el POST al backend
-            const response = await fetch("http://localhost:3000/addUser", {
+            const response = await fetch(`${API_URL}./addUser`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

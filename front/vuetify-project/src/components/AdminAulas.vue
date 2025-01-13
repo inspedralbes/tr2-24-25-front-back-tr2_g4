@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import axios from "axios";
+const API_URL = import.meta.env.VITE_API_BACK; 
 
 export default {
   data() {
@@ -82,34 +82,48 @@ export default {
   methods: {
     async fetchAulas() {
       try {
-        const response = await axios.get("http://localhost:3000/api/aulas");
-        this.aulas = response.data.aulas;
+        const response = await fetch(`${API_URL}./api/aulas`);
+        if (!response.ok) {
+          throw new Error("Error al obtener las aulas");
+        }
+        const data = await response.json();
+        this.aulas = data.aulas;
       } catch (error) {
         console.error("Error al obtener las aulas:", error);
       }
     },
     async fetchUsers() {
       try {
-        const response = await axios.get("http://localhost:3000/api/users");
-        this.users = response.data.users;
+        const response = await fetch(`${API_URL}./api/users`);
+        if (!response.ok) {
+          throw new Error("Error al obtener los usuarios");
+        }
+        const data = await response.json();
+        this.users = data.users;
       } catch (error) {
         console.error("Error al obtener los usuarios:", error);
       }
     },
     async saveAula() {
       try {
-        if (this.editMode) {
-          // Actualizar un aula existente
-          await axios.put(`http://localhost:3000/api/aulas/${this.aula.nombre}`, {
-            alumnos: this.aula.alumnos,
-          });
-          alert("Aula actualizada correctamente.");
-        } else {
-          // Crear una nueva aula
-          await axios.post("http://localhost:3000/api/aulas", this.aula);
-          alert("Aula creada correctamente.");
+        const method = this.editMode ? "PUT" : "POST";
+        const url = this.editMode 
+          ? `${API_URL}./api/aulas/${this.aula.nombre}` 
+          : `${API_URL}./api/aulas`;
+
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(this.aula),
+        });
+
+        if (!response.ok) {
+          throw new Error("Hubo un error al guardar el aula");
         }
 
+        alert(this.editMode ? "Aula actualizada correctamente." : "Aula creada correctamente.");
         this.resetForm();
         this.fetchAulas();
       } catch (error) {
@@ -124,7 +138,14 @@ export default {
     async deleteAula(nombre) {
       try {
         if (confirm(`¿Seguro que deseas eliminar el aula "${nombre}"?`)) {
-          await axios.delete(`http://localhost:3000/api/aulas/${nombre}`);
+          const response = await fetch(`${API_URL}./api/aulas/${nombre}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            throw new Error("Hubo un error al eliminar el aula");
+          }
+
           alert("Aula eliminada correctamente.");
           this.fetchAulas();
         }

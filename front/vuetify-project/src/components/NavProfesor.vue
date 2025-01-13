@@ -22,6 +22,7 @@ import AdminUsuarios from "@/components/AdminUsuarios.vue";
 import AdminAulas from "@/components/AdminAulas.vue";
 import Estadisticas from "@/components/Estadisticas.vue";
 
+
 // Define el componente inicial que se va a cargar
 const currentComponent = ref(AdminPreguntas);  // Componente predeterminado
 

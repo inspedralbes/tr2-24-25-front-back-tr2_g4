@@ -128,6 +128,7 @@
 <script>
 import waitingAudio from '@/assets/PlayCodeMusic.mp3'; // Asegúrate de que esta ruta sea correcta
 import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
   name: "CustomScreen",
@@ -178,7 +179,7 @@ export default {
       }
 
       try {
-        const response = await fetch(`http://localhost:3000/game-code?codigo=${this.codigo}`);
+        const response = await fetch(`${API_URL}./game-code?codigo=${this.codigo}`);
         const data = await response.json();
 
         if (data.message === "Partida encontrada.") {
@@ -187,7 +188,7 @@ export default {
           const email = userStore.user.email; // El correo guardado en el store
           const username = email.split('@')[0]; // Extraer la parte antes del '@' como nombre de usuario
 
-          const updateResponse = await fetch(`http://localhost:3000/update-partida`, {
+          const updateResponse = await fetch(`${API_URL}./update-partida`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

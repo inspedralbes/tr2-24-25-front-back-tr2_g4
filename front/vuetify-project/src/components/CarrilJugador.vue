@@ -141,6 +141,7 @@
 <script>
 import playerManager from '../services/playerManager.js';
 
+
 export default {
   mixins: [playerManager],
   data() {

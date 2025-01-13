@@ -96,7 +96,7 @@
 
 
 <script>
-import axios from "axios";
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
   data() {
@@ -115,8 +115,11 @@ export default {
     // Obtener todas las preguntas desde el backend
     async fetchQuestions() {
       try {
-        const response = await axios.get('http://localhost:3000/api/preguntas');
-        this.questions = response.data;
+        const response = await fetch(`${API_URL}./api/preguntas`);
+        if (!response.ok) {
+          throw new Error("Error al obtener las preguntas");
+        }
+        this.questions = await response.json();
       } catch (error) {
         console.error("Error al obtener las preguntas", error);
       }
@@ -125,8 +128,18 @@ export default {
     // Agregar una nueva pregunta
     async addQuestion() {
       try {
-        const response = await axios.post('http://localhost:3000/api/preguntas', this.newQuestion);
-        this.questions.push(response.data); // Agregar la pregunta a la lista
+        const response = await fetch(`${API_URL}./api/preguntas`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(this.newQuestion)
+        });
+        if (!response.ok) {
+          throw new Error("Error al agregar la pregunta");
+        }
+        const newQuestion = await response.json();
+        this.questions.push(newQuestion); // Agregar la pregunta a la lista
         this.newQuestion = { text_pregunta: "", difficulty_level: "", respuesta_correcta: "", type: "" }; // Limpiar formulario
       } catch (error) {
         console.error("Error al agregar la pregunta", error);
@@ -141,7 +154,16 @@ export default {
     // Actualizar una pregunta
     async updateQuestion() {
       try {
-        await axios.put(`http://localhost:3000/api/preguntas/${this.editingQuestion.id}`, this.editingQuestion);
+        const response = await fetch(`${API_URL}./api/preguntas/${this.editingQuestion.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(this.editingQuestion)
+        });
+        if (!response.ok) {
+          throw new Error("Error al actualizar la pregunta");
+        }
         this.fetchQuestions(); // Refrescar la lista de preguntas
         this.cancelEdit(); // Cerrar el modal
       } catch (error) {
@@ -152,7 +174,12 @@ export default {
     // Eliminar una pregunta
     async deleteQuestion(id) {
       try {
-        await axios.delete(`http://localhost:3000/api/preguntas/${id}`);
+        const response = await fetch(`${API_URL}./api/preguntas/${id}`, {
+          method: "DELETE"
+        });
+        if (!response.ok) {
+          throw new Error("Error al eliminar la pregunta");
+        }
         this.fetchQuestions(); // Refrescar la lista de preguntas
       } catch (error) {
         console.error("Error al eliminar la pregunta", error);
@@ -169,6 +196,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 /* Aplicar estilos al select */

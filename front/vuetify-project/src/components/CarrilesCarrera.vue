@@ -81,6 +81,7 @@
 
 <script>
 import { io } from "socket.io-client";
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
   data() {
@@ -90,7 +91,7 @@ export default {
   },
   created() {
     // Inicializar la conexión del socket
-    this.socket = io("http://localhost:3000");
+    this.socket = io(`${API_URL}`);
 
     // Escuchar el evento de actualización del carril
     this.socket.on("updateCarril", (carril, nombre, avatar, bombas, multiplicadores) => {

@@ -55,19 +55,20 @@ import { ref, onMounted } from 'vue';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+const API_URL = import.meta.env.VITE_API_BACK;
 
 const gameCode = ref('');
 const users = ref([]);
-const socket = io('http://localhost:3000');
+const socket = io(`${API_URL}`);
 const router = useRouter();
 
 onMounted(async () => {
   // Obtener el código de la partida
-  const response = await axios.get('http://localhost:3000/game-code');
+  const response = await axios.get(`${API_URL}./game-code`);
   gameCode.value = response.data.gameCode;
 
   // Obtener los alumnos de la partida
-  const alumnosResponse = await axios.get('http://localhost:3000/alumnos', { params: { codigo: gameCode.value } });
+  const alumnosResponse = await axios.get(`${API_URL}./alumnos`, { params: { codigo: gameCode.value } });
   users.value = alumnosResponse.data;
 
   // Unirse a la sala en el backend con el código de la partida
@@ -87,7 +88,7 @@ onMounted(async () => {
 const removeUser = async (userId) => {
   try {
     // Hacer la solicitud DELETE para eliminar al usuario
-    const response = await fetch('http://localhost:3000/eliminar-name', {
+    const response = await fetch(`${API_URL}./eliminar-name`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

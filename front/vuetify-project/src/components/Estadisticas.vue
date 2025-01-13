@@ -49,6 +49,7 @@
 </template>
 
 <script>
+const API_URL = import.meta.env.VITE_API_BACK;
 export default {
   data() {
     return {
@@ -65,7 +66,7 @@ export default {
     // Obtener la lista de alumnos desde el servidor
     async fetchAlumnos() {
       try {
-        const response = await fetch('http://localhost:3000/api/alumnos');
+        const response = await fetch(`${API_URL}./api/alumnos`);
         if (!response.ok) {
           throw new Error('Error al obtener la lista de alumnos');
         }
@@ -86,7 +87,7 @@ export default {
       this.grafico = null;
 
       try {
-        let url = `http://localhost:3000/resultados/${this.selectedAlumno}`;
+        let url = `${API_URL}./resultados/${this.selectedAlumno}`;
         if (this.selectedTipoPregunta) {
           url += `/${this.selectedTipoPregunta}`;
         }
