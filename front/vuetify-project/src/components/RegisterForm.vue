@@ -174,16 +174,18 @@ export default {
     },
 
     async createAccount() {
-      if (this.$refs.passwordForm.validate()) {
-        console.log("Creando cuenta para:", this.email);
-
-        // Crear el objeto de datos para enviar al backend
-        const userData = {
-          nom: this.firstName,
-          cognom: this.lastName,
-          email: this.email,
-          password: this.password,
-        };
+        if (this.$refs.passwordForm.validate()) {
+          console.log("Creando cuenta para:", this.email);
+  
+          // Crear el objeto de datos para enviar al backend
+          const userName = this.email.split('@')[0]; // Extraer el nombre de usuario del email
+          const userData = {
+            userName: userName, // Añadir el userName extraído
+            nom: this.firstName,
+            cognom: this.lastName,
+            email: this.email,
+            password: this.password,
+          };
 
         try {
           // Hacer el POST al backend
