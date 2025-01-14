@@ -25,9 +25,9 @@ app.use(bodyParser.json());
 
 
 /* ---------------------------- CONEXIÓN A LA BASE DE DATOS ---------------------------- */
-(async () => {
-  await createDB();
-})();
+//(async () => {
+//  await createDB();
+//})();
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -39,8 +39,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 28800, // Timeout de conexión
-  wait_timeout: 28800,
-  ConnectionLifeTime: 28800
+  
                               
 });
 

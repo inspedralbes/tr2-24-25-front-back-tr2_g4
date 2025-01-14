@@ -121,7 +121,7 @@ export default {
   methods: {
     async fetchUsers() {
       try {
-        const response = await fetch(`${API_URL}/api/users`);
+        const response = await fetch(`${API_URL}./api/users`);
         if (!response.ok) {
           throw new Error('Error al cargar los usuarios.');
         }
@@ -140,7 +140,7 @@ export default {
 
     async updateUser() {
       try {
-        const response = await fetch(`${API_URL}/api/users/${this.newUser.id}`, {
+        const response = await fetch(`${API_URL}./api/users/${this.newUser.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export default {
     async confirmDelete() {
       if (this.userToDelete) {
         try {
-          const response = await fetch(`${API_URL}/api/users/${this.userToDelete}`, {
+          const response = await fetch(`${API_URL}./api/users/${this.userToDelete}`, {
             method: 'DELETE',
           });
 

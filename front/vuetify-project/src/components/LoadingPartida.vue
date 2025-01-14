@@ -82,7 +82,7 @@ const router = useRouter();
 onMounted(async () => {
   try {
     // Obtener el código de la partida
-    const response = await fetch(`${API_URL}/game-code`);
+    const response = await fetch(`${API_URL}./game-code`);
     if (!response.ok) {
       throw new Error('Error al obtener el código de la partida');
     }
@@ -90,7 +90,7 @@ onMounted(async () => {
     gameCode.value = data.gameCode;
 
     // Obtener los alumnos de la partida
-    const alumnosResponse = await fetch(`${API_URL}/alumnos?codigo=${gameCode.value}`);
+    const alumnosResponse = await fetch(`${API_URL}./alumnos?codigo=${gameCode.value}`);
     if (!alumnosResponse.ok) {
       throw new Error('Error al obtener los alumnos');
     }
@@ -116,7 +116,7 @@ onMounted(async () => {
 // Función para eliminar un usuario
 const removeUser = async (userName) => {
   try {
-    const response = await fetch(`${API_URL}/eliminar-name`, {
+    const response = await fetch(`${API_URL}./eliminar-name`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

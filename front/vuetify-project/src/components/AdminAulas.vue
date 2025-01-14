@@ -118,7 +118,7 @@
   text-align: center; /* Alineación centrada */
   padding: 20px; /* Espaciado */
   border-radius: 12px; /* Bordes redondeados */
-  left: 55%;
+  left: 57%;
 
 }
 
@@ -290,15 +290,17 @@ button:hover {
 .delete-modal {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  left: 0; /* Mantener el desplazamiento de 57px */
+  width: calc(100% - 57px); /* Resta el valor de 'left' del ancho total */
+  height: 100%; /* Ocupa toda la altura de la pantalla */
   background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10000; /* Asegúrate de que se superponga al contenido */
+  z-index: 10000; /* Superponer sobre otros elementos */
 }
+
+
 
 .modal-content {
   background-color: white;
@@ -332,8 +334,10 @@ button:hover {
 }
 
 </style>
+
 <script>
-const API_URL = import.meta.env.VITE_API_BACK; 
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -353,64 +357,47 @@ export default {
   },
   methods: {
     async fetchAulas() {
-      try {
-        const response = await fetch(`${API_URL}/api/aulas`);
-        if (!response.ok) {
-          throw new Error("Error al obtener las aulas.");
-        }
-        const data = await response.json();
-        this.aulas = data.aulas;
-      } catch (error) {
-        this.showSnackbar("Error al obtener las aulas.", "error");
-      }
+  try {
+    const response = await axios.get("http://localhost:3000/api/aulas");
+    this.aulas = response.data.aulas.map(aula => ({
+      ...aula,
+      alumnos: Array.isArray(aula.alumnos) ? aula.alumnos : [], // Asegura que alumnos siempre sea un array
+    }));
+  } catch (error) {
+    this.showSnackbar("Error al obtener las aulas.", "error");
+  }
+
+
     },
     async fetchUsers() {
       try {
-        const response = await fetch(`${API_URL}/api/users`);
-        if (!response.ok) {
-          throw new Error("Error al obtener los usuarios.");
-        }
-        const data = await response.json();
-        this.users = data.users;
+        const response = await axios.get("http://localhost:3000/api/users");
+        this.users = response.data.users;
       } catch (error) {
         this.showSnackbar("Error al obtener los usuarios.", "error");
       }
     },
     async saveAula() {
-      try {
-        if (this.editMode) {
-          const response = await fetch(`${API_URL}/api/aulas/${this.aula.nombre}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ alumnos: this.aula.alumnos }),
-          });
+  try {
+    if (this.editMode) {
+      await axios.put(`http://localhost:3000/api/aulas/${this.aula.nombre}`, {
+        alumnos: Array.isArray(this.aula.alumnos) ? this.aula.alumnos : [],
+      });
+      this.showAlertMessage("Aula actualizada correctamente.");
+    } else {
+      await axios.post("http://localhost:3000/api/aulas", {
+        ...this.aula,
+        alumnos: Array.isArray(this.aula.alumnos) ? this.aula.alumnos : [],
+      });
+      this.showAlertMessage("Aula creada correctamente.");
+    }
+    this.resetForm();
+    this.fetchAulas();
+  } catch (error) {
+    this.showAlertMessage("Hubo un error al guardar el aula.", "error");
+  }
 
-          if (!response.ok) {
-            throw new Error("Error al actualizar el aula.");
-          }
-          this.showAlertMessage("Aula actualizada correctamente.");
-        } else {
-          const response = await fetch(`${API_URL}/api/aulas`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(this.aula),
-          });
 
-          if (!response.ok) {
-            throw new Error("Error al crear el aula.");
-          }
-          this.showAlertMessage("Aula creada correctamente.");
-        }
-
-        this.resetForm();
-        this.fetchAulas();
-      } catch (error) {
-        this.showAlertMessage("Hubo un error al guardar el aula.", "error");
-      }
     },
     showAlertMessage(message, type = "success") {
       this.alertMessage = message;
@@ -421,6 +408,7 @@ export default {
         this.showAlert = false;
       }, 3000);
     },
+    
     editAula(aula) {
       this.aula = { ...aula };
       this.editMode = true;
@@ -435,14 +423,7 @@ export default {
     },
     async deleteAula() {
       try {
-        const response = await fetch(`${API_URL}/api/aulas/${this.aulaToDelete}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          throw new Error("Error al eliminar el aula.");
-        }
-
+        await axios.delete(`http://localhost:3000/api/aulas/${this.aulaToDelete}`);
         this.showAlertMessage("Aula eliminada correctamente.");
         this.fetchAulas();
       } catch (error) {
