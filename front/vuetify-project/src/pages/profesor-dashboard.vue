@@ -1,11 +1,14 @@
 <template>
   <div class="layout">
     <!-- Sidebar Navigation -->
-    
     <nav class="sidebar">
       <ul>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <img src="/favicon.ico" width="40" height="40" alt="Logo">
+        <!-- Logo y texto clickeables -->
+        <div
+          style="display: flex; align-items: center; gap: 8px; cursor: pointer;"
+          @click="irAInit"
+        >
+          <img src="/favicon.ico" width="40" height="40" alt="Logo" />
           <h1 style="margin: 0;">-MATHS</h1>
         </div>
         <v-spacer style="padding: 20px;"></v-spacer>
@@ -28,10 +31,7 @@
       <!-- Botón para Crear Partida debajo del nav -->
       <li @click="irACrearPartida" class="crear-partida-btn">
         <v-icon class="red--text" large>mdi-plus</v-icon> Crear Partida
-        
       </li>
-
-
     </nav>
 
     <!-- Main Content Area -->
@@ -44,13 +44,14 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Init from '@/components/init.vue';
 import AdminPreguntas from '@/components/AdminPreguntas.vue';
 import AdminUsuarios from '@/components/AdminUsuarios.vue';
 import AdminAulas from '@/components/AdminAulas.vue';
 import Estadisticas from '@/components/Estadisticas.vue';
 
 const router = useRouter();
-const currentComponent = ref(AdminPreguntas);
+const currentComponent = ref(Init);
 
 const loadComponent = (componentName) => {
   switch (componentName) {
@@ -67,12 +68,16 @@ const loadComponent = (componentName) => {
       currentComponent.value = Estadisticas;
       break;
     default:
-      currentComponent.value = AdminPreguntas;
+      currentComponent.value = Init;
   }
 };
 
 const irACrearPartida = () => {
   router.push('/crear-partida'); // Redirige a la ruta de Crear Partida
+};
+
+const irAInit = () => {
+  currentComponent.value = Init; // Cambia al componente Init dentro del dashboard
 };
 </script>
 
@@ -125,7 +130,6 @@ const irACrearPartida = () => {
   position: absolute;
   bottom: 20px; /* Lo coloca a la parte inferior del nav */
   left: 5%; /* Lo coloca centrado horizontalmente */
-  
   display: flex;
   align-items: center;
   justify-content: center; /* Centrado del contenido del botón */
