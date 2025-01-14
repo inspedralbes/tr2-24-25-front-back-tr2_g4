@@ -13,8 +13,9 @@
           <div class="welcome-text">
             <v-spacer style="padding: 20px;"></v-spacer>
             <h1 class="welcome-title">
-              ¡BIENVENIDO!
+              🚀 ¡BIENVENIDO! 🎉            
             </h1>
+            <v-spacer style="padding: 10px;"></v-spacer>
             <h2 class="welcome-subtitle">
               ¡Prepárate para jugar y aprender!
             </h2>
