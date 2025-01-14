@@ -3,7 +3,7 @@
     <!-- Administrar Aulas -->
     <div class="admin-section">
       <div class="form-container">
-        <h1 class="custom-title">Gestión de Aulas</h1>
+        <h1 class="custom-title">Gestión de Aulas ✏️📋</h1>
 
         <!-- Formulario para agregar o actualizar un aula -->
         <h2 class="custom-title2">{{ editMode ? 'Editar Aula' : 'Agregar Nueva Aula' }}</h2>
@@ -45,7 +45,7 @@
     <!-- Lista de Aulas -->
     <div class="questions-section full-width">
       <div class="form-container">
-        <h2 class="custom-title">Listado de Aulas</h2>
+        <h2 class="custom-title">Listado de Aulas ✏️📜</h2>
         <h1 class="custom-title4">Administrar, Editar y Eliminar Aulas:</h1>
         <ul v-if="aulas.length" class="questions-list">
           <li v-for="aula in aulas" :key="aula.nombre" class="question-item">

@@ -4,7 +4,7 @@
     <!-- Administrar Usuarios -->
     <div class="admin-section">
       <div class="form-container">
-        <h1 class="custom-title">Administrar Usuarios</h1>
+        <h1 class="custom-title">Administrar Usuarios ✏️📋</h1>
 
         <h2 class="custom-title2">Editar Usuario</h2>
         <h1 class="custom-title4">Selecciona un Usuario para Editar su Información o Gestionar Detalles:</h1>
@@ -36,7 +36,7 @@
     <div class="user-list-section full-width">
       <div class="form-container">
         <div v-if="users.length" class="user-list">
-          <h2 style="padding: 2%;" class="custom-title">Lista de Usuarios</h2>
+          <h2 style="padding: 2%;" class="custom-title">Lista de Usuarios ✏️📜</h2>
           <h1 class="custom-title4">Explora la Lista de Usuarios para Editar o Eliminar:</h1>
 
           <!-- Buscador -->

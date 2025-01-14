@@ -4,7 +4,7 @@
     <!-- Administrar Preguntas -->
     <div class="admin-section">
       <div class="form-container">
-        <h1 class="custom-title">Administrar Preguntas</h1>
+        <h1 class="custom-title"> Administrar Preguntas ✏️📋</h1>
    
 
         <h2 class="custom-title2">Agregar Nueva Pregunta</h2>
@@ -46,7 +46,7 @@
     <div class="questions-section full-width">
       <div class="form-container">
 
-        <h2 style="padding: 2%;" class="custom-title">Lista de Preguntas</h2>
+        <h2 style="padding: 2%;" class="custom-title">Lista de Preguntas ✏️📜</h2>
         <h1 class="custom-title4">Explora la Lista de Preguntas para Editar o Eliminar:</h1>
 
         <v-text-field

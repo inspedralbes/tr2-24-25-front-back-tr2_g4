@@ -1,7 +1,7 @@
 <template>
   <div class="alumno-grafico-container">
     <!-- Cabecera -->
-    <h1 class="custom-title">Gráfico de Resultados</h1>
+    <h1 class="custom-title">Gráfico de Resultados 📈</h1>
     <p class="custom-title2">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
 
     <!-- Tarjeta de selección -->
