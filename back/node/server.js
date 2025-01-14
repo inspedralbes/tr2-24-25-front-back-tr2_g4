@@ -724,7 +724,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
 
     // Ejecutar el script Python con `spawn`
     const pythonProcess = spawn('py', [
-      '../python/estadisticaAlumno.py', // Ruta al script Python
+      './python/estadisticaAlumno.py', // Ruta al script Python
       nombreAlumno,
       resultadosString,
     ]);
@@ -808,7 +808,7 @@ app.get('/resultados/:nombreAlumno', async (req, res) => {
       const resultadosString = JSON.stringify(resultadosFiltrados);
  
       const pythonProcess = spawn('py', [
-        '../python/estadisticaAlumnoTipo.py',  // Ruta del script Python
+        './python/estadisticaAlumnoTipo.py',  // Ruta del script Python
         nombreAlumno,
         tipoPregunta,
         resultadosString,

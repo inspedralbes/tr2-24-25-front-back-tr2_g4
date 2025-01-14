@@ -337,6 +337,7 @@ button:hover {
 
 <script>
 import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_BACK;
 
 export default {
   data() {
@@ -358,7 +359,7 @@ export default {
   methods: {
     async fetchAulas() {
   try {
-    const response = await axios.get("http://localhost:3000/api/aulas");
+    const response = await axios.get(`${API_URL}./api/aulas`);
     this.aulas = response.data.aulas.map(aula => ({
       ...aula,
       alumnos: Array.isArray(aula.alumnos) ? aula.alumnos : [], // Asegura que alumnos siempre sea un array
@@ -371,7 +372,7 @@ export default {
     },
     async fetchUsers() {
       try {
-        const response = await axios.get("http://localhost:3000/api/users");
+        const response = await axios.get(`${API_URL}./api/users`);
         this.users = response.data.users;
       } catch (error) {
         this.showSnackbar("Error al obtener los usuarios.", "error");
@@ -380,12 +381,12 @@ export default {
     async saveAula() {
   try {
     if (this.editMode) {
-      await axios.put(`http://localhost:3000/api/aulas/${this.aula.nombre}`, {
+      await axios.put(`${API_URL}./api/aulas/${this.aula.nombre}`, {
         alumnos: Array.isArray(this.aula.alumnos) ? this.aula.alumnos : [],
       });
       this.showAlertMessage("Aula actualizada correctamente.");
     } else {
-      await axios.post("http://localhost:3000/api/aulas", {
+      await axios.post(`${API_URL}./api/aulas`, {
         ...this.aula,
         alumnos: Array.isArray(this.aula.alumnos) ? this.aula.alumnos : [],
       });
@@ -423,7 +424,7 @@ export default {
     },
     async deleteAula() {
       try {
-        await axios.delete(`http://localhost:3000/api/aulas/${this.aulaToDelete}`);
+        await axios.delete(`${API_URL}./api/aulas/${this.aulaToDelete}`);
         this.showAlertMessage("Aula eliminada correctamente.");
         this.fetchAulas();
       } catch (error) {
