@@ -128,10 +128,17 @@
     </div>
 
     <!-- Snackbar de Vuetify para mostrar el mensaje -->
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" top right>
-      {{ snackbar.message }}
-      <v-btn color="white" @click="snackbar.show = false">Cerrar</v-btn>
-    </v-snackbar>
+    <v-snackbar 
+  v-model="snackbar.show" 
+  :color="snackbar.color" 
+  :timeout="3000" 
+  class="custom-snackbar"
+>
+  <div class="snackbar-content">
+    {{ snackbar.message }}
+  </div>
+</v-snackbar>
+
   </div>
 </template>
 
@@ -305,6 +312,28 @@ export default {
   border-radius: 8px;
   margin-top: 20px;
 }
+.custom-snackbar {
+  position: fixed !important; /* Fijo en la pantalla */
+  top: 50% !important; /* Centrado verticalmente */
+  left: 55% !important; /* Ligeramente a la derecha */
+  transform: translate(-50%, -50%) !important; /* Ajusta para centrar con precisión */
+  max-width: 90%; /* Ancho máximo más amplio */
+  font-size: 2.5rem; /* Texto más grande */
+  border-radius: 16px; /* Bordes redondeados más grandes */
+  padding: 50px; /* Espaciado interno más amplio */
+  text-align: center; /* Asegura que el texto esté centrado */
+  display: flex; /* Usado para centrar contenido con flexbox */
+  align-items: center; /* Centrado vertical del contenido */
+  justify-content: center; /* Centrado horizontal del contenido */
+}
+
+.snackbar-content {
+  width: 100%; /* Asegura que el texto ocupe todo el espacio disponible */
+  text-align: center; /* Centrado del texto */
+  line-height: 1.5; /* Mejora la legibilidad del texto */
+}
+
+
 
 
 .custom-title {
