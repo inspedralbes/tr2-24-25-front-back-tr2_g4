@@ -217,7 +217,80 @@ app.post('/remove-alumno', async (req, res) => {
     res.status(500).json({ error: 'Hubo un error al eliminar al alumno' });
   }
 });
+ //----------------------------- ANDROID -----------------------------
+  // Obtener solo los códigos de las partidas desde la base de datos
+  app.get('/api/partidas', async (req, res) => {
+    try {
+        // Realizar la consulta para obtener solo los códigos de las partidas
+        const [result] = await pool.execute('SELECT codigo FROM partida');
+        
+        // Verificar si hay partidas
+        if (result.length > 0) {
+            res.status(200).json(result); // Devolver solo los códigos de las partidas
+        } else {
+            res.status(404).json({ error: 'No se encontraron partidas.' });
+        }
+    } catch (error) {
+        console.error('Error al obtener las partidas:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  });
+  
+  //Mostrar Scripts
+  app.get('/api/partida/estado/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+    const filePath = path.join(__dirname, 'Script', codigo, 'estado.txt');
 
+    if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        res.status(200).json({ estado: fileContent });
+    } else {
+        res.status(404).json({ error: `No se encontró el archivo para el código ${codigo}` });
+    }
+  });
+
+  app.post('/api/partida/estado', async (req, res) => {
+    const { codigo, estado } = req.body;
+
+    // Validar datos de entrada
+    if (!codigo || !estado) {
+        return res.status(400).json({ error: 'Faltan datos: código y estado son obligatorios.' });
+    }
+
+    try {
+        // Ruta al directorio correspondiente
+        const basePath = path.join(__dirname, 'Script');
+        const directoryPath = path.join(basePath, codigo);
+
+        // Verificar si el directorio existe
+        if (!fs.existsSync(directoryPath)) {
+            return res.status(404).json({ error: `No se encontró la carpeta para el código '${codigo}'.` });
+        }
+        // Archivo donde se guardará el estado
+        const stateFilePath = path.join(directoryPath, 'estado.txt');
+
+        // Escribir el estado en el archivo
+        fs.writeFileSync(stateFilePath, estado, 'utf8');
+
+        // Actualizar el estado en la base de datos
+        const [result] = await pool.execute(
+            'UPDATE partida SET estado = ? WHERE codigo = ?',
+            [estado, codigo]
+        );
+
+        // Verificar si se actualizó correctamente en la base de datos
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: `Estado actualizado correctamente en la carpeta del código '${codigo}' y en la base de datos.` });
+        } else {
+            res.status(404).json({ error: `No se encontró ninguna partida con el código '${codigo}' en la base de datos.` });
+        }
+
+    } catch (error) {
+        console.error('Error al actualizar el estado:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+  
 /* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
 app.get('/alumno/:email', async (req, res) => {
   try {
@@ -397,6 +470,22 @@ app.get('/game-code', async (req, res) => {
     if (alumnos === null) {
       // La partida no existe, crear una nueva
       const newCodigo = await createPartida();
+
+      // Crear carpeta con el nombre del código dentro de la carpeta 'Script'
+      const scriptDir = path.join(__dirname, 'Script');
+      const newGameDir = path.join(scriptDir, newCodigo);
+
+      if (!fs.existsSync(scriptDir)) {
+        fs.mkdirSync(scriptDir); // Crear la carpeta 'Script' si no existe
+      }
+
+      fs.mkdirSync(newGameDir); // Crear la carpeta para la nueva partida
+
+      // Crear el archivo estado.txt dentro de la carpeta de la nueva partida
+      const stateFilePath = path.join(newGameDir, 'estado.txt');
+      fs.writeFileSync(stateFilePath, 'inicial'); // Escribir contenido predeterminado
+      console.log(`Archivo creado: ${stateFilePath}`);
+
       res.json({ message: 'Nueva partida creada.', gameCode: newCodigo });
     } else {
       // La partida existe
@@ -407,6 +496,7 @@ app.get('/game-code', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
 
 
 // Obtener alumnos de una partida
