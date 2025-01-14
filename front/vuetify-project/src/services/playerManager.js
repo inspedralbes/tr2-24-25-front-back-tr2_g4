@@ -1,6 +1,8 @@
 import errorAudio from '@/assets/error.mp3';
 import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
 import { io } from 'socket.io-client';
+const API_URL = import.meta.env.VITE_API_BACK;
+
 export default {
   data() {
     return {
@@ -63,7 +65,7 @@ export default {
       console.error('Error al cargar el estado del carril:', error);
       this.generateUniquePositions();
     }
-    this.socket = io('http://localhost:3000');
+    this.socket = io(`${API_URL}`);
     this.audioIncorrecto = new Audio(errorAudio);
     this.obtenerAlumno();
     console.log('Datos enviados:', {
@@ -89,7 +91,7 @@ export default {
       try {
         const userStore = useUserStore();
         const email = userStore.user.email;
-        const response = await fetch('http://localhost:3000/alumno/'+ (email)); // Suponiendo que el id del alumno es 1
+        const response = await fetch(`${API_URL}./alumno/`+ (email)); // Suponiendo que el id del alumno es 1
         const data = await response.json();
         if (data.nom) {
           this.nom = data.nom; // Asignamos el nombre del alumno
@@ -153,7 +155,7 @@ export default {
     // Método para obtener una pregunta desde la API
     async obtenerPregunta() {
       try {
-        const response = await fetch('http://localhost:3000/preguntas'); // URL de la API para obtener las preguntas
+        const response = await fetch(`${API_URL}./preguntas`); // URL de la API para obtener las preguntas
         const preguntas = await response.json();
     
         if (preguntas.length > 0) {
@@ -266,7 +268,7 @@ export default {
       const tipoPregunta = this.preguntaActual.type;
 
       try {
-        const response = await fetch('http://localhost:3000/guardar-resultado', {
+        const response = await fetch(`${API_URL}./guardar-resultado`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
