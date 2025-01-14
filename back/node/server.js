@@ -134,6 +134,8 @@ app.post('/start-game', async (req, res) => {
     return res.status(500).json({ error: 'Error interno del servidor.' });
   }
 });
+
+//eliminar nombre de partida
 app.delete('/eliminar-name', (req, res) => {
   const { codigo_partida, nameToDelete } = req.body; // Se espera un JSON con codigo_partida y nameToDelete
 
@@ -178,6 +180,9 @@ app.delete('/eliminar-name', (req, res) => {
         return res.status(500).json({ error: 'Error al actualizar el JSON' });
       }
 
+      // Emitir evento para actualizar lista de usuarios en el cliente
+      socket.emit('user-removed', { codigo: codigo_partida, userId: nameToDelete });
+
       // Verificamos si se afectaron filas
       if (result.affectedRows > 0) {
         return res.json({ message: 'Nombre eliminado exitosamente' });
@@ -187,6 +192,7 @@ app.delete('/eliminar-name', (req, res) => {
     });
   });
 });
+
 // Ruta para eliminar un alumno de la partida
 app.post('/remove-alumno', async (req, res) => {
   const { codigo, alumnoName } = req.body;
@@ -893,6 +899,7 @@ app.get('/api/aulas', async (req, res) => {
         res.status(500).json({ success: false, message: 'Error al obtener las aulas.' });
     }
 });
+
 
 
 

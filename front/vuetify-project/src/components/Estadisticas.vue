@@ -1,8 +1,8 @@
 <template>
   <div class="alumno-grafico-container">
     <!-- Cabecera -->
-    <h1 class="title">Gráfico de Resultados</h1>
-    <p class="subtitle">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
+    <h1 class="custom-title">Gráfico de Resultados 📈</h1>
+    <p class="custom-title2">Selecciona un alumno y el tipo de pregunta para visualizar su rendimiento.</p>
 
     <!-- Tarjeta de selección -->
     <div class="card">
@@ -33,13 +33,13 @@
     </div>
 
     <!-- Mensaje de Error con v-alert -->
-    <v-alert v-if="error" type="error" dismissible>
+    <v-alert v-if="error" type="error" dismissible color="red" style="text-align: center;">
       {{ error }}
     </v-alert>
 
     <!-- Mostrar Gráfico -->
     <div v-if="grafico" class="grafico-container card">
-      <h2>
+      <h2 class="custom-title2">
         Resultados de {{ selectedAlumno }}
         <span v-if="selectedTipoPregunta"> - {{ selectedTipoPregunta }}</span>
       </h2>
@@ -112,6 +112,17 @@ export default {
 </script>
 
 <style scoped>
+
+.custom-title {
+  font-family: 'Arial Black', sans-serif; /* Cambia a una fuente más destacada */
+  font-weight: bold;
+  font-size: 24px; /* Tamaño de texto más grande */
+  color: #000000; /* Azul para darle un toque moderno */
+  text-align: center; /* Centrar el título */
+  text-transform: uppercase; /* Convertir el texto a mayúsculas */
+  margin-bottom: 20px; /* Espacio debajo del título */
+  letter-spacing: 1px; /* Espaciado entre letras */
+}
 /* Estilos Generales */
 .alumno-grafico-container {
   font-family: 'Roboto', Arial, sans-serif;
@@ -151,6 +162,15 @@ export default {
   margin-bottom: 15px;
 }
 
+.custom-title2 {
+  font-family: 'Arial Black', sans-serif; /* Cambia a una fuente más destacada */
+  font-weight: bold;
+  
+  font-size: 15px; /* Tamaño de texto más grande */
+  color: #1c4b7c; /* Azul para darle un toque moderno */
+  margin-bottom: 20px; /* Espacio debajo del título */
+  letter-spacing: 1px; /* Espaciado entre letras */
+}
 .form-group label {
   display: block;
   font-weight: bold;
