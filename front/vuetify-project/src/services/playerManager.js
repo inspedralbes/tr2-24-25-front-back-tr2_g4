@@ -2,7 +2,6 @@ import errorAudio from '@/assets/error.mp3';
 import { useUserStore } from '@/stores/userStore'; // Importa el store de usuario
 import { io } from 'socket.io-client';
 const API_URL = import.meta.env.VITE_API_BACK;
-
 export default {
   data() {
     return {
@@ -176,12 +175,16 @@ export default {
             } else {
               respuestaAleatoria = Math.max(0, Math.floor(Math.random() * 201) + (this.respuestaCorrecta - 100));
             }
-    
-            // Nos aseguramos de que las respuestas no se repitan ni sean la correcta
+          
+            // Verificar si la respuesta aleatoria es diferente de la respuesta correcta y de las demás respuestas
             if (respuestaAleatoria !== this.respuestaCorrecta && !respuestasSimilares.has(respuestaAleatoria)) {
               respuestasSimilares.add(respuestaAleatoria);
+            } else {
+              // Si se repite o es igual a la correcta, lo volvemos a intentar
+              console.log("Generando nueva respuesta, ya existe o es la correcta.");
             }
           }
+          
           // Mezclamos las respuestas y las mostramos
           const opciones = [this.respuestaCorrecta, ...Array.from(respuestasSimilares)].sort(() => Math.random() - 0.5);
           this.opcionesRespuesta = opciones;
@@ -197,34 +200,34 @@ export default {
       }
     },
 
-    // Método para verificar si la respuesta del jugador es correcta
     verificarRespuesta(respuesta) {
       if (respuesta === this.respuestaCorrecta) {
         let nuevaPosicion = this.carril.position + this.dado;
     
-        // Verificar si el jugador ha llegado a la última casilla (casilla 39)
+        // Si la nueva posición es mayor que 39, ponemos al jugador en la última casilla
         if (nuevaPosicion >= 39) {
-          this.carril.position = 39; // Asegurarnos de que no pase de la última casilla
-          this.mensajeRespuesta = '¡Has ganado! Has llegado a la última casilla.';
-          
-          // Impedir que el jugador siga jugando
-          this.girando = true;  // Deshabilitar la acción de girar el dado
-          alert('¡Felicidades, has ganado el juego!');
-          return; // Salir de la función para evitar más movimientos
+          this.carril.position = 39; // Aseguramos que no se pase de la última casilla
+          this.mensajeRespuesta = '¡Felicidades! Has alcanzado la meta. ¡Has ganado!';
+    
+          this.scrollCarril(); // Actualizamos la vista al movimiento final
+    
+          // Usamos un retraso para permitir que el jugador vea el movimiento antes de mostrar el alert
+          setTimeout(() => {
+            alert("¡Felicidades! Has alcanzado la meta. No puedes continuar.");
+    
+            // Limpiar el localStorage
+            localStorage.removeItem('estadoCarril');
+    
+            // Aquí podrías redirigir a otra pantalla (por ejemplo, "alumno-dashboard").
+            setTimeout(() => {
+              window.location.href = '/alumno-dashboard'; // Redirige a la pantalla de alumno-dashboard
+            }, 2000); // Redirige después de 2 segundos, por ejemplo
+          }, 500); // Retraso de 500ms antes del alert
+    
         } else {
-          // Si no ha llegado a la última casilla, el jugador sigue jugando
-          if (this.isMultiplier(this.carril.position)) {
-            nuevaPosicion = Math.min(nuevaPosicion + this.dado, 39);
-            this.mensajeRespuesta = 'Multiplicador, avanzando el doble';
-          } else {
-            this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.';
-          }
-    
-          if (this.isBomb(this.carril.position)) {
-            console.log("¡Bomba! No retrocede por respuesta correcta.");
-          }
-    
+          // Si no llegamos al final, se avanza normalmente
           this.carril.position = nuevaPosicion;
+          this.mensajeRespuesta = '¡Respuesta correcta! Avanzando.';
           this.scrollCarril();
         }
       } else {
@@ -235,14 +238,10 @@ export default {
           });
         }
     
-        if (this.isBomb(this.carril.position)) {
-          this.carril.position = Math.max(this.carril.position - 2, 0);
-          this.mensajeRespuesta = "¡Bomba! Retrocediendo 2 posiciones por respuesta incorrecta.";
-        } else {
-          this.mensajeRespuesta = 'Respuesta incorrecta';
-        }
+        this.mensajeRespuesta = 'Respuesta incorrecta';
       }
     
+      // Guardar resultado y actualizar estado
       this.guardarResultado(respuesta);
       this.preguntaActiva = false;
       this.preguntaActual = null;
@@ -253,9 +252,10 @@ export default {
         bombas: this.bombas,
         multiplicadores: this.multiplicadores
       });
-      this.socket.emit('updateCarril', this.carril, this.nom ,this.avatar, this.bombas, this.multiplicadores);
+      this.socket.emit('updateCarril', this.carril, this.nom, this.avatar, this.bombas, this.multiplicadores);
       this.guardarEstadoCarril();
     },
+    
     
     // Método para guardar el resultado
     async guardarResultado(respuesta) {

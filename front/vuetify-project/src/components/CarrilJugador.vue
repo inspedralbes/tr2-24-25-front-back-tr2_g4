@@ -135,25 +135,72 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <!-- Alert para la pausa de la partida -->
+    <v-dialog
+      v-model="partidaPausada"
+      persistent
+      max-width="400"
+    >
+      <v-card class="text-center">
+        <v-card-title class="headline red--text">⏸️ Partida Pausada</v-card-title>
+        <v-card-text>
+          La partida está temporalmente pausada. Por favor, espera hasta que se reanude.
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
 <script>
 import playerManager from '../services/playerManager.js';
 
-
 export default {
   mixins: [playerManager],
   data() {
     return {
       // Propiedades existentes para el carril, dado, preguntas, etc.
+      codigoPartida: this.$route.params.codigo,
       showRules: false, // Controla la visibilidad del modal de reglas
+      partidaPausada: false, // Estado para saber si la partida está pausada
     };
+  },
+  mounted() {
+    // Escucha el evento `pause-game` desde el servidor
+    this.socket.on('pause-game', (data) => {
+      this.partidaPausada = data.estado; // Accede al valor correcto de `estado`
+      if (data.codigo === this.codigoPartida) {
+        this.partidaPausada = data.estado; // Actualiza el estado de la partida
+        if (this.partidaPausada) {
+          console.log('La partida está pausada');
+        } else {
+          console.log('La partida se ha reanudado');
+        }
+      }
+    });
   },
 };
 </script>
 
+
+
 <style scoped>
+.paused-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  text-align: center;
+}
+.paused-alert h2 {
+  color: red;
+  font-size: 24px;
+  font-weight: bold;
+}
 /* Estilo del carril con scroll horizontal */
 .carril-container {
   overflow-x: scroll;

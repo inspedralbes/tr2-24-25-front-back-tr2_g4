@@ -252,34 +252,34 @@ app.post('/remove-alumno', async (req, res) => {
   app.post('/api/partida/estado', async (req, res) => {
     const { codigo, estado } = req.body;
 
-    // Validar datos de entrada
     if (!codigo || !estado) {
         return res.status(400).json({ error: 'Faltan datos: código y estado son obligatorios.' });
     }
 
     try {
-        // Ruta al directorio correspondiente
         const basePath = path.join(__dirname, 'Script');
         const directoryPath = path.join(basePath, codigo);
 
-        // Verificar si el directorio existe
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).json({ error: `No se encontró la carpeta para el código '${codigo}'.` });
         }
-        // Archivo donde se guardará el estado
-        const stateFilePath = path.join(directoryPath, 'estado.txt');
 
-        // Escribir el estado en el archivo
+        const stateFilePath = path.join(directoryPath, 'estado.txt');
         fs.writeFileSync(stateFilePath, estado, 'utf8');
 
-        // Actualizar el estado en la base de datos
         const [result] = await pool.execute(
             'UPDATE partida SET estado = ? WHERE codigo = ?',
             [estado, codigo]
         );
 
-        // Verificar si se actualizó correctamente en la base de datos
         if (result.affectedRows > 0) {
+            // Emitir evento basado en el estado
+            if (estado === 'Pausa') {
+                io.emit('pause-game', { codigo, estado: true });
+            } else if (estado === 'En Partida') {
+                io.emit('pause-game', { codigo, estado: false });
+            }
+
             res.status(200).json({ message: `Estado actualizado correctamente en la carpeta del código '${codigo}' y en la base de datos.` });
         } else {
             res.status(404).json({ error: `No se encontró ninguna partida con el código '${codigo}' en la base de datos.` });
@@ -290,6 +290,8 @@ app.post('/remove-alumno', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
+
+
   
 /* ---------------------------- RUTAS DE ALUMNOS ---------------------------- */
 app.get('/alumno/:email', async (req, res) => {
@@ -1259,6 +1261,11 @@ const io = new Server(server, {
     socket.emit('update-alumnos', partida.alumnos);
   });
 
+   // Evento para pausar la partida
+   socket.on('pause-game', ({ codigo, estadoPausa }) => {
+    console.log(`Partida ${codigo} estado de pausa: ${estadoPausa}`);
+    io.to(codigo).emit('pause-game', estadoPausa); // Emitir el estado de pausa a todos los clientes en la sala
+  });
 
     socket.on('disconnect', () => {
       console.log('Cliente desconectado:', socket.id);
