@@ -21,7 +21,7 @@
               class="ma-2 font-weight-bold"
               color="deep-purple lighten-3"
               text-color="white"
-              @click:close="removeUser(user.userName)"
+              @click:close="removeUser(user.name)"
             >
               {{ user.name }}
             </v-chip>
@@ -115,26 +115,29 @@ onMounted(async () => {
 
 // Función para eliminar un usuario
 const removeUser = async (userName) => {
+  console.log( userName, gameCode)
   try {
-    const response = await fetch(`${API_URL}./eliminar-name`, {
-      method: 'DELETE',
+    // Realizar solicitud DELETE al endpoint nuevo
+    const response = await fetch(`${API_URL}./partida/alumno`, {
+      method: 'DELETE', // Método HTTP DELETE
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        codigo_partida: gameCode.value,
-        nameToDelete: userName, // ID del usuario a eliminar
+        codigo: gameCode.value, // Código de la partida
+        alumno: userName, // Nombre del jugador a eliminar
       }),
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      // Emitir evento al servidor para actualizar lista de usuarios
-      socket.emit('user-removed', { codigo: gameCode.value, userName });
+      // Emitir evento al servidor para actualizar la lista de usuarios
+      console.log("estamos dentro");
+      
 
       // Actualizar la lista de usuarios en el cliente
-      users.value = users.value.filter(user => user.name !== userName);
+      
       alert(data.message || 'Usuario eliminado con éxito');
     } else {
       alert(data.error || 'No se pudo eliminar el usuario');
@@ -147,7 +150,8 @@ const removeUser = async (userName) => {
 
 socket.on('user-removed', ({ codigo, userName }) => {
   // Filtrar el usuario eliminado de la lista de usuarios en el cliente
-  users.value = users.value.filter(user => user.name !== userName);
+  
+  users.value = users.value.filter((user) => user.name !== userName);
   alert('Usuario eliminado con éxito');
 });
 

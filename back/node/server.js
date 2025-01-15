@@ -135,62 +135,58 @@ app.post('/start-game', async (req, res) => {
 });
 
 //eliminar nombre de partida
-app.delete('/eliminar-name', (req, res) => {
-  const { codigo_partida, nameToDelete } = req.body; // Se espera un JSON con codigo_partida y nameToDelete
+app.delete('/partida/alumno', async (req, res) => {
+  const { codigo, alumno } = req.body; // Recibir ambos parámetros desde el cuerpo
 
-  // Verificamos si los datos fueron enviados
-  if (!codigo_partida || !nameToDelete) {
-    return res.status(400).json({ error: 'Faltan parámetros codigo_partida o nameToDelete' });
+  // Validar los datos
+  if (!codigo || !alumno) {
+    return res.status(400).json({ error: 'Se requieren los campos "codigo" y "alumno"' });
   }
 
-  // Consultar el JSON para asegurarse de que existe la partida con ese código
-  const queryGetJson = 'SELECT alumnos FROM partida WHERE codigo = ?';
-  
-  pool.query(queryGetJson, [codigo_partida], (err, results) => {
-    if (err) {
-      console.error('Error al obtener los datos:', err);
-      return res.status(500).json({ error: 'Error al obtener los datos' });
+  try {
+    // Obtener los alumnos actuales
+    const [result] = await pool.query(`SELECT alumnos FROM partida WHERE codigo = ?`, [codigo]);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Partida no encontrada' });
     }
 
-    // Verificamos si se obtuvo un resultado
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'Partida no encontrada con ese código' });
+    // Verificar si el campo alumnos ya es un objeto o una cadena JSON
+    let alumnos = result[0].alumnos;
+
+    // Si 'alumnos' es una cadena JSON, parsearla
+    if (typeof alumnos === 'string') {
+      alumnos = JSON.parse(alumnos);
     }
 
-    // Obtenemos el JSON de la columna
-    const columnaJson = results[0].columna_json;
-
-    // Si el JSON no contiene el nombre a eliminar, devolver un error
-    const nameIndex = columnaJson.findIndex(item => item.name === nameToDelete);
-    
-    if (nameIndex === -1) {
-      return res.status(404).json({ message: 'Nombre no encontrado en el JSON' });
+    // Verificar si el alumno existe en la lista de objetos
+    const alumnoIndex = alumnos.findIndex(a => a.name === alumno);
+    if (alumnoIndex === -1) {
+      return res.status(404).json({ error: 'Alumno no encontrado en la partida' });
     }
 
-    // Si se encuentra el nombre, eliminamos el objeto con ese nombre
-    columnaJson.splice(nameIndex, 1); // Elimina el objeto con el 'name' específico
+    // Eliminar al alumno de la lista
+    alumnos.splice(alumnoIndex, 1);
 
-    // Actualizamos la columna_json en la base de datos
-    const queryUpdateJson = 'UPDATE partida SET alumnos = ? WHERE codigo = ?';
-    
-    pool.query(queryUpdateJson, [JSON.stringify(columnaJson), codigo_partida], (err, result) => {
-      if (err) {
-        console.error('Error al actualizar el JSON:', err);
-        return res.status(500).json({ error: 'Error al actualizar el JSON' });
-      }
+    // Actualizar el campo JSON en la base de datos
+    await pool.query(`UPDATE partida SET alumnos = ? WHERE codigo = ?`, [JSON.stringify(alumnos), codigo]);
 
-      // Emitir evento para actualizar lista de usuarios en el cliente
-      socket.emit('user-removed', { codigo: codigo_partida, userId: nameToDelete });
+    // Emitir el evento de eliminación del alumno a la sala correspondiente
+    io.to(codigo).emit('user-removed', { codigo, userName: alumno });
 
-      // Verificamos si se afectaron filas
-      if (result.affectedRows > 0) {
-        return res.json({ message: 'Nombre eliminado exitosamente' });
-      } else {
-        return res.status(404).json({ message: 'No se pudo eliminar el nombre' });
-      }
-    });
-  });
+    res.status(200).json({ message: 'Alumno eliminado correctamente', alumnos });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar al alumno' });
+  }
 });
+
+
+
+
+
+
+
 
 // Ruta para eliminar un alumno de la partida
 app.post('/remove-alumno', async (req, res) => {
@@ -1239,46 +1235,56 @@ const io = new Server(server, {
 });
 
 
-  io.on('connection', (socket) => {
-    console.log('Nuevo cliente conectado:', socket.id);
+io.on('connection', (socket) => {
+  console.log('Nuevo cliente conectado:', socket.id);
 
-      // Escucha el evento `updateCarril` desde los jugadores
-      socket.on('updateCarril', (carril, nombre, avatar, bombas, multiplicadores) => {
-        console.log('Datos recibidos del cliente:', { carril, nombre, avatar, bombas, multiplicadores });
-        io.emit('updateCarril', carril, nombre, avatar, bombas, multiplicadores);  // Emitir el evento a todos los sockets
-      });
-    
+  // Escucha el evento `updateCarril` desde los jugadores
+  socket.on('updateCarril', (carril, nombre, avatar, bombas, multiplicadores) => {
+    console.log('Datos recibidos del cliente:', { carril, nombre, avatar, bombas, multiplicadores });
+    io.emit('updateCarril', carril, nombre, avatar, bombas, multiplicadores); // Emitir el evento a todos los sockets
+  });
 
-    socket.on('join-room', async ({ codigo }) => {
-      const partida = await getAlumnos(codigo);
-      if (!partida) {
-        return socket.emit('error', 'Código de partida no válido');
-      }
-
+  // Manejo del evento `join-room`
+  socket.on('join-room', async ({ codigo }) => {
+    const partida = await getAlumnos(codigo);
+    if (!partida) {
+      return socket.emit('error', 'Código de partida no válido');
+    }
 
     socket.join(codigo);
     console.log(`Cliente ${socket.id} se unió a la sala ${codigo}`);
     socket.emit('update-alumnos', partida.alumnos);
   });
 
-   // Evento para pausar la partida
-   socket.on('pause-game', ({ codigo, estadoPausa }) => {
+  // Evento para pausar la partida
+  socket.on('pause-game', ({ codigo, estadoPausa }) => {
     console.log(`Partida ${codigo} estado de pausa: ${estadoPausa}`);
     io.to(codigo).emit('pause-game', estadoPausa); // Emitir el estado de pausa a todos los clientes en la sala
   });
 
-    socket.on('disconnect', () => {
-      console.log('Cliente desconectado:', socket.id);
-    });
-
-
-    socket.on('new-participant', ({ usuario, codigo }) => {
-      io.to(codigo).emit('new-participant', { usuario, codigo });
-    });
-    socket.on('game-started', (data) => {
-      io.emit('game-started', data);  // Emitir el evento a todos los sockets
-    });
+  // Manejo de la desconexión del cliente
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
   });
+
+  // Manejo del evento `new-participant`
+  socket.on('new-participant', ({ usuario, codigo }) => {
+    io.to(codigo).emit('new-participant', { usuario, codigo });
+  });
+
+  // Manejo del evento `game-started`
+  socket.on('game-started', (data) => {
+    io.emit('game-started', data); // Emitir el evento a todos los sockets
+  });
+
+  // Notificar que un usuario fue eliminado
+  socket.on('user-removed', ({ codigo, userName }) => {
+    console.log(`Notificando que el usuario ${userName} fue eliminado de la partida ${codigo}`);
+    io.to(codigo).emit('user-removed', { codigo, userName });
+  });
+});
+
+
 
 
 /* ---------------------------- TAREAS PERIÓDICAS ---------------------------- */
